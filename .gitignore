@@ -33,6 +33,6 @@
 .idea/misc.xml
 .idea/mobycpp.iml
 .idea/modules.xml
-/.idea/
+.idea/
 /cmake-build-debug/
-/build/
+build/
