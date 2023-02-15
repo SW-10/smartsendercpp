@@ -1,0 +1,27 @@
+[
+{
+  "directory": "C:/Users/teisv/Documents/GitHub/smartsendercpp/build",
+  "command": "D:\\Programs\\Strawberry\\c\\bin\\g++.exe -g -std=gnu++17 -o CMakeFiles\\mobycpp.dir\\main.cpp.obj -c C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\main.cpp",
+  "file": "C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\main.cpp"
+},
+{
+  "directory": "C:/Users/teisv/Documents/GitHub/smartsendercpp/build",
+  "command": "D:\\Programs\\Strawberry\\c\\bin\\g++.exe -g -std=gnu++17 -o config\\CMakeFiles\\config.dir\\AsciiPatternMatch.cpp.obj -c C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\AsciiPatternMatch.cpp",
+  "file": "C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\AsciiPatternMatch.cpp"
+},
+{
+  "directory": "C:/Users/teisv/Documents/GitHub/smartsendercpp/build",
+  "command": "D:\\Programs\\Strawberry\\c\\bin\\g++.exe -g -std=gnu++17 -o config\\CMakeFiles\\config.dir\\Config2Cpp.cpp.obj -c C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\Config2Cpp.cpp",
+  "file": "C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\Config2Cpp.cpp"
+},
+{
+  "directory": "C:/Users/teisv/Documents/GitHub/smartsendercpp/build",
+  "command": "D:\\Programs\\Strawberry\\c\\bin\\g++.exe -g -std=gnu++17 -o config\\CMakeFiles\\config.dir\\config2cpp-main.cpp.obj -c C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\config2cpp-main.cpp",
+  "file": "C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\config2cpp-main.cpp"
+},
+{
+  "directory": "C:/Users/teisv/Documents/GitHub/smartsendercpp/build",
+  "command": "D:\\Programs\\Strawberry\\c\\bin\\g++.exe -g -std=gnu++17 -o config\\CMakeFiles\\config.dir\\config2cpp-nocheck-main.cpp.obj -c C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\config2cpp-nocheck-main.cpp",
+  "file": "C:\\Users\\teisv\\Documents\\GitHub\\smartsendercpp\\config\\config2cpp-nocheck-main.cpp"
+}
+]
