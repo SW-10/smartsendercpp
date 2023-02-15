@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+.idea/misc.xml
+.idea/mobycpp.iml
+.idea/modules.xml
+
+/cmake-build-debug/
