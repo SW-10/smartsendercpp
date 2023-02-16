@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 file(GLOB add
         "*.h"
         "*.cpp"
+        "*.c"
         )
 
 add_executable(mobycpp ${add})
