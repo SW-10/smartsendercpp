@@ -1,15 +1,12 @@
 #include "gorilla.h"
 #include <math.h>
-#include <iostream>
-#include "../doctest.h"
-#include <math.h>
 
 
 const int debug = 0;
 
 const uint8_t SIZE_OF_32INT = (uint8_t) sizeof(int32_t) * 8;
 
-uint8_t Gorilla::leading_zeros(const uint32_t &num){
+uint8_t leading_zeros(uint32_t num){
     // Equivalent to
     // 10000000 00000000 00000000 00000000
     int msb = 1 << (SIZE_OF_32INT - 1);
@@ -32,7 +29,7 @@ uint8_t Gorilla::leading_zeros(const uint32_t &num){
     if(debug) printf("Total number of leading zeros in %d is %d", num, count);
     return count;
 }
-uint8_t Gorilla::trailing_zeros(const uint32_t &num){
+uint8_t trailing_zeros(uint32_t num){
     
     uint8_t count = 0;
 
@@ -54,79 +51,78 @@ uint8_t Gorilla::trailing_zeros(const uint32_t &num){
     return count;
 }
 
-uint32_t Gorilla::float_to_bit(float val){
+uint32_t float_to_bit(float val){
     return *(uint32_t *)&val;
 }
 
 
-void Gorilla::fitValueGorilla(float value){
+void fitValueGorilla(Gorilla* data, float value){
     uint32_t value_as_integer = float_to_bit(value); // Læs den binære repræsentation af float value som en integer, som vi herefter kan lave bitwise operationer på
-    uint32_t last_value_as_integer = float_to_bit(last_value);
+    uint32_t last_value_as_integer = float_to_bit(data->last_value);
     uint32_t value_xor_last_value = value_as_integer ^ last_value_as_integer;
     
-    if(compressed_values.bytes_counter == 0){
+    if(data->compressed_values.bytes_counter == 0){
         // TODO: &(data->compressed_values) ?????????????????
         //printf("====================\n");
-        append_bits(&compressed_values, value_as_integer, VALUE_SIZE_IN_BITS);
+        append_bits(&data->compressed_values, value_as_integer, VALUE_SIZE_IN_BITS);
 
     } else if (value_xor_last_value == 0){
-        append_a_zero_bit(&compressed_values);
+        append_a_zero_bit(&data->compressed_values);
         // printf("ZERO BIT\n");
     } else {
         uint8_t leading_zero_bits = leading_zeros(value_xor_last_value);
         uint8_t trailing_zero_bits = trailing_zeros(value_xor_last_value);
-        append_a_one_bit(&compressed_values); //???????????????????
+        append_a_one_bit(&data->compressed_values); //???????????????????
 
-        if(leading_zero_bits >= last_leading_zero_bits
-            && trailing_zero_bits >= last_trailing_zero_bits)
+        if(leading_zero_bits >= data->last_leading_zero_bits
+            && trailing_zero_bits >= data->last_trailing_zero_bits)
         {
-            append_a_zero_bit(&compressed_values);
+            append_a_zero_bit(&data->compressed_values);
             uint8_t meaningful_bits = VALUE_SIZE_IN_BITS 
-                - last_leading_zero_bits 
-                - last_trailing_zero_bits;
-            append_bits(&compressed_values, 
-                value_xor_last_value >> last_trailing_zero_bits, 
+                - data->last_leading_zero_bits 
+                - data->last_trailing_zero_bits;
+            append_bits(&data->compressed_values, 
+                value_xor_last_value >> data->last_trailing_zero_bits, 
                 meaningful_bits
             );
 
         } else {
-            append_a_one_bit(&compressed_values);
-            append_bits(&compressed_values, leading_zero_bits, 5);
+            append_a_one_bit(&data->compressed_values);
+            append_bits(&data->compressed_values, leading_zero_bits, 5);
             uint8_t meaningful_bits = VALUE_SIZE_IN_BITS - leading_zero_bits - trailing_zero_bits;
-            append_bits(&compressed_values, meaningful_bits, 6);
-            append_bits(&compressed_values, value_xor_last_value >> trailing_zero_bits, meaningful_bits);
+            append_bits(&data->compressed_values, meaningful_bits, 6);
+            append_bits(&data->compressed_values, value_xor_last_value >> trailing_zero_bits, meaningful_bits);
 
-            last_leading_zero_bits = leading_zero_bits;
-            last_trailing_zero_bits = trailing_zero_bits;
+            data->last_leading_zero_bits = leading_zero_bits;
+            data->last_trailing_zero_bits = trailing_zero_bits;
 
         }
         // uint8_t leading_zero_bits = value_xor_last_value
 
     }
     
-    last_value = value;
-    length++;
+    data->last_value = value;
+    data->length++;
 }
 
-float Gorilla::get_bytes_per_value_gorilla(){
-    // return (float) len(&data->compressed_values) / (float) data->length;
-    return (float) len(compressed_values) / (float) length;
-
+float get_bytes_per_value_gorilla(Gorilla* data){
+    return (float) len(&data->compressed_values) / (float) data->length;
 }
 
-size_t Gorilla::len(const Bit_vec_builder &data){
-    return data.bytes_counter + (size_t) (data.remaining_bits != 8);
+size_t len(Bit_vec_builder* data){
+    return data->bytes_counter + (size_t) (data->remaining_bits != 8);
 }
 
-std::vector<uint8_t> Gorilla::finish(Bit_vec_builder* data){
+uint8_t* finish(Bit_vec_builder* data){
   if (data->remaining_bits != 8){
     data->bytes_capacity++;
+    data->bytes = realloc(data->bytes, 4 * data->bytes_capacity * sizeof(*data->bytes));
     data->bytes[data->bytes_counter++] = data->current_byte;
   }
   return data->bytes;
 }
 
-std::vector<uint8_t> Gorilla::finish_with_one_bits(Bit_vec_builder* data){
+uint8_t* finish_with_one_bits(Bit_vec_builder* data){
     if(data->remaining_bits != 8){
         uint8_t remaining_bits = pow(2, data->remaining_bits)-1;
         append_bits(data, remaining_bits, data->remaining_bits);
@@ -134,25 +130,28 @@ std::vector<uint8_t> Gorilla::finish_with_one_bits(Bit_vec_builder* data){
     return finish(data);
 }
 
-std::vector<uint8_t> Gorilla::get_compressed_values(){
-  return finish(&compressed_values);
+uint8_t* get_compressed_values(Gorilla* data){
+  return finish(&data->compressed_values);
 }
 
-size_t Gorilla::get_length_gorilla(){
-    return length;
+size_t get_length_gorilla(Gorilla* data){
+    return data->length;
 }
 
 
-void Gorilla::append_a_zero_bit(Bit_vec_builder* data){
+
+
+
+void append_a_zero_bit(Bit_vec_builder* data){
     append_bits(data, 0, 1);
 }
 
-void Gorilla::append_a_one_bit(Bit_vec_builder* data){
+void append_a_one_bit(Bit_vec_builder* data){
     append_bits(data, 1, 1);
 }
 
 
-void Gorilla::append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bits){
+void append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bits){
     uint8_t _number_of_bits = number_of_bits;
 
     while(_number_of_bits > 0){
@@ -176,7 +175,12 @@ void Gorilla::append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bi
             //printf("%d\n", 4 * data->bytes_capacity * sizeof(uint8_t));
             data->bytes_capacity++;
 
-            data->bytes.push_back(data->current_byte);
+            data->bytes = realloc(data->bytes, 4 * data->bytes_capacity * sizeof(*data->bytes));
+            if(data->bytes == NULL){
+                printf("REALLOC ERROR(append_bits)\n");
+            }
+
+            data->bytes[data->bytes_counter] = data->current_byte;
             data->bytes_counter = data->bytes_counter+1;
             data->current_byte = 0;
             data->remaining_bits = 8;   
@@ -184,7 +188,7 @@ void Gorilla::append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bi
     }
 }
 
-Gorilla Gorilla::get_gorilla(){
+Gorilla get_gorilla(){
     Gorilla data;
     data.last_value = 0;
     data.last_leading_zero_bits = UCHAR_MAX;
@@ -198,31 +202,51 @@ Gorilla Gorilla::get_gorilla(){
     
     //is this correct?
     data.compressed_values.bytes_capacity = 1;
+    data.compressed_values.bytes = (uint8_t*) calloc (data.compressed_values.bytes_capacity, sizeof(uint8_t));
+    if(data.compressed_values.bytes == NULL){
+        printf("MALLOC ERROR\n");
+    }
+    // for(int i = 0; i < sizeof(data.compressed_values.bytes)/sizeof(data.compressed_values.bytes[0]); i++){
+    //     data.compressed_values.bytes[i] = NULL;
+    // }
     data.length = 0;
     
     return data;
 }
 
-void Gorilla::reset_gorilla(){
-    last_leading_zero_bits = UCHAR_MAX;
-    last_trailing_zero_bits = 0;
-    last_value = 0;
-    length = 0;
-
-    compressed_values.current_byte = 0;
-    compressed_values.remaining_bits = 8;
-    compressed_values.bytes_capacity = 1;
-    compressed_values.bytes_counter = 0;
+void reset_gorilla(Gorilla* gorilla){
+    gorilla->last_leading_zero_bits = UCHAR_MAX;
+    gorilla->last_trailing_zero_bits = 0;
+    gorilla->last_value = 0;
+    gorilla->length = 0;
+    
+    gorilla->compressed_values.current_byte = 0;
+    gorilla->compressed_values.remaining_bits = 8;
+    gorilla->compressed_values.bytes_capacity = 1;
+    gorilla->compressed_values.bytes_counter = 0;
+    gorilla->compressed_values.bytes = realloc(gorilla->compressed_values.bytes, 4 * gorilla->compressed_values.bytes_capacity * sizeof(*gorilla->compressed_values.bytes));
+    if(gorilla->compressed_values.bytes == NULL){
+        printf("REALLOC ERROR\n");
+    }
 }
 
-std::vector<float> Gorilla::grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count){
-    std::vector<float> result;
+void delete_gorilla(Gorilla* gorilla){
+    free(gorilla->compressed_values.bytes);
+}
+
+
+float* grid_gorilla(uint8_t* values, int values_count, int timestamp_count){
+    float* result;
+    result = calloc(timestamp_count, sizeof(*result));
+    if(!result){
+        printf("CALLOC ERROR (grid_gorilla: result)\n");
+    }
     int resultIndex = 0;
     BitReader bitReader = tryNewBitreader(values, values_count);
     int leadingZeros = 255;
     int trailingZeros = 0;
     uint32_t lastValue = read_bits(&bitReader, VALUE_SIZE_IN_BITS);
-    result.push_back(intToFloat(lastValue));
+    result[resultIndex++] = intToFloat(lastValue);
     for(int i = 0; i < timestamp_count-1; i++){
         if(read_bit(&bitReader)){
             if(read_bit(&bitReader)){
@@ -242,63 +266,8 @@ std::vector<float> Gorilla::grid_gorilla(std::vector<uint8_t> values, int values
             value ^= lastValue;
             lastValue = value;
         }
-        // result[resultIndex++] = intToFloat(lastValue);
-        std::cout << "i: " << i <<  " lastValue: " << lastValue << std::endl;
-
-        result.push_back(intToFloat(lastValue));
+        result[resultIndex++] = intToFloat(lastValue);
     }
     return result;
-}
-
-
-TEST_CASE("GORILLA TESTS") {
-    std::vector<uint8_t> original{ 
-        63, 128, 0, 0, 212, 172, 204, 204, 238, 55, 141, 107, 87, 111, 91, 182, 44, 
-        138, 244, 171, 97, 184, 125, 43, 124, 135, 35, 169, 109, 177, 108};
-
-    std::vector<float> values{1.0, 1.3, 1.24, 1.045, 1.23, 1.54, 1.45, 1.12, 1.12};
-    Gorilla g;
-    g = g.get_gorilla();
-    
-    for(auto v : values){
-        g.fitValueGorilla(v);
-    }
-    
-    SUBCASE("Size equal to original") {
-        CHECK(original.size() == g.compressed_values.bytes.size());
-    }
-    SUBCASE("Values equal to original"){
-        bool equal = true;
-        for(int i = 0; i < original.size(); i++){
-            if(original[i] != (int)g.compressed_values.bytes[i]){
-                equal = false;
-            }
-        }
-        CHECK(equal == true);
-    }
-
-    SUBCASE("Gorilla grid"){
-        bool equal = true;
-        auto res = g.grid_gorilla(original, original.size(), values.size());
-        std::cout << "val size: " << values.size() << std::endl;
-        for(int i = 0; i < values.size(); i++){
-            if(std::fabs(values[i] - res[i]) > 0.00001){ //there might be some float inaccuracy
-                equal = false;
-            }
-            std::cout << "val: " << values[i] << " res: " << res[i] << std::endl; 
-        }
-        CHECK(equal == true);
-    }
-}
-
-TEST_CASE("Leading and trailing zeros"){ //Taken from Rust
-    Gorilla g;
-    g = g.get_gorilla();
-    g.fitValueGorilla(37.0);
-    g.fitValueGorilla(71.0);
-    g.fitValueGorilla(73.0);
-    CHECK(g.last_leading_zero_bits == 8);
-    CHECK(g.last_trailing_zero_bits == 17);
-
 }
 

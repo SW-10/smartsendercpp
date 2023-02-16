@@ -42,7 +42,7 @@ struct Gorilla {
 
         Gorilla get_gorilla(void);
         void reset_gorilla();
-        std::vector<float> grid_gorilla(uint8_t* values, int values_count, int timestamp_count);
+        std::vector<float> grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count);
         std::vector<uint8_t> finish(Bit_vec_builder* data);
         std::vector<uint8_t> finish_with_one_bits(Bit_vec_builder* data);
 } typedef Gorilla;
