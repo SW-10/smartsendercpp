@@ -49,7 +49,7 @@ configParameters::configParameters(int argc, char *argv[]){
                 while( token != NULL ) {
                     count++;
                     // Handle args here
-                    printf( " %s\n", token );
+                    //printf( " %s\n", token );
                     if(count==1) latCol.col = atoi(token);
                     if(count==2) longCol.col = atoi(token);
                     if(count==3){
