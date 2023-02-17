@@ -21,13 +21,14 @@ public:
     columns latCol, longCol;
     std::vector<columns> cols;
     std::vector<int> text_cols;
-    int timestampCol;
+    int timestampCol = -1;
     int numberOfCols = 0;
-    int number_of_text_cols;
+    int number_of_text_cols = 0;
     std::string outPutCsvFile;
-    int containsPosition;
+    int containsPosition = 0;
     char* output;
-    configParameters(int argc, char *argv[]);
+    explicit configParameters(std::string &path);
+private:
     void column_or_text(int* count, char* token);
 };
 

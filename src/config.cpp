@@ -3,39 +3,42 @@
 //
 
 #include <fstream>
-#include <iostream>
+#include <filesystem>
 #include "config.h"
 #include "getopt.h"
 #include "memory"
 
 
 
-configParameters::configParameters(int argc, char *argv[]){
+configParameters::configParameters(std::string &path){
     int c;
     int digit_optind = 0;
     const char s[2] = " ";
     char *token;
     int count = 0;
     std::ifstream configFile;
-    configFile.open("C:\\Users\\power\\CLionProjects\\smartsendercpp\\moby.cfg");
-    std::vector<std::string> charVectors;
+    configFile.open("../"+path);
+    std::vector<std::string> innerCharVector;
     if ( configFile.is_open() ) {
         while ( configFile ) {
             std::string tpTemp;
             std::getline (configFile, tpTemp);
-            charVectors.emplace_back(tpTemp);
-            //charVectors.push_back(strcpy(malloc(sizeof tpTemp.c_str()), tpTemp.c_str()));
-            //char* charboy = tpTemp.data();
-            //tp = tp + tpTemp;
-            //std::cout << tpTemp << ": " << configFile.tellg() << '\n';
+            innerCharVector.emplace_back(tpTemp);
         }
     }
 
-    std::vector<char *> charsVectors2;
-    for (std::string &v : charVectors){
-        charsVectors2.emplace_back(v.data());
+
+    std::vector<char *> outerCharVector;
+    for (std::string &v : innerCharVector){
+        outerCharVector.emplace_back(v.data());
+        if (v.empty()){
+            outerCharVector.emplace_back(v.data());
+        }
     }
-    char** hello = charsVectors2.data();
+    
+    //Do not ask
+    std::rotate(outerCharVector.rbegin(), outerCharVector.rbegin() + 1, outerCharVector.rend());
+    char** argsEmulator = outerCharVector.data();
 
     while (true)
     {
@@ -49,12 +52,12 @@ configParameters::configParameters(int argc, char *argv[]){
                 {"text", required_argument, 0, 'x'},
                 {0, 0, 0, 0}};
 
-        c = getopt_long(4, hello, "p:c:t:o:x:",
+        c = getopt_long(outerCharVector.size(), argsEmulator, "p:c:t:o:x:",
                         long_options, &option_index);
         if (c == -1)
             break;
         // printf("DEBUG: %d\n", debug);
-        charVectors;
+        //innerCharVector;
         switch (c)
         {
             case 'p':
