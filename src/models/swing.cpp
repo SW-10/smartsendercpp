@@ -8,11 +8,22 @@
 #include <iostream>
 #include "../doctest.h"
 
+Swing::Swing(double error, bool is_error_absolute){
+  error_bound = error;
+  first_timestamp = 0;
+  last_timestamp = 0;
+  first_value = 0;
+  upper_bound_slope = 0;
+  upper_bound_intercept = 0;
+  lower_bound_slope = 0;
+  lower_bound_intercept = 0;
+  length = 0;
+  error_absolute = is_error_absolute;
+}
 
-
-int Swing::fitValueSwing(long timestamp, double value, int is_error_absolute){
+int Swing::fitValueSwing(long timestamp, double value){
     double maximum_deviation = 0;
-    if (is_error_absolute)  // check if using relative or absolute error bounds
+    if (error_absolute)  // check if using relative or absolute error bounds
     {
         maximum_deviation = error_bound;
     }
@@ -172,19 +183,19 @@ size_t Swing::get_length_swing(){
 //
 // Created by power on 23-09-2022.
 //
-Swing Swing::getSwing(double error_bound){
-  Swing data;
-  data.error_bound = error_bound;
-  data.first_timestamp = 0;
-  data.last_timestamp = 0;
-  data.first_value = 0;
-  data.upper_bound_slope = 0;
-  data.upper_bound_intercept = 0;
-  data.lower_bound_slope = 0;
-  data.lower_bound_intercept = 0;
-  data.length = 0;
-  return data;
-}
+// Swing Swing::getSwing(double error_bound){
+//   Swing data;
+//   data.error_bound = error_bound;
+//   data.first_timestamp = 0;
+//   data.last_timestamp = 0;
+//   data.first_value = 0;
+//   data.upper_bound_slope = 0;
+//   data.upper_bound_intercept = 0;
+//   data.lower_bound_slope = 0;
+//   data.lower_bound_intercept = 0;
+//   data.length = 0;
+//   return data;
+// }
 
 void Swing::resetSwing(){
     first_timestamp = 0;
@@ -219,18 +230,18 @@ bool float_equal(float a, float b){
 }
 
 TEST_CASE("Swing"){
-    Swing p;
     double error_bound = 0.3;
-    p = p.getSwing(error_bound);
-    CHECK(p.fitValueSwing (1, 1.0 , 1) == 1);
-    CHECK(p.fitValueSwing(2, 1.3 , 1) == 1);
-    CHECK(p.fitValueSwing(3, 1.24, 1) == 1);
-    CHECK(p.fitValueSwing(4, 1.045, 1) == 1);
-    CHECK(p.fitValueSwing(5, 1.23, 1) == 1);
-    CHECK(p.fitValueSwing(6, 1.54, 1) == 1);
-    CHECK(p.fitValueSwing(7, 1.45, 1) == 1);
-    CHECK(p.fitValueSwing(8, 1.12, 1) == 1);
-    CHECK(p.fitValueSwing(9, 1.12, 1) == 1);
+    Swing p(error_bound, 1);
+    // p = p.getSwing(error_bound);
+    CHECK(p.fitValueSwing (1, 1.0) == 1);
+    CHECK(p.fitValueSwing(2, 1.3) == 1);
+    CHECK(p.fitValueSwing(3, 1.24) == 1);
+    CHECK(p.fitValueSwing(4, 1.045) == 1);
+    CHECK(p.fitValueSwing(5, 1.23) == 1);
+    CHECK(p.fitValueSwing(6, 1.54) == 1);
+    CHECK(p.fitValueSwing(7, 1.45) == 1);
+    CHECK(p.fitValueSwing(8, 1.12) == 1);
+    CHECK(p.fitValueSwing(9, 1.12) == 1);
 
     SUBCASE("Results"){
         CHECK(float_equal(p.get_error_bound(), 0.3f));
@@ -268,18 +279,18 @@ TEST_CASE("Swing"){
 }
 
 TEST_CASE("Not all values fit"){
-    Swing p;
-    p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
+    Swing p(0.2, 1);
+    // p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
     
-    CHECK(p.fitValueSwing(1, 1.0 , 1) == 1);
-    CHECK(p.fitValueSwing(2, 1.3 , 1) == 1);
-    CHECK(p.fitValueSwing(3, 1.24, 1) == 1);
-    CHECK(p.fitValueSwing(4, 1.045, 1) == 0);
-    CHECK(p.fitValueSwing(5, 1.23, 1) == 1);
-    CHECK(p.fitValueSwing(6, 1.54, 1) == 1);
-    CHECK(p.fitValueSwing(7, 1.45, 1) == 1);
-    CHECK(p.fitValueSwing(8, 1.12, 1) == 0);
-    CHECK(p.fitValueSwing(9, 1.12, 1) == 0);
+    CHECK(p.fitValueSwing(1, 1.0) == 1);
+    CHECK(p.fitValueSwing(2, 1.3) == 1);
+    CHECK(p.fitValueSwing(3, 1.24) == 1);
+    CHECK(p.fitValueSwing(4, 1.045) == 0);
+    CHECK(p.fitValueSwing(5, 1.23) == 1);
+    CHECK(p.fitValueSwing(6, 1.54) == 1);
+    CHECK(p.fitValueSwing(7, 1.45) == 1);
+    CHECK(p.fitValueSwing(8, 1.12) == 0);
+    CHECK(p.fitValueSwing(9, 1.12) == 0);
 }
 
 
