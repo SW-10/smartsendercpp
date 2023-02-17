@@ -17,7 +17,16 @@ struct columns {
 
 class configParameters {
 public:
+    explicit configParameters(std::string &path);
+    columns* getLatColumn(){ return &latCol; }
+    columns* getLongColumn(){ return &longCol; }
+    std::vector<columns>* getTimeSeriesColumns(){ return &cols;}
+    int getTimestampColumn() { return numberOfCols;}
+    bool getContainsPosition(){return containsPosition}
 
+
+private:
+    void column_or_text(int* count, char* token);
     columns latCol, longCol;
     std::vector<columns> cols;
     std::vector<int> text_cols;
@@ -25,11 +34,9 @@ public:
     int numberOfCols = 0;
     int number_of_text_cols = 0;
     std::string outPutCsvFile;
-    int containsPosition = 0;
+    bool containsPosition = false;
+    //Future use for MQTT credentials
     char* output;
-    explicit configParameters(std::string &path);
-private:
-    void column_or_text(int* count, char* token);
 };
 
 

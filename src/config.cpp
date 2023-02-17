@@ -82,7 +82,7 @@ configParameters::configParameters(std::string &path){
                     if(count==3){
                         latCol.error  = atof(token);
                         longCol.error = atof(token);
-                        containsPosition = 1;
+                        containsPosition = true;
                     }
 
                     if(count>3){
@@ -174,6 +174,7 @@ configParameters::configParameters(std::string &path){
                 timestampCol = atoi(optarg);
                 break;
             case 'o':
+                //Future use for MQTT credentials
                 output = optarg;
                 outPutCsvFile = optarg;
                 outPutCsvFile += "/";
