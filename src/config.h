@@ -22,7 +22,7 @@ public:
     columns* getLongColumn(){ return &longCol; }
     std::vector<columns>* getTimeSeriesColumns(){ return &cols;}
     int getTimestampColumn() { return numberOfCols;}
-    bool getContainsPosition(){return containsPosition}
+    bool getContainsPosition(){return containsPosition;}
 
 
 private:
