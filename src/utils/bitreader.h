@@ -1,7 +1,7 @@
 #ifndef BITREADER
 #define BITREADER
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstdint>
+#include <cstdlib>
 #include <vector>
 
 struct BitReader{

@@ -1,5 +1,6 @@
 #include "bitreader.h"
-#include <stdio.h>
+#include <cstdio>
+
 
 BitReader tryNewBitreader(std::vector<uint8_t> bytes, int byteCount){
     BitReader bitReader;

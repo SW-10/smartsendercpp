@@ -46,10 +46,10 @@ public:
         std::vector<float> grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count);
         Bit_vec_builder compressed_values;
 
-        Gorilla get_gorilla(void);
+        Gorilla get_gorilla();
 
-        uint8_t get_last_leading_zero_bits();
-        uint8_t get_last_trailing_zero_bits();        
+        uint8_t get_last_leading_zero_bits() { return last_leading_zero_bits; }
+        uint8_t get_last_trailing_zero_bits() { return last_trailing_zero_bits; }        
 
 } typedef Gorilla;
 

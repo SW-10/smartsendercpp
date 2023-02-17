@@ -1,9 +1,6 @@
 #include "gorilla.h"
-#include <math.h>
-#include <iostream>
+#include <cmath>
 #include "../doctest.h"
-#include <math.h>
-
 
 const int debug = 0;
 
@@ -172,8 +169,6 @@ void Gorilla::append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bi
 
         if(data->remaining_bits == 0){
 
-            //is this correct? probs
-            //printf("%d\n", 4 * data->bytes_capacity * sizeof(uint8_t));
             data->bytes_capacity++;
 
             data->bytes.push_back(data->current_byte);
@@ -218,7 +213,6 @@ void Gorilla::reset_gorilla(){
 
 std::vector<float> Gorilla::grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count){
     std::vector<float> result;
-    int resultIndex = 0;
     BitReader bitReader = tryNewBitreader(values, values_count);
     int leadingZeros = 255;
     int trailingZeros = 0;
@@ -230,8 +224,8 @@ std::vector<float> Gorilla::grid_gorilla(std::vector<uint8_t> values, int values
                 leadingZeros = read_bits(&bitReader, 5);
                 uint8_t meaningfulBits = read_bits(&bitReader, 6);
                 if(meaningfulBits == 63){
-                    for(int i = 0; i < values_count; i++){
-                        printf("ERROR %d,", values[i]);
+                    for(int j = 0; j < values_count; j++){
+                        printf("ERROR %d,", values[j]);
                     }
                 }
                 trailingZeros = VALUE_SIZE_IN_BITS - meaningfulBits - leadingZeros;
@@ -248,15 +242,6 @@ std::vector<float> Gorilla::grid_gorilla(std::vector<uint8_t> values, int values
     }
     return result;
 }
-
-uint8_t Gorilla::get_last_leading_zero_bits(){
-    return last_leading_zero_bits;
-}
-
-uint8_t Gorilla::get_last_trailing_zero_bits(){
-    return last_trailing_zero_bits;
-}
-
 
 
 TEST_CASE("GORILLA TESTS") {

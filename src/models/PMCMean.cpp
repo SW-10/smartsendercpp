@@ -1,9 +1,8 @@
 #include "PMCMean.h"
 #include "../constants.h"
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 #include "../doctest.h"
-#include <iostream>
 
 int Pmc_mean::fit_value_pmc(float value, int is_error_absolute){
     float next_min_value = min_value < value ? min_value : value;
@@ -42,12 +41,9 @@ float Pmc_mean::get_bytes_per_value_pmc(Pmc_mean* data){
 
 
 int Pmc_mean::equal_or_nan_pmc(float v1, float v2){
-    return v1==v2 || (is_nan_pmc(v1) && is_nan_pmc(v2));
+    return v1==v2 || (std::isnan(v1) && std::isnan(v2));
 }
 
-int Pmc_mean::is_nan_pmc(float val){
-    return val != val; //Wacky code but should work for now. Val is NAN if val != val returns 1
-}
 
 float Pmc_mean::get_model_pmcmean(Pmc_mean* data){
     return (float) (data->sum_of_values / (double) data->length);
@@ -82,23 +78,6 @@ std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
 
     return result;
 }
-
-double Pmc_mean::get_error(){
-    return error;
-}
-float Pmc_mean::get_min_value(){
-    return min_value;
-}
-float Pmc_mean::get_max_value(){
-    return max_value;
-}
-float Pmc_mean::get_sum_of_values(){
-    return sum_of_values;
-}
-size_t Pmc_mean::get_length(){
-    return length;
-}
-
 
 TEST_CASE("All values fit"){
     Pmc_mean p;
