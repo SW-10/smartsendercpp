@@ -249,6 +249,15 @@ std::vector<float> Gorilla::grid_gorilla(std::vector<uint8_t> values, int values
     return result;
 }
 
+uint8_t Gorilla::get_last_leading_zero_bits(){
+    return last_leading_zero_bits;
+}
+
+uint8_t Gorilla::get_last_trailing_zero_bits(){
+    return last_trailing_zero_bits;
+}
+
+
 
 TEST_CASE("GORILLA TESTS") {
     std::vector<uint8_t> original{ 
@@ -262,10 +271,10 @@ TEST_CASE("GORILLA TESTS") {
     for(auto v : values){
         g.fitValueGorilla(v);
     }
-    g.compressed_values.bytes.push_back(g.compressed_values.current_byte); //the fix
+    g.compressed_values.bytes.push_back(g.compressed_values.current_byte); // 192 is not pushed when fitting the values. This line does that manually 
     
     SUBCASE("Size equal to original") {
-        CHECK(original.size() == g.compressed_values.bytes.size()); // 192 kommer ikke med, når der komprimeres. Derfor fejler både denne og den næste test. 
+        CHECK(original.size() == g.compressed_values.bytes.size()); 
     }
     SUBCASE("Values equal to original"){
         bool equal = true;
@@ -280,12 +289,10 @@ TEST_CASE("GORILLA TESTS") {
     SUBCASE("Gorilla grid"){
         bool equal = true;
         auto res = g.grid_gorilla(original, original.size(), values.size());
-        // std::cout << "val size: " << values.size() << std::endl;
         for(int i = 0; i < values.size(); i++){
             if(std::fabs(values[i] - res[i]) > 0.00001){ //there might be some float inaccuracy
                 equal = false;
             }
-            // std::cout << "val: " << values[i] << " res: " << res[i] << std::endl; 
         }
         CHECK(equal == true);
     }
@@ -297,8 +304,7 @@ TEST_CASE("Leading and trailing zeros"){ //Taken from Rust
     g.fitValueGorilla(37.0);
     g.fitValueGorilla(71.0);
     g.fitValueGorilla(73.0);
-    CHECK(g.last_leading_zero_bits == 8);
-    CHECK(g.last_trailing_zero_bits == 17);
-
+    CHECK(g.get_last_leading_zero_bits() == 8);
+    CHECK(g.get_last_trailing_zero_bits() == 17);
 }
 

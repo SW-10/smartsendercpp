@@ -83,6 +83,23 @@ std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
     return result;
 }
 
+double Pmc_mean::get_error(){
+    return error;
+}
+float Pmc_mean::get_min_value(){
+    return min_value;
+}
+float Pmc_mean::get_max_value(){
+    return max_value;
+}
+float Pmc_mean::get_sum_of_values(){
+    return sum_of_values;
+}
+size_t Pmc_mean::get_length(){
+    return length;
+}
+
+
 TEST_CASE("All values fit"){
     Pmc_mean p;
     p = p.get_pmc_mean(0.5);
@@ -91,11 +108,11 @@ TEST_CASE("All values fit"){
     p.fit_value_pmc(1.24, 1);
     p.fit_value_pmc(1.045, 1);
 
-    CHECK(p.error == 0.5f);
-    CHECK(p.length == 4);
-    CHECK(p.max_value == 1.3f);
-    CHECK(p.min_value == 1.0f);
-    CHECK(p.sum_of_values == 4.585f);
+    CHECK(p.get_error() == 0.5f);
+    CHECK(p.get_length() == 4);
+    CHECK(p.get_max_value() == 1.3f);
+    CHECK(p.get_min_value() == 1.0f);
+    CHECK(p.get_sum_of_values() == 4.585f);
 
     p.fit_value_pmc(0.9, 1);
     p.fit_value_pmc(1.54, 1);
@@ -103,11 +120,11 @@ TEST_CASE("All values fit"){
     p.fit_value_pmc(1.12, 1);
     p.fit_value_pmc(1.12, 1);
     
-    CHECK(p.error == 0.5f);
-    CHECK(p.length == 9);
-    CHECK(p.max_value == 1.54f);
-    CHECK(p.min_value == 0.9f);
-    CHECK(p.sum_of_values == 10.715f);
+    CHECK(p.get_error() == 0.5f);
+    CHECK(p.get_length() == 9);
+    CHECK(p.get_max_value() == 1.54f);
+    CHECK(p.get_min_value() == 0.9f);
+    CHECK(p.get_sum_of_values() == 10.715f);
 }
 
 TEST_CASE("Not all values fit"){
@@ -136,7 +153,7 @@ TEST_CASE("Grid"){
         p.fit_value_pmc(v, 1);
     }
 
-    auto res = p.grid_pmc_mean(p.sum_of_values/p.length, vals.size());
+    auto res = p.grid_pmc_mean(p.get_sum_of_values()/p.get_length(), vals.size());
     bool equal = true;
     for(int i = 0; i < vals.size(); i++){
         if(std::fabs(vals[i]-res[i]) > error_bound){
