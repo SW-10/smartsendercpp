@@ -1,8 +1,8 @@
 #include <iostream>
 #include "models/gorilla.h"
 #include "models/PMCMean.h"
-#include "models/test.h"
 #include "doctest.h"
+#include "models/swing.h"
 
 int main() {
     Pmc_mean pmc;
@@ -11,10 +11,13 @@ int main() {
 	doctest::Context context;
 	int res = context.run();
 	int client_stuff_return_code = 0;
-
-    test t;
-    t.printhello();
-
     pmc.grid_pmc_mean(10, 5);
+
+    Swing s;
+    fitValueSwing(&s, 1, 1.4, 1);
+
+
 	return res + client_stuff_return_code;
+
+    
 }

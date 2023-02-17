@@ -5,13 +5,6 @@
 #include "../doctest.h"
 #include <iostream>
 
-
-// int fit_value_pmc(Pmc_mean *data, float value, int is_error_absolute);
-// int is_value_within_error_bound(Pmc_mean*, float, float, int);
-// int equal_or_nan_pmc(float, float);
-// int is_nan_pmc(float);
-
-
 int Pmc_mean::fit_value_pmc(float value, int is_error_absolute){
     float next_min_value = min_value < value ? min_value : value;
     float next_max_value = max_value > value ? max_value : value;
@@ -87,9 +80,6 @@ std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
         result.push_back(value);
     }
 
-    for(auto i : result){
-        std::cout << i << std::endl;
-    }
     return result;
 }
 
