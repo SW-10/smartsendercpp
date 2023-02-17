@@ -45,12 +45,12 @@ int Pmc_mean::equal_or_nan_pmc(float v1, float v2){
 }
 
 
-float Pmc_mean::get_model_pmcmean(Pmc_mean* data){
-    return (float) (data->sum_of_values / (double) data->length);
+float Pmc_mean::get_model_pmcmean(){
+    return (float) (sum_of_values / (double) length);
 }
 
-size_t Pmc_mean::get_length_pmcmean (Pmc_mean* data){
-    return data->length;
+size_t Pmc_mean::get_length_pmcmean (){
+    return length;
 }
 
 Pmc_mean Pmc_mean::get_pmc_mean(double error_bound){
@@ -63,11 +63,11 @@ Pmc_mean Pmc_mean::get_pmc_mean(double error_bound){
   return data;
 }
 
-void Pmc_mean::reset_pmc_mean(Pmc_mean *pmc){
-  pmc->min_value = NAN;
-  pmc->max_value = NAN;
-  pmc->sum_of_values = 0;
-  pmc->length = 0;
+void Pmc_mean::reset_pmc_mean(){
+  min_value = NAN;
+  max_value = NAN;
+  sum_of_values = 0;
+  length = 0;
 }
 
 std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
