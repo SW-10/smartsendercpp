@@ -215,7 +215,6 @@ std::vector<float> Swing::gridSwing(float min, float max, uint8_t values, std::v
 }
 
 bool float_equal(float a, float b){
-    std::cout << std::fabs(a-b) << std::endl;
     return (std::fabs(a-b) < 0.00001);
 }
 
@@ -259,7 +258,6 @@ TEST_CASE("Swing"){
     auto res = p.gridSwing(y_first, y_last, 1, timestamps, timestamps.size());
     bool equal = true;
     for(int i = 0; i < vals.size(); i++){
-        std::cout << "val: " << vals[i] << " res: " << res[i] << " dif: " << std::fabs(vals[i]-res[i]) << std::endl;
         if(std::fabs(vals[i]-res[i]) > error_bound){
             equal = false;
         }

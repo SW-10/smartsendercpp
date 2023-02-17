@@ -13,7 +13,7 @@ private:
 
     int is_value_within_error_bound(float, float, int);
     int equal_or_nan_pmc(float, float);
-    float get_bytes_per_value_pmc(Pmc_mean* data);
+    float get_bytes_per_value_pmc();
     float get_model_pmcmean(Pmc_mean* data);
     size_t get_length_pmcmean (Pmc_mean* data);
 

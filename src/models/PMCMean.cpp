@@ -35,8 +35,8 @@ int Pmc_mean::is_value_within_error_bound(float real_value, float approx_value, 
     }
 }
 
-float Pmc_mean::get_bytes_per_value_pmc(Pmc_mean* data){
-    return (float) VALUE_SIZE_IN_BYTES / (float) data -> length;
+float Pmc_mean::get_bytes_per_value_pmc(){
+    return (float) VALUE_SIZE_IN_BYTES / (float) length;
 }
 
 
