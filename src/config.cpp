@@ -18,6 +18,8 @@ configParameters::configParameters(std::string &path){
     int count = 0;
     std::ifstream configFile;
     configFile.open("../"+path);
+
+    //Read configfile into vector
     std::vector<std::string> innerCharVector;
     if ( configFile.is_open() ) {
         while ( configFile ) {
@@ -27,7 +29,7 @@ configParameters::configParameters(std::string &path){
         }
     }
 
-
+    //Convert strings to char* vector
     std::vector<char *> outerCharVector;
     for (std::string &v : innerCharVector){
         outerCharVector.emplace_back(v.data());
@@ -36,7 +38,7 @@ configParameters::configParameters(std::string &path){
         }
     }
     
-    //Do not ask
+    //Rotate vector to get empty char* in element 0, as getopt need
     std::rotate(outerCharVector.rbegin(), outerCharVector.rbegin() + 1, outerCharVector.rend());
     char** argsEmulator = outerCharVector.data();
 
