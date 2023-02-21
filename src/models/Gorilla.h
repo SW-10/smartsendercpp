@@ -51,7 +51,7 @@ public:
         uint8_t get_last_leading_zero_bits() { return last_leading_zero_bits; }
         uint8_t get_last_trailing_zero_bits() { return last_trailing_zero_bits; }        
 
-} typedef Gorilla;
+};
 
 
 #endif

@@ -76,7 +76,7 @@ public:
     double get_lower_bound_slope(){ return lower_bound_slope; }
     double get_lower_bound_intercept(){ return lower_bound_intercept; }
 
-} typedef Swing;
+};
 
 
 #endif

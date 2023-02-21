@@ -1,4 +1,4 @@
-#include "gorilla.h"
+#include "Gorilla.h"
 #include <cmath>
 #include "../doctest.h"
 

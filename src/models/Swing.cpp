@@ -1,4 +1,4 @@
-#include "swing.h"
+#include "Swing.h"
 #include "../constants.h"
 #include <cstdio>
 #include <cmath>
