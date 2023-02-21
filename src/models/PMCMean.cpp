@@ -6,9 +6,8 @@
 
 #include <iostream>
 
-Pmc_mean::Pmc_mean(double error_bound, bool error_absolute){
+Pmc_mean::Pmc_mean(double &error_bound, bool error_absolute) : error(error_bound) {
     std::cout<<"Constructor!"<<std::endl;
-    error = error_bound;
     min_value = NAN;
     max_value = NAN;
     sum_of_values = 0;
@@ -23,7 +22,7 @@ int Pmc_mean::fit_value_pmc(float value){
     size_t next_length = length+1;
     float average = (next_sum_of_values / next_length);
 
-    if(is_value_within_error_bound(next_min_value, average, is_error_absolute) && is_value_within_error_bound(next_max_value, average, is_error_absolute)){
+    if(is_value_within_error_bound(next_min_value, average) && is_value_within_error_bound(next_max_value, average)){
         min_value = next_min_value;
         max_value = next_max_value;
         sum_of_values = next_sum_of_values;
@@ -34,7 +33,7 @@ int Pmc_mean::fit_value_pmc(float value){
     }
 }
 
-int Pmc_mean::is_value_within_error_bound(float real_value, float approx_value, bool is_error_absolute){
+int Pmc_mean::is_value_within_error_bound(float real_value, float approx_value){
     if(equal_or_nan_pmc(real_value, approx_value)){
         return 1;
     } else {
@@ -82,13 +81,14 @@ std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
 }
 
 TEST_CASE("All values fit"){
-    Pmc_mean p(0.5, true);
+    double error = 0.5;
+    Pmc_mean p(error, true);
     p.fit_value_pmc(1.0);
     p.fit_value_pmc(1.3);
     p.fit_value_pmc(1.24);
     p.fit_value_pmc(1.045);
 
-    CHECK(p.get_error() == 0.5f);
+    CHECK(p.get_error() == 0.5);
     CHECK(p.get_length() == 4);
     CHECK(p.get_max_value() == 1.3f);
     CHECK(p.get_min_value() == 1.0f);
@@ -100,7 +100,7 @@ TEST_CASE("All values fit"){
     p.fit_value_pmc(1.12);
     p.fit_value_pmc(1.12);
     
-    CHECK(p.get_error() == 0.5f);
+    CHECK(p.get_error() == 0.5);
     CHECK(p.get_length() == 9);
     CHECK(p.get_max_value() == 1.54f);
     CHECK(p.get_min_value() == 0.9f);
@@ -108,7 +108,8 @@ TEST_CASE("All values fit"){
 }
 
 TEST_CASE("Not all values fit"){
-    Pmc_mean p(0.2, true);
+    double error = 0.2;
+    Pmc_mean p(error, true);
     
     CHECK(p.fit_value_pmc(1.0)  == 1);
     CHECK(p.fit_value_pmc(1.3)  == 1);
@@ -124,7 +125,7 @@ TEST_CASE("Not all values fit"){
 TEST_CASE("Grid"){
 
     //Grid
-    float error_bound = 1;
+    double error_bound = 1;
     Pmc_mean p(error_bound, true);
 
     std::vector vals{1.0, 1.3, 1.24, 1.045, 0.9, 1.54, 1.45, 1.12, 1.12};

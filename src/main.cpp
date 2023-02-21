@@ -1,7 +1,7 @@
-#include <iostream>
 #include "models/gorilla.h"
 #include "doctest.h"
-#include "config.h"
+#include "managers/ConfigManager.h"
+#include "managers/ReaderManager.h"
 
 int main(int argc, char *argv[]) {
     
@@ -10,8 +10,8 @@ int main(int argc, char *argv[]) {
 	int res = context.run();
 	int client_stuff_return_code = 0;
     std::string path = "moby.cfg";
-    configParameters config = configParameters(path);
-
+    ReaderManager readerManager(path);
+    readerManager.runCompressor();
 	return res + client_stuff_return_code;
     
 }

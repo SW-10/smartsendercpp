@@ -4,13 +4,13 @@
 
 #include <fstream>
 #include <filesystem>
-#include "config.h"
-#include "getopt.h"
+#include "ConfigManager.h"
+#include "../getopt.h"
 #include "memory"
 
 
 
-configParameters::configParameters(std::string &path){
+ConfigManager::ConfigManager(std::string &path){
     int c;
     int digit_optind = 0;
     const char s[2] = " ";
@@ -52,6 +52,7 @@ configParameters::configParameters(std::string &path){
                 {"timestamps", required_argument, 0, 't'},
                 {"output", required_argument, 0, 'o'},
                 {"text", required_argument, 0, 'x'},
+                {"inputFile", required_argument, 0, 'i'},
                 {0, 0, 0, 0}};
 
         c = getopt_long(outerCharVector.size(), argsEmulator, "p:c:t:o:x:",
@@ -181,6 +182,9 @@ configParameters::configParameters(std::string &path){
                 outPutCsvFile = optarg;
                 outPutCsvFile += "/";
                 break;
+            case 'i':
+                this->inputFile = optarg;
+                break;
             default:
                 printf("Unknown option, exiting ...\n");
                 exit(1);
@@ -193,7 +197,7 @@ configParameters::configParameters(std::string &path){
         exit(1);
     }
 }
-void configParameters::column_or_text(int* count, char* token){
+void ConfigManager::column_or_text(int* count, char* token){
     int column = *count / 3;
     // Handle arg here
     if (*count % 3 == 0) {

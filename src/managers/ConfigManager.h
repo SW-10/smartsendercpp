@@ -15,14 +15,15 @@ struct columns {
     int isAbsolute;
 };
 
-class configParameters {
+class ConfigManager {
 public:
-    explicit configParameters(std::string &path);
-    columns* getLatColumn(){ return &latCol; }
-    columns* getLongColumn(){ return &longCol; }
-    std::vector<columns>* getTimeSeriesColumns(){ return &cols;}
+    explicit ConfigManager(std::string &path);
+    columns* getLatColumn() { return &latCol; }
+    columns* getLongColumn() { return &longCol; }
+    std::vector<columns>* getTimeSeriesColumns() { return &cols;}
     int getTimestampColumn() { return numberOfCols;}
-    bool getContainsPosition(){return containsPosition;}
+    bool getContainsPosition() { return containsPosition;}
+    std::string getInputFile() { return inputFile;}
 
 
 private:
@@ -35,6 +36,7 @@ private:
     int number_of_text_cols = 0;
     std::string outPutCsvFile;
     bool containsPosition = false;
+    std::string inputFile;
     //Future use for MQTT credentials
     char* output;
 };
