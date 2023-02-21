@@ -12,29 +12,29 @@ VectorBased::VectorBased(){
     prev = (Position){ .latitude = 0, .longitude = 0};
     current = (Position){ .latitude = 0, .longitude = 0};
     length = 0;
-    current_delta = 0;
+    currentDelta = 0;
     modelLength = 0;
     maxTimestamps = 256;
     currentTimestampIndex = 0;
 
 }
 
-int VectorBased::fitValue(long time_stamp, double latitude, double longitude, float error){
+int VectorBased::fitValue(long timeStamp, double latitude, double longitude, float errorBound){
     if(length == 0){
-        start = (Position){.latitude = latitude, .longitude = longitude};
-        prev = (Position){ .latitude = latitude, .longitude = longitude};
-        startTime = time_stamp;
+        start = { latitude, longitude };
+        prev = { latitude, longitude };
+        startTime = timeStamp;
         length++;
         modelLength++;
-        timestamps.push_back(time_stamp);
+        timestamps.push_back(timeStamp);
         errorSum = 0;
         return 1;
     }
     else if (length == 1) {
-        current_delta = time_stamp - startTime;
+        currentDelta = timeStamp - startTime;
 
-        current = (Position){ .latitude = latitude, .longitude = longitude};
-        endTime = time_stamp;
+        current = { latitude, longitude };
+        endTime = timeStamp;
         length++;        
         
         // Build vector
@@ -42,28 +42,28 @@ int VectorBased::fitValue(long time_stamp, double latitude, double longitude, fl
         vec.y = current.latitude - prev.latitude;
 
         // Scale down vector to only reflect the change for a single time step
-        vec.y = vec.y / (double)(current_delta);
-        vec.x = vec.x / (double)(current_delta);
+        vec.y = vec.y / currentDelta;
+        vec.x = vec.x / currentDelta;
 
-        timestamps.push_back(time_stamp);
+        timestamps.push_back(timeStamp);
         modelLength++;
         return 1;
     } 
     else {
-        current_delta = time_stamp - endTime;
+        currentDelta = timeStamp - endTime;
 
         // Make prediction
         // Scale up vector to reflect the change for the current delta
         Position prediction; 
-        prediction.latitude = current.latitude + (vec.y * (double)(current_delta));
-        prediction.longitude = current.longitude + (vec.x * (double)(current_delta));
+        prediction.latitude = current.latitude + (vec.y * currentDelta);
+        prediction.longitude = current.longitude + (vec.x * currentDelta);
 
         // Update current
-        current = (Position){ .latitude = latitude, .longitude = longitude};
+        current = { latitude, longitude };
 
         // calls Distance calculator, to get distance between two points on a sphere, takes two pairs of lat,long
         // handled as a sphere, which means we get some measure of error the longer a distance is.
-        double m_distance = haversineDistance(prediction.latitude, prediction.longitude,current.latitude, current.longitude);
+        double haversineDist = haversineDistance(prediction.latitude, prediction.longitude,current.latitude, current.longitude);
 
         //printf("Distance: %f\n", distance);
         current = prediction;
@@ -71,16 +71,15 @@ int VectorBased::fitValue(long time_stamp, double latitude, double longitude, fl
         length++;
 
 
-        if(m_distance > error){
+        if(haversineDist > errorBound){
             return 0;
         } 
 
         //printf("Vector --- x: %f, y: %f\n", data->vec.x, data->vec.y);
         // printf("%lf, %lf\n", prediction.latitude, prediction.longitude);
         modelLength++;
-        endTime = time_stamp;
-        timestamps.push_back(time_stamp);
-        errorSum += (float)m_distance;
+        endTime = timeStamp;
+        timestamps.push_back(timeStamp);
 
         return 1;
         

@@ -26,7 +26,7 @@ private:
     Vector vec;
     float errorSum;
     
-    int current_delta;
+    int currentDelta;
     std::vector<long> timestamps;
     int maxTimestamps;
     int currentTimestampIndex;
