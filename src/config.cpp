@@ -2,16 +2,45 @@
 // Created by power on 15-02-2023.
 //
 
+#include <fstream>
+#include <filesystem>
 #include "config.h"
 #include "getopt.h"
+#include "memory"
 
 
-configParameters::configParameters(int argc, char *argv[]){
+
+configParameters::configParameters(std::string &path){
     int c;
     int digit_optind = 0;
     const char s[2] = " ";
     char *token;
     int count = 0;
+    std::ifstream configFile;
+    configFile.open("../"+path);
+
+    //Read configfile into vector
+    std::vector<std::string> innerCharVector;
+    if ( configFile.is_open() ) {
+        while ( configFile ) {
+            std::string tpTemp;
+            std::getline (configFile, tpTemp);
+            innerCharVector.emplace_back(tpTemp);
+        }
+    }
+
+    //Convert strings to char* vector
+    std::vector<char *> outerCharVector;
+    for (std::string &v : innerCharVector){
+        outerCharVector.emplace_back(v.data());
+        if (v.empty()){
+            outerCharVector.emplace_back(v.data());
+        }
+    }
+    
+    //Rotate vector to get empty char* in element 0, as getopt need
+    std::rotate(outerCharVector.rbegin(), outerCharVector.rbegin() + 1, outerCharVector.rend());
+    char** argsEmulator = outerCharVector.data();
 
     while (true)
     {
@@ -25,12 +54,12 @@ configParameters::configParameters(int argc, char *argv[]){
                 {"text", required_argument, 0, 'x'},
                 {0, 0, 0, 0}};
 
-        c = getopt_long(argc, argv, "p:c:t:o:x:",
+        c = getopt_long(outerCharVector.size(), argsEmulator, "p:c:t:o:x:",
                         long_options, &option_index);
         if (c == -1)
             break;
         // printf("DEBUG: %d\n", debug);
-
+        //innerCharVector;
         switch (c)
         {
             case 'p':
@@ -55,7 +84,7 @@ configParameters::configParameters(int argc, char *argv[]){
                     if(count==3){
                         latCol.error  = atof(token);
                         longCol.error = atof(token);
-                        containsPosition = 1;
+                        containsPosition = true;
                     }
 
                     if(count>3){
@@ -147,6 +176,7 @@ configParameters::configParameters(int argc, char *argv[]){
                 timestampCol = atoi(optarg);
                 break;
             case 'o':
+                //Future use for MQTT credentials
                 output = optarg;
                 outPutCsvFile = optarg;
                 outPutCsvFile += "/";

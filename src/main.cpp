@@ -9,7 +9,8 @@ int main(int argc, char *argv[]) {
 	doctest::Context context;
 	int res = context.run();
 	int client_stuff_return_code = 0;
-    configParameters config = configParameters(argc, argv);
+    std::string path = "moby.cfg";
+    configParameters config = configParameters(path);
 
 	return res + client_stuff_return_code;
     
