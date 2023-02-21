@@ -9,8 +9,8 @@
 #define TO_RAD (3.1415926536 / 180)
 
 VectorBased::VectorBased(){
-    prev = (Position){ /*latitude =*/ 0, /*longitude =*/ 0};
-    current = (Position){ /*latitude =*/ 0, /*latitude =*/ 0};
+    prev = { /*latitude =*/ 0, /*longitude =*/ 0};
+    current = { /*latitude =*/ 0, /*latitude =*/ 0};
     length = 0;
     currentDelta = 0;
     modelLength = 0;
