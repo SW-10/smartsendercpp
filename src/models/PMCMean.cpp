@@ -7,7 +7,6 @@
 #include <iostream>
 
 Pmc_mean::Pmc_mean(double error_bound, bool error_absolute){
-    std::cout<<"Constructor!"<<std::endl;
     error = error_bound;
     min_value = NAN;
     max_value = NAN;
