@@ -1,6 +1,0 @@
-C:/Users/teisv/Documents/GitHub/smartsendercpp/build/CMakeFiles/mobycpp.dir
-C:/Users/teisv/Documents/GitHub/smartsendercpp/build/CMakeFiles/edit_cache.dir
-C:/Users/teisv/Documents/GitHub/smartsendercpp/build/CMakeFiles/rebuild_cache.dir
-C:/Users/teisv/Documents/GitHub/smartsendercpp/build/config/CMakeFiles/config.dir
-C:/Users/teisv/Documents/GitHub/smartsendercpp/build/config/CMakeFiles/edit_cache.dir
-C:/Users/teisv/Documents/GitHub/smartsendercpp/build/config/CMakeFiles/rebuild_cache.dir
