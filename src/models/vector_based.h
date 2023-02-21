@@ -35,7 +35,7 @@ private:
 
 public:
     VectorBased();
-    int fitValue(long time_stamp, double latitude, double longitude, float error);
+    int fitValue(long timeStamp, double latitude, double longitude, float error);
 };
 
 #endif
