@@ -61,7 +61,7 @@ private:
 
 public:
     Swing(double &error_bound, bool is_error_absolute);
-    int fitValueSwing(long timestamp, double value);
+    bool fitValueSwing(long timestamp, double value);
     std::vector<float> gridSwing(float min, float max, uint8_t values, std::vector<long> timestamps,int timestamp_count);
     // Swing getSwing(double error_bound);
     double getModelFirst();

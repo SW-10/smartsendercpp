@@ -29,9 +29,11 @@ struct TimeSeriesModelContainer {
 class ModelManager {
 private:
     std::vector<TimeSeriesModelContainer> timeSeries;
+    bool shouldCacheData(TimeSeriesModelContainer &);
 public:
     void fitTimeSeriesModels(int id, float value);
     ModelManager(std::vector<columns>& timeSeriesConfig);
+
 
 
 };

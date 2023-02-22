@@ -21,7 +21,7 @@ Swing::Swing(double &error, bool is_error_absolute)
   error_absolute = is_error_absolute;
 }
 
-int Swing::fitValueSwing(long timestamp, double value){
+bool Swing::fitValueSwing(long timestamp, double value){
     double maximum_deviation = 0;
     if (error_absolute)  // check if using relative or absolute error bounds
     {
@@ -39,7 +39,7 @@ int Swing::fitValueSwing(long timestamp, double value){
         last_timestamp = timestamp;
         first_value = value;
         length += 1;
-        return 1;
+        return true;
     } else if (isNan(first_value) || isNan(value)) {
         // Extend Swing to handle both types of infinity and NAN.
         if (equalOrNAN(first_value, value)) {
@@ -49,9 +49,9 @@ int Swing::fitValueSwing(long timestamp, double value){
             lower_bound_slope = value;
             lower_bound_intercept = value;
             length += 1;
-            return 1;
+            return true;
         } else {
-            return 0;
+            return false;
         }
     } else if (length == 1) {
         // Line 3 of Algorithm 1 in the Swing and Slide paper.
@@ -76,7 +76,7 @@ int Swing::fitValueSwing(long timestamp, double value){
         lower_bound_slope = slopes.slope;
         lower_bound_intercept = slopes.intercept;
         length += 1;
-        return 1;
+        return true;
     } else {
         // Line 6 of Algorithm 1 in the Swing and Slide paper.
         double upper_bound_approximate_value = upper_bound_slope * timestamp + upper_bound_intercept;
@@ -85,7 +85,7 @@ int Swing::fitValueSwing(long timestamp, double value){
         if (upper_bound_approximate_value + maximum_deviation < value
            || lower_bound_approximate_value - maximum_deviation > value)
         {
-            return 0;
+            return false;
         } else {
             last_timestamp = timestamp;
 
@@ -115,7 +115,7 @@ int Swing::fitValueSwing(long timestamp, double value){
                 lower_bound_intercept = slopes.intercept;
             }
             length += 1;
-            return 1;
+            return true;
         }
     }
 }
@@ -214,7 +214,7 @@ bool float_equal(float a, float b){
 
 TEST_CASE("Swing"){
     double error_bound = 0.3;
-    Swing p(error_bound, 1);
+    Swing p(error_bound, true);
     // p = p.getSwing(error_bound);
     CHECK(p.fitValueSwing (1, 1.0) == 1);
     CHECK(p.fitValueSwing(2, 1.3) == 1);
@@ -263,7 +263,7 @@ TEST_CASE("Swing"){
 
 TEST_CASE("Not all values fit"){
     double error_bound = 0.2;
-    Swing p(error_bound, 1);
+    Swing p(error_bound, true);
     // p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
     
     CHECK(p.fitValueSwing(1, 1.0) == 1);

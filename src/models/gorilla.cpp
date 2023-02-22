@@ -130,11 +130,13 @@ std::vector<uint8_t> Gorilla::get_compressed_values(){
   return finish(&compressed_values);
 }
 
+
+*/
 size_t Gorilla::get_length_gorilla(){
     return length;
 }
 
-*/
+
 void Gorilla::append_a_zero_bit(Bit_vec_builder* data){
     append_bits(data, 0, 1);
 }

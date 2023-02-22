@@ -29,7 +29,7 @@ private:
         void append_a_zero_bit(Bit_vec_builder* data);
         void append_a_one_bit(Bit_vec_builder* data);
         float get_bytes_per_value_gorilla();
-        size_t get_length_gorilla();
+
         size_t len(const Bit_vec_builder &data);
         std::vector<uint8_t> get_compressed_values();
 
@@ -44,7 +44,7 @@ public:
         void fitValueGorilla(float value);
         std::vector<float> grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count);
         Bit_vec_builder compressed_values;
-
+        size_t get_length_gorilla();
         Gorilla();
 
         uint8_t get_last_leading_zero_bits() { return last_leading_zero_bits; }
