@@ -7,4 +7,7 @@ target_sources(smartsendercpp PRIVATE ConfigManager.cpp)
 target_sources(smartsendercpp PRIVATE ModelManager.h)
 target_sources(smartsendercpp PRIVATE ModelManager.cpp)
 
+target_sources(smartsendercpp PRIVATE TimestampManager.h)
+target_sources(smartsendercpp PRIVATE TimestampManager.cpp)
+
 

@@ -9,6 +9,14 @@
 #include "string"
 #include "ConfigManager.h"
 #include "ModelManager.h"
+#include "TimestampManager.h"
+#include <iostream>
+#include <unordered_map>
+#include <any>
+#include <functional>
+
+
+using pfunc = void (*)(std::string);
 
 class ReaderManager {
 public:
@@ -18,7 +26,11 @@ private:
     std::fstream csvFileStream;
     ConfigManager configManager;
     ModelManager modelManager;
+    TimestampManager timestampManager;
+    std::unordered_map<int,std::any> myMap;
+
 };
 
+void test(std::string word){ std::cout << "hej " << word << std::endl; }
 
 #endif //SMARTSENDERCPP_READERMANAGER_H

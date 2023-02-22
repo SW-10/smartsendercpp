@@ -9,6 +9,7 @@
 #include <string>
 #include <cstring>
 #include "vector"
+
 struct columns {
     int col;
     double error;
@@ -23,7 +24,7 @@ public:
     std::vector<columns>* getTimeSeriesColumns() { return &cols;}
     int getTimestampColumn() { return numberOfCols;}
     bool getContainsPosition() { return containsPosition;}
-    std::string getInputFile() { return inputFile;}
+    std::string getInputFile() { return "../" + inputFile;}
 
 
 private:
