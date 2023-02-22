@@ -36,5 +36,7 @@
 /.idea/
 /cmake-build-debug/
 /build/
+/build
 /.vscode
 /.vs/
+smartsendercpp.code-workspace
