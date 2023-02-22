@@ -4,14 +4,17 @@
 
 #include "ModelManager.h"
 #include "vector"
-TimeSeriesModelContainer::TimeSeriesModelContainer(double errorBound, bool errorAbsolute) :
+TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute) :
     pmcMean(errorBound, errorAbsolute),
     swing(errorBound, errorAbsolute) {
     this->errorBound = errorBound;
 }
 
 void ModelManager::fitTimeSeriesModels(int id, float value) {
-    //this->timeSeries[0].errorBound
+    TimeSeriesModelContainer& pointers = timeSeries[id];
+    if(pointers.status.SwingReady){
+        pointers.swing.fitValueSwing(1000, value);
+    }
 }
 
 ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig) {

@@ -22,7 +22,7 @@ struct TimeSeriesModelContainer {
     Pmc_mean pmcMean;
     Swing swing;
     status status;
-    TimeSeriesModelContainer(double errorBound, bool errorAbsolute);
+    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute);
 };
 
 

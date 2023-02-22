@@ -11,7 +11,7 @@
 #include "vector"
 struct columns {
     int col;
-    float error;
+    double error;
     int isAbsolute;
 };
 
