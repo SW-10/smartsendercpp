@@ -6,8 +6,8 @@
 
 #include <iostream>
 
-Pmc_mean::Pmc_mean(double &error_bound, bool error_absolute) : error(error_bound) {
-    std::cout<<"Constructor!"<<std::endl;
+Pmc_mean::Pmc_mean(double &error_bound, bool error_absolute) 
+        : error(error_bound) {
     min_value = NAN;
     max_value = NAN;
     sum_of_values = 0;
@@ -128,7 +128,7 @@ TEST_CASE("Grid"){
     double error_bound = 1;
     Pmc_mean p(error_bound, true);
 
-    std::vector vals{1.0, 1.3, 1.24, 1.045, 0.9, 1.54, 1.45, 1.12, 1.12};
+    std::vector<float> vals{1.0, 1.3, 1.24, 1.045, 0.9, 1.54, 1.45, 1.12, 1.12};
     for(auto v : vals){
         p.fit_value_pmc(v);
     }

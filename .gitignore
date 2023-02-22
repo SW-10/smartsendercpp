@@ -26,6 +26,9 @@
 *.a
 *.lib
 
+# Workspace files
+*.code-workspace
+
 # Executables
 *.exe
 *.out
@@ -35,6 +38,6 @@
 .idea/modules.xml
 /.idea/
 /cmake-build-debug/
-/build/
+/build
 /.vscode
 /.vs/

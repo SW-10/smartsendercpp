@@ -11,5 +11,6 @@ void ReaderManager::runCompressor() {
         std::string line;
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
+        break;
     }
 }

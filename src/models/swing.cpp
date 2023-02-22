@@ -8,8 +8,8 @@
 #include <iostream>
 #include "../doctest.h"
 
-Swing::Swing(double error, bool is_error_absolute){
-  error_bound = error;
+Swing::Swing(double &error, bool is_error_absolute)
+        : error_bound(error){
   first_timestamp = 0;
   last_timestamp = 0;
   first_value = 0;
@@ -180,23 +180,6 @@ size_t Swing::get_length_swing(){
   return length;
 }
 
-//
-// Created by power on 23-09-2022.
-//
-// Swing Swing::getSwing(double error_bound){
-//   Swing data;
-//   data.error_bound = error_bound;
-//   data.first_timestamp = 0;
-//   data.last_timestamp = 0;
-//   data.first_value = 0;
-//   data.upper_bound_slope = 0;
-//   data.upper_bound_intercept = 0;
-//   data.lower_bound_slope = 0;
-//   data.lower_bound_intercept = 0;
-//   data.length = 0;
-//   return data;
-// }
-
 void Swing::resetSwing(){
     first_timestamp = 0;
     last_timestamp = 0;
@@ -279,7 +262,8 @@ TEST_CASE("Swing"){
 }
 
 TEST_CASE("Not all values fit"){
-    Swing p(0.2, 1);
+    double error_bound = 0.2;
+    Swing p(error_bound, 1);
     // p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
     
     CHECK(p.fitValueSwing(1, 1.0) == 1);

@@ -62,17 +62,14 @@ void Gorilla::fitValueGorilla(float value){
     uint32_t value_xor_last_value = value_as_integer ^ last_value_as_integer;
     
     if(compressed_values.bytes_counter == 0){
-        // TODO: &(data->compressed_values) ?????????????????
-        //printf("====================\n");
         append_bits(&compressed_values, value_as_integer, VALUE_SIZE_IN_BITS);
 
     } else if (value_xor_last_value == 0){
         append_a_zero_bit(&compressed_values);
-        // printf("ZERO BIT\n");
     } else {
         uint8_t leading_zero_bits = leading_zeros(value_xor_last_value);
         uint8_t trailing_zero_bits = trailing_zeros(value_xor_last_value);
-        append_a_one_bit(&compressed_values); //???????????????????
+        append_a_one_bit(&compressed_values);
 
         if(leading_zero_bits >= last_leading_zero_bits
             && trailing_zero_bits >= last_trailing_zero_bits)
@@ -97,8 +94,6 @@ void Gorilla::fitValueGorilla(float value){
             last_trailing_zero_bits = trailing_zero_bits;
 
         }
-        // uint8_t leading_zero_bits = value_xor_last_value
-
     }
     
     last_value = value;
@@ -106,7 +101,6 @@ void Gorilla::fitValueGorilla(float value){
 }
 
 float Gorilla::get_bytes_per_value_gorilla(){
-    // return (float) len(&data->compressed_values) / (float) data->length;
     return (float) len(compressed_values) / (float) length;
 
 }
@@ -115,6 +109,7 @@ size_t Gorilla::len(const Bit_vec_builder &data){
     return data.bytes_counter + (size_t) (data.remaining_bits != 8);
 }
 
+/* // FUNCTIONS SAVED FOR LATER USAGE
 std::vector<uint8_t> Gorilla::finish(Bit_vec_builder* data){
   if (data->remaining_bits != 8){
     data->bytes_capacity++;
@@ -139,7 +134,7 @@ size_t Gorilla::get_length_gorilla(){
     return length;
 }
 
-
+*/
 void Gorilla::append_a_zero_bit(Bit_vec_builder* data){
     append_bits(data, 0, 1);
 }
@@ -168,9 +163,6 @@ void Gorilla::append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bi
         data->remaining_bits -= bits_written;
 
         if(data->remaining_bits == 0){
-
-            data->bytes_capacity++;
-
             data->bytes.push_back(data->current_byte);
             data->bytes_counter = data->bytes_counter+1;
             data->current_byte = 0;
@@ -180,36 +172,16 @@ void Gorilla::append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bi
     }
 }
 
-Gorilla Gorilla::get_gorilla(){
-    Gorilla data;
-    data.last_value = 0;
-    data.last_leading_zero_bits = UCHAR_MAX;
-    data.last_trailing_zero_bits = 0;
-
-    data.compressed_values.current_byte = 0;
-    data.compressed_values.remaining_bits = 8;
-
-    //Initialise bytes array to NULL values
-    data.compressed_values.bytes_counter = 0;
-    
-    //is this correct?
-    data.compressed_values.bytes_capacity = 1;
-    data.length = 0;
-    
-    return data;
-}
-
-void Gorilla::reset_gorilla(){
+Gorilla::Gorilla(){
+    last_value = 0;
     last_leading_zero_bits = UCHAR_MAX;
     last_trailing_zero_bits = 0;
-    last_value = 0;
-    length = 0;
-
     compressed_values.current_byte = 0;
     compressed_values.remaining_bits = 8;
-    compressed_values.bytes_capacity = 1;
     compressed_values.bytes_counter = 0;
+    length = 0;
 }
+
 
 std::vector<float> Gorilla::grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count){
     std::vector<float> result;
@@ -251,7 +223,6 @@ TEST_CASE("GORILLA TESTS") {
 
     std::vector<float> values{1.0, 1.3, 1.24, 1.045, 1.23, 1.54, 1.45, 1.12, 1.12};
     Gorilla g;
-    g = g.get_gorilla();
     
     for(auto v : values){
         g.fitValueGorilla(v);
@@ -285,7 +256,6 @@ TEST_CASE("GORILLA TESTS") {
 
 TEST_CASE("Leading and trailing zeros"){ //Taken from Rust
     Gorilla g;
-    g = g.get_gorilla();
     g.fitValueGorilla(37.0);
     g.fitValueGorilla(71.0);
     g.fitValueGorilla(73.0);

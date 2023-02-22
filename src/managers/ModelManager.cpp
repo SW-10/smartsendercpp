@@ -4,9 +4,8 @@
 
 #include "ModelManager.h"
 #include "vector"
-TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute) :
-    pmcMean(errorBound, errorAbsolute),
-    swing(errorBound, errorAbsolute) {
+TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute) 
+        : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute) {
     this->errorBound = errorBound;
 }
 

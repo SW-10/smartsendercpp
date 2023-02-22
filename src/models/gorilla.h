@@ -37,7 +37,6 @@ private:
         uint8_t trailing_zeros(const uint32_t &num);
         uint32_t float_to_bit(float val);
 
-        void reset_gorilla();
         std::vector<uint8_t> finish(Bit_vec_builder* data);
         std::vector<uint8_t> finish_with_one_bits(Bit_vec_builder* data);
 
@@ -46,7 +45,7 @@ public:
         std::vector<float> grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count);
         Bit_vec_builder compressed_values;
 
-        Gorilla get_gorilla();
+        Gorilla();
 
         uint8_t get_last_leading_zero_bits() { return last_leading_zero_bits; }
         uint8_t get_last_trailing_zero_bits() { return last_trailing_zero_bits; }        

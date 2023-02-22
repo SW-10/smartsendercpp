@@ -18,7 +18,7 @@ struct slopeAndIntercept {
 class Swing {
 private:
     /// Maximum relative error for the value of each data point.
-    double error_bound;
+    double& error_bound;
     /// Time at which the first value represented by the current model was
     /// collected.
     long first_timestamp;
@@ -60,7 +60,7 @@ private:
     slopeAndIntercept decode_and_compute_slope_and_intercept(long firstTimestamp, long lastTimestamp, double min_value, double max_value, int value);
 
 public:
-    Swing(double error_bound, bool is_error_absolute);
+    Swing(double &error_bound, bool is_error_absolute);
     int fitValueSwing(long timestamp, double value);
     std::vector<float> gridSwing(float min, float max, uint8_t values, std::vector<long> timestamps,int timestamp_count);
     // Swing getSwing(double error_bound);
