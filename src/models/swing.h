@@ -46,7 +46,6 @@ private:
     int isNan(double val);
     int equalOrNAN(double v1, double v2);
 
-    float get_bytes_per_value_swing();
     void get_model_swing(float arr[]);
     size_t get_length_swing();
 
@@ -75,6 +74,7 @@ public:
     double get_upper_bound_intercept(){ return upper_bound_intercept; }
     double get_lower_bound_slope(){ return lower_bound_slope; }
     double get_lower_bound_intercept(){ return lower_bound_intercept; }
+    float getBytesPerValue() const;
 
 } typedef Swing;
 

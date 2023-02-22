@@ -14,7 +14,7 @@ private:
 
     int is_value_within_error_bound(float, float);
     int equal_or_nan_pmc(float, float);
-    float get_bytes_per_value_pmc();
+
     float get_model_pmcmean();
     size_t get_length_pmcmean ();
 
@@ -29,7 +29,8 @@ public:
     float get_max_value() { return max_value; }
     float get_sum_of_values() { return sum_of_values; }
     size_t get_length() { return length; }
-    
+    float getBytesPerValue() const;
+
 } typedef Pmc_mean;
 
 

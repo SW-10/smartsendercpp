@@ -100,8 +100,8 @@ void Gorilla::fitValueGorilla(float value){
     length++;
 }
 
-float Gorilla::get_bytes_per_value_gorilla(){
-    return (float) len(compressed_values) / (float) length;
+float Gorilla::getBytesPerValue(){
+    return static_cast<float>(len(compressed_values)) / static_cast<float>(length);
 
 }
 

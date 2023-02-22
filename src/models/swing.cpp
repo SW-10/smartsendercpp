@@ -164,8 +164,8 @@ int Swing::equalOrNAN(double v1, double v2){
     return v1==v2 || (isNan(v1) && isNan(v2));
 }
 
-float Swing::get_bytes_per_value_swing(){
-    return (float) (2 * VALUE_SIZE_IN_BYTES) / (float) length;
+float Swing::getBytesPerValue() const{
+    return static_cast<float>(2 * VALUE_SIZE_IN_BYTES) / static_cast<float>(length);
 }
 void Swing::get_model_swing(float *arr){
   double first_value = upper_bound_slope * (double) first_timestamp + upper_bound_intercept;

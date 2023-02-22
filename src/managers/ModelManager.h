@@ -16,12 +16,18 @@ struct status {
     bool SwingReady = true;
 };
 
+struct CachedValues {
+    int startTimestamp = NULL;
+    std::vector<float> values;
+};
+
 struct TimeSeriesModelContainer {
     double errorBound;
     Gorilla gorilla;
     Pmc_mean pmcMean;
     Swing swing;
     status status;
+    CachedValues cachedValues;
     TimeSeriesModelContainer(double &errorBound, bool errorAbsolute);
 };
 
@@ -35,7 +41,7 @@ public:
     ModelManager(std::vector<columns>& timeSeriesConfig);
 
 
-
+    bool constructFinishedModels(TimeSeriesModelContainer &finishedSegment);
 };
 
 

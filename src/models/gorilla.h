@@ -28,7 +28,7 @@ private:
         void append_bits(Bit_vec_builder* data, long bits, uint8_t number_of_bits);
         void append_a_zero_bit(Bit_vec_builder* data);
         void append_a_one_bit(Bit_vec_builder* data);
-        float get_bytes_per_value_gorilla();
+
 
         size_t len(const Bit_vec_builder &data);
         std::vector<uint8_t> get_compressed_values();
@@ -48,9 +48,9 @@ public:
         Gorilla();
 
         uint8_t get_last_leading_zero_bits() { return last_leading_zero_bits; }
-        uint8_t get_last_trailing_zero_bits() { return last_trailing_zero_bits; }        
-
-} typedef Gorilla;
+        uint8_t get_last_trailing_zero_bits() { return last_trailing_zero_bits; }
+        float getBytesPerValue();
+};
 
 
 #endif
