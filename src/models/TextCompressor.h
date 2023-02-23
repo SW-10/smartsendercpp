@@ -11,6 +11,6 @@ class TextCompressor{
   int id;
 
   TextCompressor(int id);
-  int fitString(std::string text, long timestamp);
+  bool fitString(std::string text, long timestamp);
 
 };

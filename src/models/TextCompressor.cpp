@@ -5,16 +5,16 @@ TextCompressor::TextCompressor(int id){
   this->id = id;
 }
 
-int TextCompressor::fitString(std::string text, long timestamp){
+bool TextCompressor::fitString(std::string text, long timestamp){
   if(this->timestamps.empty()){
     this->string = text;
     this->timestamps.push_back(timestamp);
-    return 1;
+    return true;
   }else if((this->string.compare(text) == 0)){ //compare() returns 0 if they are equal
     this->timestamps.push_back(timestamp);
-    return 1;
+    return true;
   }
-  return 0;
+  return false;
 }
 
 TEST_CASE("Same values return 1"){
