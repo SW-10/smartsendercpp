@@ -1,5 +1,5 @@
 #include <iostream>
-#include "models/gorilla.h"
+#include "models/Gorilla.h"
 #include "doctest.h"
 #include "config.h"
 

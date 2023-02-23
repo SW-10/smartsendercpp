@@ -35,6 +35,8 @@
 .idea/modules.xml
 /.idea/
 /cmake-build-debug/
+/cmake-build-debug-coverage/
+/cmake-build-release
 /build/
 /build
 /.vscode

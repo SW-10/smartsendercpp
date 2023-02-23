@@ -1,5 +1,4 @@
-#ifndef VECTOR_BASED
-#define VECTOR_BASED
+#pragma once
 
 #include <vector>
 
@@ -37,5 +36,3 @@ public:
     VectorBased();
     int fitValue(long timeStamp, double latitude, double longitude, float error);
 };
-
-#endif
