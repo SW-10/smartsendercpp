@@ -1,7 +1,3 @@
-//
-// Created by fragn on 21/02/2023.
-//
-
 #include "../doctest.h"
 #include "TextCompressor.h"
 
