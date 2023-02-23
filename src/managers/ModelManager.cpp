@@ -46,4 +46,12 @@ bool ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     float swingSize = finishedSegment.swing.getBytesPerValue();
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
 
+    if (pmcMeanSize > swingSize && pmcMeanSize > gorillaSize){
+
+    } else if (swingSize > pmcMeanSize && swingSize > gorillaSize){
+
+    } else {
+
+    }
+
 }
