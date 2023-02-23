@@ -9,5 +9,5 @@ public:
     TimestampManager();
 
     void addTimestamp(int timestamp);
-
+    
 };

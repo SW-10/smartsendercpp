@@ -12,6 +12,8 @@
 #include "TimestampManager.h"
 #include <iostream>
 #include <unordered_map>
+#include <map>
+
 #include <any>
 #include <functional>
 
@@ -27,10 +29,11 @@ private:
     ConfigManager configManager;
     ModelManager modelManager;
     TimestampManager timestampManager;
-    std::unordered_map<int,std::any> myMap;
+    std::unordered_map<int, std::function<void(std::string)>> myMap;
 
+    void test(std::string word){  }
+    void compressTimestamps(int timestamp);
 };
 
-void test(std::string word){ std::cout << "hej " << word << std::endl; }
 
 #endif //SMARTSENDERCPP_READERMANAGER_H

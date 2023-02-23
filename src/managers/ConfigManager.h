@@ -22,9 +22,11 @@ public:
     columns* getLatColumn() { return &latCol; }
     columns* getLongColumn() { return &longCol; }
     std::vector<columns>* getTimeSeriesColumns() { return &cols;}
-    int getTimestampColumn() { return numberOfCols;}
+    int getTimestampColumn() { return timestampCol;}
     bool getContainsPosition() { return containsPosition;}
     std::string getInputFile() { return "../" + inputFile;}
+    std::vector<int> getTextColumns() { return text_cols; }
+    int getNumberOfCols() { return numberOfCols; }
 
 
 private:
