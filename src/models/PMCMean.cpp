@@ -80,6 +80,10 @@ std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
     return result;
 }
 
+Pmc_mean &Pmc_mean::operator=(const Pmc_mean &instance) {
+    return *this;
+}
+
 TEST_CASE("All values fit"){
     double error = 0.5;
     Pmc_mean p(error, true);

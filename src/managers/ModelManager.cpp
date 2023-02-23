@@ -7,7 +7,14 @@
 TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute) 
         : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute) {
     this->errorBound = errorBound;
+    this->errorAbsolute = errorAbsolute;
 }
+
+/*TimeSeriesModelContainer &TimeSeriesModelContainer::operator=(const TimeSeriesModelContainer& t) {
+    pmcMean. = t.pmcMean;
+    return *this;
+}*/
+
 
 void ModelManager::fitTimeSeriesModels(int id, float value) {
     TimeSeriesModelContainer& container = timeSeries[id];
@@ -51,7 +58,15 @@ bool ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     } else if (swingSize > pmcMeanSize && swingSize > gorillaSize){
 
     } else {
+        
+    }
+    if (finishedSegment.cachedValues.startTimestamp != NULL){
+        CachedValues innerCache = std::move(finishedSegment.cachedValues);
+        // TODO: MAYBE MOVE
+        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute);
+        for (auto value : finishedSegment.cachedValues.values){
 
+        }
     }
 
 }

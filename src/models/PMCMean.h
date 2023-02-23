@@ -30,6 +30,7 @@ public:
     float get_sum_of_values() { return sum_of_values; }
     size_t get_length() { return length; }
     float getBytesPerValue() const;
+    Pmc_mean& operator=(const Pmc_mean& instance);
 
 } typedef Pmc_mean;
 

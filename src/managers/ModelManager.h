@@ -23,12 +23,14 @@ struct CachedValues {
 
 struct TimeSeriesModelContainer {
     double errorBound;
+    bool errorAbsolute;
     Gorilla gorilla;
     Pmc_mean pmcMean;
     Swing swing;
     status status;
     CachedValues cachedValues;
     TimeSeriesModelContainer(double &errorBound, bool errorAbsolute);
+    //TimeSeriesModelContainer& operator= (const TimeSeriesModelContainer& t);
 };
 
 

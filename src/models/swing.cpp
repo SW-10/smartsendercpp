@@ -208,6 +208,10 @@ std::vector<float> Swing::gridSwing(float min, float max, uint8_t values, std::v
     return result;
 }
 
+Swing &Swing::operator=(const Swing &instance) {
+    return *this;
+}
+
 bool float_equal(float a, float b){
     return (std::fabs(a-b) < 0.00001);
 }
