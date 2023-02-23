@@ -46,8 +46,8 @@ int Pmc_mean::is_value_within_error_bound(float real_value, float approx_value){
     }
 }
 
-float Pmc_mean::get_bytes_per_value_pmc(){
-    return (float) VALUE_SIZE_IN_BYTES / (float) length;
+float Pmc_mean::getBytesPerValue() const{
+    return static_cast<float>(VALUE_SIZE_IN_BYTES) / static_cast<float>(length);
 }
 
 
@@ -78,6 +78,10 @@ std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
     }
 
     return result;
+}
+
+Pmc_mean &Pmc_mean::operator=(const Pmc_mean &instance) {
+    return *this;
 }
 
 TEST_CASE("All values fit"){
