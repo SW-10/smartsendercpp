@@ -29,7 +29,7 @@ private:
     ConfigManager configManager;
     ModelManager modelManager;
     TimestampManager timestampManager;
-    std::unordered_map<int, std::function<void(std::string)>> myMap;
+    std::unordered_map<int, std::function<void(const std::string&)>> myMap;
 
     void test(std::string word){  }
     void compressTimestamps(int timestamp);

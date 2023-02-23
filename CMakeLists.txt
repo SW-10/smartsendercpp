@@ -3,7 +3,7 @@ project(smartsendercpp)
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_executable(smartsendercpp "src/CMakeLists.txt" "src/models/CMakeLists.txt" "src/utils/CMakeLists.txt" "src/managers/CMakeLists.txt")
+add_executable(smartsendercpp "src/CMakeLists.txt" "src/models/CMakeLists.txt" "src/utils/CMakeLists.txt" "src/managers/CMakeLists.txt" src/utils/Utils.cpp src/utils/Utils.h)
 
 add_subdirectory(src)
 add_subdirectory(src/models)
