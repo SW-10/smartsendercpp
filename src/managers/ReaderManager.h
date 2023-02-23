@@ -32,7 +32,6 @@ private:
     std::unordered_map<int, std::function<void(const std::string&)>> myMap;
 
     void test(std::string word){  }
-    void compressTimestamps(int timestamp);
 };
 
 
