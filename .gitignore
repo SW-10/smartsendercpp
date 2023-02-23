@@ -37,5 +37,7 @@
 /cmake-build-debug/
 /cmake-build-debug-coverage/
 /build/
+/build
 /.vscode
 /.vs/
+smartsendercpp.code-workspace
