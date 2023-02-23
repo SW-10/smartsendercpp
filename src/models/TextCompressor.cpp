@@ -9,12 +9,12 @@ TextCompressor::TextCompressor(int id){
   this->id = id;
 }
 
-int TextCompressor::fitString(std::string string, long timestamp){
+int TextCompressor::fitString(std::string text, long timestamp){
   if(this->timestamps.empty()){
-    this->string = string;
+    this->string = text;
     this->timestamps.push_back(timestamp);
     return 1;
-  }else if((this->string.compare(string) == 0)){ //compare() returns 0 if they are equal
+  }else if((this->string.compare(text) == 0)){ //compare() returns 0 if they are equal
     this->timestamps.push_back(timestamp);
     return 1;
   }

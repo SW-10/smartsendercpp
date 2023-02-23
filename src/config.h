@@ -1,14 +1,9 @@
-//
-// Created by power on 15-02-2023.
-//
-
-
-#ifndef MOBYCPP_CONFIG_H
-#define MOBYCPP_CONFIG_H
+#pragma once
 
 #include <string>
 #include <cstring>
 #include "vector"
+
 struct columns {
     int col;
     float error;
@@ -38,7 +33,3 @@ private:
     //Future use for MQTT credentials
     char* output;
 };
-
-
-
-#endif //MOBYCPP_CONFIG_H

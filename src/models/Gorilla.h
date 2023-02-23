@@ -1,5 +1,4 @@
-#ifndef GORILLA
-#define GORILLA
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -52,6 +51,3 @@ public:
         uint8_t get_last_trailing_zero_bits() { return last_trailing_zero_bits; }        
 
 };
-
-
-#endif

@@ -1,11 +1,4 @@
-//
-// Created by fragn on 21/02/2023.
-//
-
-#ifndef SMARTSENDERCPP_SRC_MODELS_TEXTRLE_H_
-#define SMARTSENDERCPP_SRC_MODELS_TEXTRLE_H_
-
-#endif //SMARTSENDERCPP_SRC_MODELS_TEXTRLE_H_
+#pragma once
 
 #include <cstdlib>
 #include <string>
@@ -18,7 +11,6 @@ class TextCompressor{
   int id;
 
   TextCompressor(int id);
-  int fitString(std::string string, long timestamp);
-
+  int fitString(std::string text, long timestamp);
 
 };

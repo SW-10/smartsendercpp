@@ -1,9 +1,4 @@
-#ifndef SWING
-#define SWING
-
-//
-// Created by power on 05-10-2022.
-//
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -77,6 +72,3 @@ public:
     double get_lower_bound_intercept(){ return lower_bound_intercept; }
 
 };
-
-
-#endif

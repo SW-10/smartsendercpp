@@ -1,8 +1,9 @@
-#ifndef PMCMEAN
-#define PMCMEAN
+#pragma once
+
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
+
 class PmcMean {
 private:
     double error;
@@ -31,6 +32,3 @@ public:
     size_t get_length() { return length; }
     
 };
-
-
-#endif
