@@ -8,7 +8,7 @@ TimestampManager::TimestampManager(){
 }
 
 void TimestampManager::compressTimestamps(int timestamp){
-    timestamps.push_back(timestamp);
+//    timestamps.push_back(timestamp);
     timestampCurrent = timestamp;
     if(!readyForOffset) firstTimestamp = timestamp;
     if(readyForOffset){
@@ -29,7 +29,7 @@ void TimestampManager::compressTimestamps(int timestamp){
     readyForOffset = true;
 }
 
-void TimestampManager::reconstructTimestamps() {
+std::vector<int> TimestampManager::reconstructTimestamps() {
     std::vector<int> reconstructed;
     reconstructed.push_back(firstTimestamp);
     int current = firstTimestamp;
@@ -39,13 +39,16 @@ void TimestampManager::reconstructTimestamps() {
             reconstructed.push_back(current);
         }
     }
+
+    return reconstructed;
 }
 
 bool TimestampManager::calcIndexRangeFromTimestamps(int first, int second, int& first_out, int& second_out){
     int out1, out2;
     bool success = true;
-    out1 = Utils::BinarySearch(timestamps, first);
-    out2 = Utils::BinarySearch(timestamps, second);
+    std::vector<int> reconstructed = reconstructTimestamps();
+    out1 = Utils::BinarySearch(reconstructed, first);
+    out2 = Utils::BinarySearch(reconstructed, second);
 
     if(out1 == -1){
         std::cout << "First value (" << first << ")  in range not found";
@@ -63,4 +66,22 @@ bool TimestampManager::calcIndexRangeFromTimestamps(int first, int second, int& 
     second_out = out2;
 
     return success;
+}
+
+int TimestampManager::getTimestampFromIndex(int index) {
+    int count = 0;
+    int current = firstTimestamp;
+    for(auto o : offsetList){
+        for(int i = 0; i < o.second; i++){
+            if(count == index){
+                // Index found
+                return current;
+            }
+            count++;
+            current += o.first;
+        }
+    }
+
+    // Index not found
+    return -1;
 }

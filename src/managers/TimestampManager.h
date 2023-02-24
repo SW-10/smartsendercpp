@@ -4,7 +4,7 @@
 
 class TimestampManager{
 private:
-    std::vector<int> timestamps;
+//    std::vector<int> timestamps;
     int firstTimestamp;
     int timestampCurrent;
     int timestampPrevious;
@@ -18,6 +18,7 @@ public:
     std::vector<std::pair<int, int>> getOffsetList(){ return offsetList; }
     int getFirstTimestamp(){ return firstTimestamp; }
     void compressTimestamps(int timestamp);
-    void reconstructTimestamps();
+    std::vector<int> reconstructTimestamps();
     bool calcIndexRangeFromTimestamps(int first, int second, int& first_out, int& second_out);
+    int getTimestampFromIndex(int index);
 };
