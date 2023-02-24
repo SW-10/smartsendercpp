@@ -13,6 +13,7 @@ Pmc_mean::Pmc_mean(double &error_bound, bool error_absolute)
     sum_of_values = 0;
     length = 0;
     is_error_absolute = error_absolute;
+    lastTimestamp = 0;
 }
 
 int Pmc_mean::fit_value_pmc(float value){

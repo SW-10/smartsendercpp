@@ -9,6 +9,7 @@
 #include "../models/PMCMean.h"
 #include "../models/swing.h"
 #include "ConfigManager.h"
+#include "TimestampManager.h"
 
 
 struct status {
@@ -22,28 +23,43 @@ struct CachedValues {
 };
 
 struct TimeSeriesModelContainer {
+    int id;
     double errorBound;
     bool errorAbsolute;
+    int startTimestamp;
     Gorilla gorilla;
     Pmc_mean pmcMean;
     Swing swing;
     status status;
     CachedValues cachedValues;
-    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute);
+    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int id);
     //TimeSeriesModelContainer& operator= (const TimeSeriesModelContainer& t);
+};
+
+struct TextModelContainer{
+    int id;
+    std::string text;
+    bool reCheck;
+    TextModelContainer(int id);
 };
 
 
 class ModelManager {
 private:
     std::vector<TimeSeriesModelContainer> timeSeries;
-    bool shouldCacheData(TimeSeriesModelContainer &);
+    std::vector<TextModelContainer> textModels;
+    TimestampManager& timestampManager;
+    static bool shouldCacheData(TimeSeriesModelContainer &);
 public:
     void fitTimeSeriesModels(int id, float value);
-    ModelManager(std::vector<columns>& timeSeriesConfig);
+    ModelManager(std::vector<columns>& timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager);
 
 
     void constructFinishedModels(TimeSeriesModelContainer &finishedSegment);
+
+    static bool shouldConstructModel(TimeSeriesModelContainer &container);
+
+    void fitTextModels(int id, const std::string &value);
 };
 
 

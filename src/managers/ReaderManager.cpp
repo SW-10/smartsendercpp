@@ -7,7 +7,7 @@
 #include <functional>
 
 ReaderManager::ReaderManager(std::string configFile)
-        : configManager(configFile), modelManager(*configManager.getTimeSeriesColumns()) {
+        : configManager(configFile), modelManager(*configManager.getTimeSeriesColumns(), *configManager.getTextColumns(), timestampManager) {
     this->csvFileStream.open(this->configManager.getInputFile()/*"../Cobham_hour.csv"*/, std::ios::in);
 
     // Initialise all elements in the map
@@ -24,7 +24,7 @@ ReaderManager::ReaderManager(std::string configFile)
     }
 
     // Handle text series columns
-    for(const auto &c : configManager.getTextColumns()){
+    for(const auto &c : *configManager.getTextColumns()){
         myMap[c] = [this](const std::string& in) {
             test("text series column ");
         };

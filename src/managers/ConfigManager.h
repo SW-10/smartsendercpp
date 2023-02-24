@@ -25,7 +25,7 @@ public:
     int getTimestampColumn() { return timestampCol;}
     bool getContainsPosition() { return containsPosition;}
     std::string getInputFile() { return "../" + inputFile;}
-    std::vector<int> getTextColumns() { return text_cols; }
+    std::vector<int>* getTextColumns() { return &text_cols; }
     int getNumberOfCols() { return numberOfCols; }
 
 

@@ -31,6 +31,7 @@ public:
     size_t get_length() { return length; }
     float getBytesPerValue() const;
     Pmc_mean& operator=(const Pmc_mean& instance);
+    int lastTimestamp;
 
 } typedef Pmc_mean;
 

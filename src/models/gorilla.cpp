@@ -182,6 +182,7 @@ Gorilla::Gorilla(){
     compressed_values.remaining_bits = 8;
     compressed_values.bytes_counter = 0;
     length = 0;
+    lastTimestamp = 0;
 }
 
 

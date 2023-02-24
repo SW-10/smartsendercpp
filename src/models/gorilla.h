@@ -46,6 +46,7 @@ public:
         Bit_vec_builder compressed_values;
         size_t get_length_gorilla();
         Gorilla();
+        int lastTimestamp;
 
         uint8_t get_last_leading_zero_bits() { return last_leading_zero_bits; }
         uint8_t get_last_trailing_zero_bits() { return last_trailing_zero_bits; }
