@@ -48,7 +48,7 @@ bool ModelManager::shouldCacheData(TimeSeriesModelContainer& container) {
     container.gorilla.get_length_gorilla() < GORILLA_MAX);
 }
 
-bool ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSegment){
+void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSegment){
     float pmcMeanSize = finishedSegment.pmcMean.getBytesPerValue();
     float swingSize = finishedSegment.swing.getBytesPerValue();
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();

@@ -43,7 +43,7 @@ public:
     ModelManager(std::vector<columns>& timeSeriesConfig);
 
 
-    bool constructFinishedModels(TimeSeriesModelContainer &finishedSegment);
+    void constructFinishedModels(TimeSeriesModelContainer &finishedSegment);
 };
 
 

@@ -10,25 +10,33 @@ ReaderManager::ReaderManager(std::string configFile)
         : configManager(configFile), modelManager(*configManager.getTimeSeriesColumns()) {
     this->csvFileStream.open(this->configManager.getInputFile()/*"../Cobham_hour.csv"*/, std::ios::in);
 
+    // Initialise all elements in the map
     for(int i = 0; i < configManager.getNumberOfCols(); i ++){
         myMap[i] = [this](const std::string& in) {};
     }
 
     // TODO: Change all test-functions
+    // Handle time series columns
     for(auto &c : *configManager.getTimeSeriesColumns()){
-        myMap[c.col] = [this](const std::string& in) {test("time series column ");};
+        myMap[c.col] = [this](const std::string& in) {
+            test("time series column ");
+        };
     }
 
+    // Handle text series columns
     for(const auto &c : configManager.getTextColumns()){
-        myMap[c] = [this](const std::string& in) {test("text series column ");};
+        myMap[c] = [this](const std::string& in) {
+            test("text series column ");
+        };
     }
 
+    // Handle time series columns
     auto timestampCol = configManager.getTimestampColumn();
+    myMap[timestampCol] =  [this](const std::string& in) {
+        timestampManager.compressTimestamps( std::stoi(in) );
+    };
 
-    // Void pointer is necessary as all lambdas need to have the same signature
-    // The void pointer is cast to an integer as 'compressTimestamps' is called
-    myMap[timestampCol] =  [this](const std::string& in) {timestampManager.compressTimestamps( std::stoi(in) );};
-
+    //Handle position columns
     if(configManager.getContainsPosition()){
         auto latCol  = configManager.getLatColumn();
         auto longCol = configManager.getLongColumn();
@@ -62,16 +70,17 @@ void ReaderManager::runCompressor() {
     this->csvFileStream.close();
 
 
-    // The following lines should probably be called elsewhere, but I'll leave it here for now ...
-    // TODO: Figure out where this stuff goes
-    for(auto c : timestampManager.getOffsetList()){
-        std::cout << c.first << ":" << c.second << std::endl;
-    }
-    std::cout << timestampManager.getFirstTimestamp() << std::endl;
-    timestampManager.reconstructTimestamps();
+//     The following lines should probably be called elsewhere, but I'll leave it here for now ...
+//     TODO: Figure out where this stuff goes
 
-    int a, b;
-    auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
-
-    std::cout << a << std::endl;
+//        for(auto c : timestampManager.getOffsetList()){
+//            std::cout << c.first << ":" << c.second << std::endl;
+//        }
+//    std::cout << timestampManager.getFirstTimestamp() << std::endl;
+//    timestampManager.reconstructTimestamps();
+//
+//    int a, b;
+//    auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
+//
+//    std::cout << a << std::endl;
 }
