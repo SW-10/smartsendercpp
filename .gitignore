@@ -38,9 +38,12 @@
 .idea/modules.xml
 /.idea/
 /cmake-build-debug/
-/build
+/cmake-build-debug-coverage/
+/cmake-build-release
+/build/
 /.vscode
 /.vs/
 
 # Data sets
 Cobham_hour.csv
+smartsendercpp.code-workspace

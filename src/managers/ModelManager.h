@@ -28,7 +28,7 @@ struct TimeSeriesModelContainer {
     bool errorAbsolute;
     int startTimestamp;
     Gorilla gorilla;
-    Pmc_mean pmcMean;
+    PmcMean pmcMean;
     Swing swing;
     status status;
     CachedValues cachedValues;

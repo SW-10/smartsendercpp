@@ -129,7 +129,7 @@ void ReaderManager::runCompressor() {
     auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
 
 
-    std::cout << a << ", " << b << std::endl;
+    //std::cout << a << ", " << b << std::endl;
 
-    std::cout << timestampManager.getTimestampFromIndex(b) << std::endl;
+    //std::cout << timestampManager.getTimestampFromIndex(b) << std::endl;
 }

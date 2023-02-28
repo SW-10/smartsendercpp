@@ -1,9 +1,10 @@
-#ifndef PMCMEAN
-#define PMCMEAN
+#pragma once
+
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
-class Pmc_mean {
+
+class PmcMean {
 private:
     double& error;
     float min_value;
@@ -21,7 +22,7 @@ private:
     void reset_pmc_mean();
 
 public:
-    Pmc_mean(double &error_bound, bool error_absolute);
+    PmcMean(double &error_bound, bool error_absolute);
     int fit_value_pmc(float value);
     std::vector<float> grid_pmc_mean(float value, int timestamp_count);
     double get_error() { return error; }
@@ -30,10 +31,6 @@ public:
     float get_sum_of_values() { return sum_of_values; }
     size_t get_length() { return length; }
     float getBytesPerValue() const;
-    Pmc_mean& operator=(const Pmc_mean& instance);
+    PmcMean& operator=(const PmcMean& instance);
     int lastTimestamp;
-
-} typedef Pmc_mean;
-
-
-#endif
+};

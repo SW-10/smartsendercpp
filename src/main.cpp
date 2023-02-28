@@ -1,4 +1,5 @@
-#include "models/gorilla.h"
+#include <iostream>
+#include "models/Gorilla.h"
 #include "doctest.h"
 #include "managers/ConfigManager.h"
 #include "managers/ReaderManager.h"

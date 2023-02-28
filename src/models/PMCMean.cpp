@@ -6,8 +6,9 @@
 
 #include <iostream>
 
-Pmc_mean::Pmc_mean(double &error_bound, bool error_absolute) 
-        : error(error_bound) {
+PmcMean::PmcMean(double &error_bound, bool error_absolute)
+        : error(error_bound){
+    error = error_bound;
     min_value = NAN;
     max_value = NAN;
     sum_of_values = 0;
@@ -16,7 +17,7 @@ Pmc_mean::Pmc_mean(double &error_bound, bool error_absolute)
     lastTimestamp = 0;
 }
 
-int Pmc_mean::fit_value_pmc(float value){
+int PmcMean::fit_value_pmc(float value){
     float next_min_value = min_value < value ? min_value : value;
     float next_max_value = max_value > value ? max_value : value;
     float next_sum_of_values = sum_of_values + value;
@@ -34,7 +35,7 @@ int Pmc_mean::fit_value_pmc(float value){
     }
 }
 
-int Pmc_mean::is_value_within_error_bound(float real_value, float approx_value){
+int PmcMean::is_value_within_error_bound(float real_value, float approx_value){
     if(equal_or_nan_pmc(real_value, approx_value)){
         return 1;
     } else {
@@ -47,32 +48,32 @@ int Pmc_mean::is_value_within_error_bound(float real_value, float approx_value){
     }
 }
 
-float Pmc_mean::getBytesPerValue() const{
+float PmcMean::getBytesPerValue() const{
     return static_cast<float>(VALUE_SIZE_IN_BYTES) / static_cast<float>(length);
 }
 
 
-int Pmc_mean::equal_or_nan_pmc(float v1, float v2){
+int PmcMean::equal_or_nan_pmc(float v1, float v2){
     return v1==v2 || (std::isnan(v1) && std::isnan(v2));
 }
 
 
-float Pmc_mean::get_model_pmcmean(){
+float PmcMean::get_model_pmcmean(){
     return (float) (sum_of_values / (double) length);
 }
 
-size_t Pmc_mean::get_length_pmcmean (){
+size_t PmcMean::get_length_pmcmean (){
     return length;
 }
 
-void Pmc_mean::reset_pmc_mean(){
+void PmcMean::reset_pmc_mean(){
   min_value = NAN;
   max_value = NAN;
   sum_of_values = 0;
   length = 0;
 }
 
-std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
+std::vector<float> PmcMean::grid_pmc_mean(float value, int timestamp_count){
     std::vector<float> result;
     for(int i = 0; i < timestamp_count; i++){
         result.push_back(value);
@@ -81,13 +82,13 @@ std::vector<float> Pmc_mean::grid_pmc_mean(float value, int timestamp_count){
     return result;
 }
 
-Pmc_mean &Pmc_mean::operator=(const Pmc_mean &instance) {
+PmcMean &PmcMean::operator=(const PmcMean &instance) {
     return *this;
 }
 
 TEST_CASE("All values fit"){
     double error = 0.5;
-    Pmc_mean p(error, true);
+    PmcMean p(error, true);
     p.fit_value_pmc(1.0);
     p.fit_value_pmc(1.3);
     p.fit_value_pmc(1.24);
@@ -114,7 +115,7 @@ TEST_CASE("All values fit"){
 
 TEST_CASE("Not all values fit"){
     double error = 0.2;
-    Pmc_mean p(error, true);
+    PmcMean p(error, true);
     
     CHECK(p.fit_value_pmc(1.0)  == 1);
     CHECK(p.fit_value_pmc(1.3)  == 1);
@@ -131,7 +132,7 @@ TEST_CASE("Grid"){
 
     //Grid
     double error_bound = 1;
-    Pmc_mean p(error_bound, true);
+    PmcMean p(error_bound, true);
 
     std::vector<float> vals{1.0, 1.3, 1.24, 1.045, 0.9, 1.54, 1.45, 1.12, 1.12};
     for(auto v : vals){

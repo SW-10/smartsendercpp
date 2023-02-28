@@ -1,9 +1,4 @@
-#ifndef SWING
-#define SWING
-
-//
-// Created by power on 05-10-2022.
-//
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -77,7 +72,4 @@ public:
     float getBytesPerValue() const;
     Swing &operator=(const Swing &instance);
 
-} typedef Swing;
-
-
-#endif
+};
