@@ -1,6 +1,8 @@
+#pragma once
 #include <vector>
 #include <utility>
 #include <map>
+
 
 class TimestampManager{
 private:

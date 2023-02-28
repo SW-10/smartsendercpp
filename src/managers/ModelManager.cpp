@@ -56,13 +56,13 @@ void ModelManager::fitTimeSeriesModels(int id, float value) {
         }
     }
     if(shouldConstructModel(container)){
-        constructFinishedModels(container);
+        constructFinishedModels(container, timestamp);
     }
 }
 
 ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager) : timestampManager(timestampManager) {
     for (auto &column : timeSeriesConfig){
-        timeSeries.emplace_back(column.col, column.error, column.isAbsolute);
+        timeSeries.emplace_back(column.error, column.isAbsolute, column.col);
     }
     for (auto &textColumn : text_cols){
         textModels.emplace_back(textColumn);
@@ -82,7 +82,7 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer& container){
 }
 
 //Recursive call chain OK
-void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSegment){
+void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSegment, int lastTimestamp){
     float pmcMeanSize = finishedSegment.pmcMean.getBytesPerValue();
     float swingSize = finishedSegment.swing.getBytesPerValue();
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
@@ -100,6 +100,10 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.id);
         // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
+        int startIndex = 0, endIndex = 0;
+        timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
+        std::vector<int> stamps;
+        //timestampManager.getTimestampFromIndex()
         for (auto value : finishedSegment.cachedValues.values){
             fitTimeSeriesModels(finishedSegment.id, value);
         }

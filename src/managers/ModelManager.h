@@ -54,8 +54,7 @@ public:
     void fitTimeSeriesModels(int id, float value);
     ModelManager(std::vector<columns>& timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager);
 
-
-    void constructFinishedModels(TimeSeriesModelContainer &finishedSegment);
+    void constructFinishedModels(TimeSeriesModelContainer &finishedSegment, int lastTimestamp);
 
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
