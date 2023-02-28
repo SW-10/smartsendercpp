@@ -20,7 +20,7 @@ ReaderManager::ReaderManager(std::string configFile)
 
     // Initialise all elements in the map
     for(int i = 0; i < configManager.getNumberOfCols(); i ++){
-        std::get<0>(myMap[i]) = [this](void* in) { return CompressionType::NONE;};
+        std::get<0>(myMap[i]) = [this](std::string* in) { return CompressionType::NONE;};
         std::get<1>(myMap[i]) = CompressionType::NONE;
 
     }
@@ -29,7 +29,7 @@ ReaderManager::ReaderManager(std::string configFile)
     // Handle time series columns
     int i = 0;
     for(const auto &c : *configManager.getTimeSeriesColumns()){
-        std::get<0>(myMap[c.col]) = [this, i](void* in) {
+        std::get<0>(myMap[c.col]) = [this, i](std::string* in) {
             test("time series column ");
             return CompressionType::VALUES;
         };
@@ -41,7 +41,7 @@ ReaderManager::ReaderManager(std::string configFile)
     // Handle text series columns
     i = 0;
     for(const auto &c : configManager.getTextColumns()){
-        std::get<0>(myMap[c]) = [this, i](void* in) {
+        std::get<0>(myMap[c]) = [this, i](std::string* in) {
             test("text series column ");
             return CompressionType::TEXT;
         };
@@ -53,9 +53,8 @@ ReaderManager::ReaderManager(std::string configFile)
     // Handle time stamp columns
     i = 0;
     auto timestampCol = configManager.getTimestampColumn();
-    std::get<0>(myMap[timestampCol]) =  [this, i](void* in) {
-        auto val = std::stoi(*static_cast<std::string*>(in));
-        timestampManager.compressTimestamps( val );
+    std::get<0>(myMap[timestampCol]) =  [this, i](std::string* in) {
+        timestampManager.compressTimestamps( std::stoi(*in) );
         return CompressionType::TIMESTAMP;
     };
 
@@ -65,7 +64,7 @@ ReaderManager::ReaderManager(std::string configFile)
         auto longCol = configManager.getLongColumn();
 
         //Pak lat og long sammen i et pair i stedet for at kalde dem separat
-        std::get<0>(myMap[latCol->col]) = [&](void* in) {
+        std::get<0>(myMap[latCol->col]) = [&](std::string* in) {
             if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
                 test("lat column ");
                 bothLatLongSeen = false;
@@ -74,7 +73,7 @@ ReaderManager::ReaderManager(std::string configFile)
             }
             return CompressionType::POSITION;
         };
-        std::get<0>(myMap[longCol->col]) = [&](void* in) {
+        std::get<0>(myMap[longCol->col]) = [&](std::string* in) {
             if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
                 test("long column ");
                 bothLatLongSeen = false;
@@ -124,15 +123,13 @@ void ReaderManager::runCompressor() {
 //            std::cout << c.first << ":" << c.second << std::endl;
 //        }
 //    std::cout << timestampManager.getFirstTimestamp() << std::endl;
-    timestampManager.reconstructTimestamps();
+//    timestampManager.reconstructTimestamps();
 //
     int a, b;
     auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
 
 
     std::cout << a << ", " << b << std::endl;
-
-    auto hej = timestampManager.getTimestampsFromIndices(4,10);
 
     std::cout << timestampManager.getTimestampFromIndex(b) << std::endl;
 }

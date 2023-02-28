@@ -10,6 +10,7 @@ TimestampManager::TimestampManager(){
 void TimestampManager::compressTimestamps(int timestamp){
 //    timestampCount++;
 //    timestamps.push_back(timestamp);
+
     timestampCurrent = timestamp;
     if(!readyForOffset) firstTimestamp = timestamp;
     if(readyForOffset){
@@ -38,7 +39,6 @@ std::vector<int> TimestampManager::reconstructTimestamps() {
         for(int i = 0; i < o.second; i++){
             current += o.first;
             reconstructed.push_back(current);
-            std::cout << "CURRENT: " << current << std::endl;
         }
     }
 
