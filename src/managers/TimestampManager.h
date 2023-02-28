@@ -23,4 +23,5 @@ public:
     std::vector<int> reconstructTimestamps();
     bool calcIndexRangeFromTimestamps(int first, int second, int& first_out, int& second_out);
     int getTimestampFromIndex(int index);
+    std::vector<int> getTimestampsFromIndices(int index1, int index2);
 };
