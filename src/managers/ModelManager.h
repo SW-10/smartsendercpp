@@ -5,14 +5,14 @@
 #ifndef SMARTSENDERCPP_MODELMANAGER_H
 #define SMARTSENDERCPP_MODELMANAGER_H
 
-#include "../models/gorilla.h"
+#include "../models/Gorilla.h"
 #include "../models/PMCMean.h"
-#include "../models/swing.h"
+#include "../models/Swing.h"
 #include "ConfigManager.h"
 #include "TimestampManager.h"
 
 
-struct status {
+struct Status {
     bool pmcMeanReady = true;
     bool SwingReady = true;
 };
@@ -30,7 +30,7 @@ struct TimeSeriesModelContainer {
     Gorilla gorilla;
     PmcMean pmcMean;
     Swing swing;
-    status status;
+    Status status;
     CachedValues cachedValues;
     TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int id);
     //TimeSeriesModelContainer& operator= (const TimeSeriesModelContainer& t);
