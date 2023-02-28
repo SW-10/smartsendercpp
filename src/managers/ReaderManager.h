@@ -31,10 +31,10 @@ private:
     ConfigManager configManager;
     ModelManager modelManager;
     TimestampManager timestampManager;
-
+    bool bothLatLongSeen;
     std::unordered_map<
         int, // key
-        std::tuple<std::function<std::pair<CompressionType, int>(void*)>, CompressionType, int> // value (function, compressiontype, count)
+        std::tuple<std::function<CompressionType(void*)>, CompressionType, int> // value (function, compressiontype, count)
         > myMap;
 
     void test(std::string word){  }

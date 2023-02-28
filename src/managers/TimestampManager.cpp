@@ -7,8 +7,8 @@ TimestampManager::TimestampManager(){
 
 }
 
-void TimestampManager::compressTimestamps(int timestamp, int &timestampCount){
-    timestampCount++;
+void TimestampManager::compressTimestamps(int timestamp){
+//    timestampCount++;
 //    timestamps.push_back(timestamp);
     timestampCurrent = timestamp;
     if(!readyForOffset) firstTimestamp = timestamp;
