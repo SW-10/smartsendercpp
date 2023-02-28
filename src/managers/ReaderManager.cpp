@@ -16,34 +16,47 @@ ReaderManager::ReaderManager(std::string configFile)
     timestampCount = 0;
     positionCount = 0;
 
+    bothLatLongSeen = false;
+
     // Initialise all elements in the map
     for(int i = 0; i < configManager.getNumberOfCols(); i ++){
-        std::get<0>(myMap[i]) = [&](void* in) { return std::make_pair(CompressionType::NONE, 0);};
+        std::get<0>(myMap[i]) = [this](void* in) { return CompressionType::NONE;};
+        std::get<1>(myMap[i]) = CompressionType::NONE;
+
     }
 
     // TODO: Change all test-functions
     // Handle time series columns
-    for(auto &c : *configManager.getTimeSeriesColumns()){
-        std::get<0>(myMap[c.col]) = [&](void* in) {
+    int i = 0;
+    for(const auto &c : *configManager.getTimeSeriesColumns()){
+        std::get<0>(myMap[c.col]) = [this, i](void* in) {
             test("time series column ");
-            return std::pair(CompressionType::VALUES, ++valuesCount);
+            return CompressionType::VALUES;
         };
+
+        std::get<2>(myMap[c.col]) = i;         // Store 'local' ID
+        i++;
     }
 
     // Handle text series columns
+    i = 0;
     for(const auto &c : configManager.getTextColumns()){
-        std::get<0>(myMap[c]) = [&](void* in) {
+        std::get<0>(myMap[c]) = [this, i](void* in) {
             test("text series column ");
-            return std::make_pair(CompressionType::TEXT, ++textCount);
+            return CompressionType::TEXT;
         };
+
+        std::get<2>(myMap[c]) = i;        // Store 'local' ID
+        i++;
     }
 
     // Handle time stamp columns
+    i = 0;
     auto timestampCol = configManager.getTimestampColumn();
-    std::get<0>(myMap[timestampCol]) =  [&](void* in) {
+    std::get<0>(myMap[timestampCol]) =  [this, i](void* in) {
         auto val = std::stoi(*static_cast<std::string*>(in));
-        timestampManager.compressTimestamps( val, timestampCount );
-        return std::make_pair(CompressionType::TIMESTAMP, ++timestampCount);
+        timestampManager.compressTimestamps( val );
+        return CompressionType::TIMESTAMP;
     };
 
     //Handle position columns
@@ -53,12 +66,22 @@ ReaderManager::ReaderManager(std::string configFile)
 
         //Pak lat og long sammen i et pair i stedet for at kalde dem separat
         std::get<0>(myMap[latCol->col]) = [&](void* in) {
-            test("lat column ");
-            return std::pair(CompressionType::POSITION, ++positionCount);
+            if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
+                test("lat column ");
+                bothLatLongSeen = false;
+            } else {
+                bothLatLongSeen = true;
+            }
+            return CompressionType::POSITION;
         };
         std::get<0>(myMap[longCol->col]) = [&](void* in) {
-            test("long column ");
-            return std::pair(CompressionType::POSITION, ++positionCount);
+            if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
+                test("long column ");
+                bothLatLongSeen = false;
+            } else {
+                bothLatLongSeen = true;
+            }
+            return CompressionType::POSITION;
         };
     }
     
@@ -82,8 +105,8 @@ void ReaderManager::runCompressor() {
             //Get the lambda function from the map.
             // 0th index in second() contains the  lambda function responsible for calling further compression methods
             auto compressFunction = std::get<0>(mapElement->second);
-
-            CompressionType ct = compressFunction(&word).first; // Call the compression function
+            
+            CompressionType ct = compressFunction(&word); // Call the compression function
 
             std::get<1>(mapElement->second) = ct; // Update the compression type in the map
 

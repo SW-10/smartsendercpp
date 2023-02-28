@@ -17,7 +17,7 @@ public:
     TimestampManager();
     std::vector<std::pair<int, int>> getOffsetList(){ return offsetList; }
     int getFirstTimestamp(){ return firstTimestamp; }
-    void compressTimestamps(int timestamp, int &timestampCount);
+    void compressTimestamps(int timestamp);
     std::vector<int> reconstructTimestamps();
     bool calcIndexRangeFromTimestamps(int first, int second, int& first_out, int& second_out);
     int getTimestampFromIndex(int index);
