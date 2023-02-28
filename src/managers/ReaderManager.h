@@ -34,8 +34,12 @@ private:
     bool bothLatLongSeen;
     std::unordered_map<
         int, // key
-        std::tuple<std::function<CompressionType(std::string*)>, CompressionType, int> // value (function, compressiontype, count)
-        > myMap;
+        std::tuple<
+                std::function<CompressionType(std::string*)>,
+                CompressionType,
+                int
+                > // value (function, compressiontype, count)
+    > myMap;
 
     void test(std::string word){  }
 };
