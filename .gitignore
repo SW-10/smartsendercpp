@@ -26,6 +26,9 @@
 *.a
 *.lib
 
+# Workspace files
+*.code-workspace
+
 # Executables
 *.exe
 *.out
@@ -38,7 +41,9 @@
 /cmake-build-debug-coverage/
 /cmake-build-release
 /build/
-/build
 /.vscode
 /.vs/
+
+# Data sets
+Cobham_hour.csv
 smartsendercpp.code-workspace

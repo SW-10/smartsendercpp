@@ -8,3 +8,4 @@ add_executable(smartsendercpp "src/CMakeLists.txt" "src/models/CMakeLists.txt" "
 add_subdirectory(src)
 add_subdirectory(src/models)
 add_subdirectory(src/utils)
+add_subdirectory(src/managers)
