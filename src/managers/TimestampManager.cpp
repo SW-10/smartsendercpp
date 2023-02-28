@@ -38,6 +38,7 @@ std::vector<int> TimestampManager::reconstructTimestamps() {
         for(int i = 0; i < o.second; i++){
             current += o.first;
             reconstructed.push_back(current);
+            std::cout << "CURRENT: " << current << std::endl;
         }
     }
 
@@ -85,4 +86,27 @@ int TimestampManager::getTimestampFromIndex(int index) {
 
     // Index not found
     return -1;
+}
+
+std::vector<int> TimestampManager::getTimestampsFromIndices(int index1, int index2) {
+    std::vector<int> result;
+
+    int count = 0;
+    int current = firstTimestamp;
+    for(auto o : offsetList){
+        for(int i = 0; i < o.second; i++){
+            if(count > index2){
+                return result;
+            }
+            if(count >= index1){
+                // First index found, add to 'result' until second index found
+                result.push_back(current);
+            }
+            count++;
+            current += o.first;
+        }
+    }
+    // Index not found
+    std::cout << "Timestamp range not valid";
+    return result;
 }

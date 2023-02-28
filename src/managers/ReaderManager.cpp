@@ -124,13 +124,15 @@ void ReaderManager::runCompressor() {
 //            std::cout << c.first << ":" << c.second << std::endl;
 //        }
 //    std::cout << timestampManager.getFirstTimestamp() << std::endl;
-//    timestampManager.reconstructTimestamps();
+    timestampManager.reconstructTimestamps();
 //
     int a, b;
     auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
 
 
     std::cout << a << ", " << b << std::endl;
+
+    auto hej = timestampManager.getTimestampsFromIndices(4,10);
 
     std::cout << timestampManager.getTimestampFromIndex(b) << std::endl;
 }
