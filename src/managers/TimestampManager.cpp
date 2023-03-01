@@ -8,8 +8,6 @@ TimestampManager::TimestampManager(ConfigManager &confMan){
         TwoLatestTimestamps ts = {0, 0, false};
         latestTimestamps.push_back(ts);
     }
-
-    std::cout << "ASDFASDAS" << std::endl;
 }
 
 void TimestampManager::compressTimestamps(int timestamp){

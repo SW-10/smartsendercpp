@@ -37,7 +37,6 @@ ReaderManager::ReaderManager(std::string configFile)
         std::get<1>(myMap[c.col]) = CompressionType::VALUES;
         std::get<2>(myMap[c.col]) = i;         // Store 'local' ID
         i++;
-        std::cout << "C.COL: " << c.col << std::endl;
     }
 
     // Handle text series columns
