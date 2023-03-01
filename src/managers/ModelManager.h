@@ -69,7 +69,8 @@ public:
 
     void fitTextModels(int id, const std::string &value);
 
-    void selectPmcMean(SelectedModel *model, PmcMean *pmcMean);
+    SelectedModel selectPmcMean(PmcMean *pmcMean);
+    SelectedModel selectSwing(Swing *swing);
 };
 
 
