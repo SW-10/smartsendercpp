@@ -53,7 +53,7 @@ ReaderManager::ReaderManager(std::string configFile)
     // Handle time stamp columns
     i = 0;
     auto timestampCol = configManager.getTimestampColumn();
-    std::get<0>(myMap[timestampCol]) =  [this, i](std::string* in) {
+    std::get<0>(myMap[timestampCol]) = [this, i](std::string* in) {
         timestampManager.compressTimestamps( std::stoi(*in) );
         return CompressionType::TIMESTAMP;
     };

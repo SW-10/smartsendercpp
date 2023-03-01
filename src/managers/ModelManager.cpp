@@ -6,6 +6,7 @@
 
 #include <utility>
 #include "vector"
+#include "../doctest.h"
 TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int id)
         : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute) {
     this->errorBound = errorBound;
@@ -80,6 +81,29 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer& container){
     container.status.SwingReady ||
     container.gorilla.get_length_gorilla() < GORILLA_MAX);
 }
+void ModelManager::selectPmcMean(SelectedModel* model, PmcMean* pmcMean){
+    model->modelTypeId = PMC_MEAN;
+    model->values[0] = 0;
+    model->minValue = (pmcMean->get_sum_of_values()/pmcMean->get_length());
+    model->maxValue = 0;
+};
+
+void ModelManager::selectSwing(SelectedModel* model, Swing* swing){
+    float start_value = swing->get_upper_bound_slope() * swing->get_first_timestamp() + swing->get_upper_bound_intercept();
+    float end_value = swing->get_lower_bound_slope() * swing->get_last_timestamp() + swing->get_lower_bound_intercept();
+
+    if(start_value < end_value){
+        model->maxValue = end_value;
+        model->minValue = start_value;
+    }
+    else{
+        model->maxValue = start_value;
+        model->minValue = end_value;
+    }
+
+    model->modelTypeId = SWING;
+    model->values[0] = (int)(start_value < end_value);
+}
 
 //Recursive call chain OK
 void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSegment, int lastTimestamp){
@@ -87,10 +111,13 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     float swingSize = finishedSegment.swing.getBytesPerValue();
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
     int lastModelledTimestamp = 0;
+    SelectedModel selectedModel = SelectedModel();
 
-    if (pmcMeanSize > swingSize && pmcMeanSize > gorillaSize){
+    if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
+        selectPmcMean(&selectedModel, &finishedSegment.pmcMean);
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
-    } else if (swingSize > pmcMeanSize && swingSize > gorillaSize){
+    } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
+
         lastModelledTimestamp = finishedSegment.swing.get_last_timestamp();
     } else {
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
@@ -114,6 +141,7 @@ TextModelContainer::TextModelContainer(int id) {
     this->id = id;
     this->reCheck = true;
 }
+
 
 /*TEST_CASE("Same values return 1"){
 

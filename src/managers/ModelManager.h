@@ -11,6 +11,7 @@
 #include "ConfigManager.h"
 #include "TimestampManager.h"
 
+enum model_type_id {PMC_MEAN, SWING, GORILLA};
 
 struct Status {
     bool pmcMeanReady = true;
@@ -20,6 +21,14 @@ struct Status {
 struct CachedValues {
     int startTimestamp = NULL;
     std::vector<float> values;
+};
+
+struct SelectedModel{
+    int modelTypeId;
+    float minValue;
+    float maxValue;
+    std::vector<int> values;
+    float error;
 };
 
 struct TimeSeriesModelContainer {
@@ -59,6 +68,8 @@ public:
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
     void fitTextModels(int id, const std::string &value);
+
+    void selectPmcMean(SelectedModel *model, PmcMean *pmcMean);
 };
 
 
