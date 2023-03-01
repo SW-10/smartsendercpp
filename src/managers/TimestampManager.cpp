@@ -130,13 +130,13 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
         elem->currentOffset = elem->timestampCurrent - elem->timestampPrevious ;
 
 
-
         // Insert new offset if first element or if current offset is not equal to previous offset
         // Else, increase counter for current offset
         if(localOffsetList[globalID].empty() || elem->currentOffset != localOffsetList[globalID][localOffsetList[globalID].size()-1].first){
             localOffsetList[globalID].emplace_back(elem->currentOffset, 1);
         } else {
-            localOffsetList[globalID][offsetList.size()-1].second++;
+
+            localOffsetList[globalID][localOffsetList[globalID].size()-1].second++;
         }
     }
 

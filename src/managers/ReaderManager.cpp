@@ -53,7 +53,7 @@ ReaderManager::ReaderManager(std::string configFile)
 
     // Handle time stamp columns
     i = 0;
-    auto timestampCol = configManager.getTimestampColumn() - 1;
+    auto timestampCol = configManager.getTimestampColumn();
     std::get<0>(myMap[timestampCol]) =  [this, i, timestampCol](std::string* in, int &lineNum) {
         //timestampManager.makeLocalOffsetList(lineNum, timestampCol); //c.col is the global ID
         timestampManager.compressTimestamps( std::stoi(*in) );
