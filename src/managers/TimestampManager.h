@@ -38,5 +38,5 @@ public:
     int getTimestampFromIndex(int index);
     std::vector<int> getTimestampsFromIndices(int index1, int index2);
 
-    std::vector<std::pair<int, int>> makeLocalOffsetList(int lineNumber, int globalID);
+    void makeLocalOffsetList(int lineNumber, int globalID);
 };

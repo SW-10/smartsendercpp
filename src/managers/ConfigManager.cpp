@@ -84,7 +84,6 @@ ConfigManager::ConfigManager(std::string &path){
                     if(count==1){
                         latCol.col = atoi(token);
                         totalCount++;
-                        totalCount++;
                     }
                     if(count==2){
                         longCol.col = atoi(token);

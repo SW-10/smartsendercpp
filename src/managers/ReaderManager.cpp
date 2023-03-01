@@ -44,7 +44,6 @@ ReaderManager::ReaderManager(std::string configFile)
     i = 0;
     for(const auto &c : *configManager.getTextColumns()){
         std::get<0>(myMap[c-1]) = [this, i](std::string* in, int &lineNum) {
-            test("text series column ");
             return CompressionType::TEXT;
         };
 
@@ -55,7 +54,8 @@ ReaderManager::ReaderManager(std::string configFile)
     // Handle time stamp columns
     i = 0;
     auto timestampCol = configManager.getTimestampColumn() - 1;
-    std::get<0>(myMap[timestampCol]) =  [this, i](std::string* in, int &lineNum) {
+    std::get<0>(myMap[timestampCol]) =  [this, i, timestampCol](std::string* in, int &lineNum) {
+        timestampManager.makeLocalOffsetList(lineNum, timestampCol); //c.col is the global ID
         timestampManager.compressTimestamps( std::stoi(*in) );
         return CompressionType::TIMESTAMP;
     };
@@ -73,6 +73,7 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
+            timestampManager.makeLocalOffsetList(lineNum, latCol->col-1); //c.col is the global ID
             return CompressionType::POSITION;
         };
         std::get<0>(myMap[longCol->col-1]) = [&](std::string* in, int &lineNum) {
@@ -82,6 +83,7 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
+            timestampManager.makeLocalOffsetList(lineNum, longCol->col-1); //c.col is the global ID
             return CompressionType::POSITION;
         };
     }
