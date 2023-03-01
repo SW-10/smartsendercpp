@@ -44,6 +44,7 @@ ConfigManager::ConfigManager(std::string &path){
 
     while (true)
     {
+
         int this_option_optind = optind ? optind : 1;
         int option_index = 0;
         static struct option long_options[] = {
@@ -80,8 +81,15 @@ ConfigManager::ConfigManager(std::string &path){
                     count++;
                     // Handle args here
                     //printf( " %s\n", token );
-                    if(count==1) latCol.col = atoi(token);
-                    if(count==2) longCol.col = atoi(token);
+                    if(count==1){
+                        latCol.col = atoi(token);
+                        totalCount++;
+                        totalCount++;
+                    }
+                    if(count==2){
+                        longCol.col = atoi(token);
+                        totalCount++;
+                    }
                     if(count==3){
                         latCol.error  = atof(token);
                         longCol.error = atof(token);
@@ -126,6 +134,7 @@ ConfigManager::ConfigManager(std::string &path){
 
                     token = strtok(NULL, s); // NULL is not a mistake!
                     count++;
+
                 }
 
                 if (count % 3 != 0) {
@@ -133,6 +142,8 @@ ConfigManager::ConfigManager(std::string &path){
                     printf("<column (int)> <error (float)> <absolute (A) / relative (R)>\n");
                     //exit(1);
                 }
+
+                totalCount += (count/3);
                 break;
             case 'x':
                 //From documentation. Not sure what it does
@@ -165,7 +176,9 @@ ConfigManager::ConfigManager(std::string &path){
 
                     token = strtok(NULL, s); // NULL is not a mistake!
                     count++;
+                    totalCount++;
                 }
+
                 break;
             case 't':
                 if(optarg[0] == '\'' || optarg[0] == '\"'){
@@ -175,12 +188,14 @@ ConfigManager::ConfigManager(std::string &path){
                     optarg[strlen(optarg)-1] = '\0';
                 }
                 timestampCol = atoi(optarg);
+                totalCount++;
                 break;
             case 'o':
                 //Future use for MQTT credentials
                 output = optarg;
                 outPutCsvFile = optarg;
                 outPutCsvFile += "/";
+
                 break;
             case 'i':
                 if(optarg[0] == '\'' || optarg[0] == '\"'){
@@ -190,6 +205,7 @@ ConfigManager::ConfigManager(std::string &path){
                     optarg[strlen(optarg)-1] = '\0';
                 }
                 this->inputFile = optarg;
+
                 break;
             default:
                 printf("Unknown option, exiting ...\n");

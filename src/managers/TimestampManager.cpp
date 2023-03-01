@@ -3,8 +3,13 @@
 #include <iostream>
 #include <algorithm>
 
-TimestampManager::TimestampManager(){
+TimestampManager::TimestampManager(ConfigManager &confMan){
+    for(int i = 0; i < confMan.getTotalNumberOfCols(); i++){
+        TwoLatestTimestamps ts = {0, 0, false};
+        latestTimestamps.push_back(ts);
+    }
 
+    std::cout << "ASDFASDAS" << std::endl;
 }
 
 void TimestampManager::compressTimestamps(int timestamp){
@@ -109,4 +114,32 @@ std::vector<int> TimestampManager::getTimestampsFromIndices(int index1, int inde
     // Index not found
     std::cout << "Timestamp range not valid";
     return result;
+}
+
+std::vector<std::pair<int, int>> TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
+//    std::vector<std::pair<int, int>> res;
+//    std::cout << "linenumber " << lineNumber <<  "globalID: " << globalID << std::endl;
+//    return res;
+    auto elem = latestTimestamps.at(globalID);
+    elem.timestampCurrent = lineNumber;
+
+    if(!elem.readyForOffset) elem.timestampFirst = lineNumber;
+    if(elem.readyForOffset){
+
+        // Offset = Difference between current and previous timestamp
+        elem.currentOffset = elem.timestampCurrent - elem.timestampPrevious ;
+
+
+
+        // Insert new offset if first element or if current offset is not equal to previous offset
+        // Else, increase counter for current offset
+        if(localOffsetList[globalID].empty() || elem.currentOffset != localOffsetList[globalID][offsetList.size()-1].first){
+            localOffsetList[globalID].emplace_back(elem.currentOffset, 1);
+        } else {
+            localOffsetList[globalID][offsetList.size()-1].second++;
+        }
+    }
+
+    elem.timestampPrevious = elem.timestampCurrent;
+    elem.readyForOffset = true;
 }
