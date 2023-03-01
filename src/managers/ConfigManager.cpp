@@ -82,11 +82,11 @@ ConfigManager::ConfigManager(std::string &path){
                     // Handle args here
                     //printf( " %s\n", token );
                     if(count==1){
-                        latCol.col = atoi(token);
+                        latCol.col = atoi(token)-1;
                         totalCount++;
                     }
                     if(count==2){
-                        longCol.col = atoi(token);
+                        longCol.col = atoi(token)-1;
                         totalCount++;
                     }
                     if(count==3){
@@ -165,7 +165,7 @@ ConfigManager::ConfigManager(std::string &path){
                 while (token != NULL) {
 
                         // argStruct.cols->currentSize++;
-                        text_cols.emplace_back(atoi(token));
+                        text_cols.emplace_back(atoi(token)-1);
                         number_of_text_cols++;
                         //printf("SIZE: %d\n", sizeof(*argStruct.text_cols) * argStruct.number_of_text_cols);
                         //text_cols = realloc(text_cols, sizeof(*text_cols) * number_of_text_cols);
@@ -186,7 +186,7 @@ ConfigManager::ConfigManager(std::string &path){
                 if(optarg[strlen(optarg)-1] == '\'' || optarg[strlen(optarg)-1] == '\"'){
                     optarg[strlen(optarg)-1] = '\0';
                 }
-                timestampCol = atoi(optarg);
+                timestampCol = atoi(optarg)-1;
                 totalCount++;
                 break;
             case 'o':
@@ -212,7 +212,7 @@ ConfigManager::ConfigManager(std::string &path){
         }
     }
 
-    if(timestampCol<1){
+    if(timestampCol<0){
         printf("Timestamp column must be specified, and it must be above 0. It should follow the following format:\n");
         printf("--timestamps <column (int)>\n");
         exit(1);
@@ -227,7 +227,7 @@ void ConfigManager::column_or_text(int* count, char* token){
             //printf("SIZE: %d\n", sizeof(**cols) * (*column_count));
             //*cols = realloc(*cols, sizeof(**cols) * numberOfCols);
             columns &ptr = cols.emplace_back();
-            ptr.col = atoi(token);
+            ptr.col = atoi(token)-1;
         //printf("Column: %s\n", token);
     }
     if (*count % 3 == 1) {

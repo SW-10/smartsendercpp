@@ -29,25 +29,25 @@ ReaderManager::ReaderManager(std::string configFile)
     // Handle time series columns
     int i = 0;
     for(const auto &c : *configManager.getTimeSeriesColumns()){
-        std::get<0>(myMap[c.col-1]) = [this, i, &c](std::string* in, int &lineNum) {
-            timestampManager.makeLocalOffsetList(lineNum, c.col-1); //c.col is the global ID
+        std::get<0>(myMap[c.col]) = [this, i, &c](std::string* in, int &lineNum) {
+            timestampManager.makeLocalOffsetList(lineNum, c.col); //c.col is the global ID
             test("time series column ");
             return CompressionType::VALUES;
         };
-        std::get<1>(myMap[c.col-1]) = CompressionType::VALUES;
-        std::get<2>(myMap[c.col-1]) = i;         // Store 'local' ID
+        std::get<1>(myMap[c.col]) = CompressionType::VALUES;
+        std::get<2>(myMap[c.col]) = i;         // Store 'local' ID
         i++;
-        std::cout << "C.COL: " << c.col-1 << std::endl;
+        std::cout << "C.COL: " << c.col << std::endl;
     }
 
     // Handle text series columns
     i = 0;
     for(const auto &c : *configManager.getTextColumns()){
-        std::get<0>(myMap[c-1]) = [this, i](std::string* in, int &lineNum) {
+        std::get<0>(myMap[c]) = [this, i](std::string* in, int &lineNum) {
             return CompressionType::TEXT;
         };
 
-        std::get<2>(myMap[c-1]) = i;        // Store 'local' ID
+        std::get<2>(myMap[c]) = i;        // Store 'local' ID
         i++;
     }
 
@@ -55,35 +55,35 @@ ReaderManager::ReaderManager(std::string configFile)
     i = 0;
     auto timestampCol = configManager.getTimestampColumn() - 1;
     std::get<0>(myMap[timestampCol]) =  [this, i, timestampCol](std::string* in, int &lineNum) {
-        timestampManager.makeLocalOffsetList(lineNum, timestampCol); //c.col is the global ID
+        //timestampManager.makeLocalOffsetList(lineNum, timestampCol); //c.col is the global ID
         timestampManager.compressTimestamps( std::stoi(*in) );
         return CompressionType::TIMESTAMP;
     };
 
     //Handle position columns
     if(configManager.getContainsPosition()){
-        auto latCol  = configManager.getLatColumn()-1;
-        auto longCol = configManager.getLongColumn()-1;
+        auto latCol  = configManager.getLatColumn();
+        auto longCol = configManager.getLongColumn();
 
         //Pak lat og long sammen i et pair i stedet for at kalde dem separat
-        std::get<0>(myMap[latCol->col-1]) = [&](std::string* in, int &lineNum) {
+        std::get<0>(myMap[latCol->col]) = [this, latCol](std::string* in, int &lineNum) {
             if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
                 test("lat column ");
                 bothLatLongSeen = false;
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum, latCol->col-1); //c.col is the global ID
+            timestampManager.makeLocalOffsetList(lineNum, latCol->col); //c.col is the global ID
             return CompressionType::POSITION;
         };
-        std::get<0>(myMap[longCol->col-1]) = [&](std::string* in, int &lineNum) {
+        std::get<0>(myMap[longCol->col]) = [this, longCol](std::string* in, int &lineNum) {
             if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
                 test("long column ");
                 bothLatLongSeen = false;
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum, longCol->col-1); //c.col is the global ID
+            timestampManager.makeLocalOffsetList(lineNum, longCol->col); //c.col is the global ID
             return CompressionType::POSITION;
         };
     }
@@ -115,9 +115,10 @@ void ReaderManager::runCompressor() {
 
             std::get<1>(mapElement->second) = ct; // Update the compression type in the map
 
-//            std::cout << "COUNT: " << count << std::endl;
+
             count++;
-        }      
+        }
+        std::cout << "line: " << lineNumber << std::endl;
       }
     this->csvFileStream.close();
 
