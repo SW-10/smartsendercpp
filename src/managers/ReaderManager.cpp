@@ -30,8 +30,9 @@ ReaderManager::ReaderManager(std::string configFile)
     int i = 0;
     for(const auto &c : *configManager.getTimeSeriesColumns()){
         std::get<0>(myMap[c.col]) = [this, i](std::string* in) {
-            //test("time series column ");
-            //modelManager.fitTimeSeriesModels()
+            if (!in->empty()){
+                modelManager.fitTimeSeriesModels(i, std::stof(*in));
+            }
             return CompressionType::VALUES;
         };
 
@@ -43,7 +44,9 @@ ReaderManager::ReaderManager(std::string configFile)
     i = 0;
     for(const auto &c : *configManager.getTextColumns()){
         std::get<0>(myMap[c]) = [this, i](std::string* in) {
-            test("text series column ");
+            if (!in->empty()){
+                modelManager.fitTextModels(i, *in);
+            }
             return CompressionType::TEXT;
         };
 

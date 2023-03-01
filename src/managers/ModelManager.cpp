@@ -52,7 +52,7 @@ void ModelManager::fitTimeSeriesModels(int id, float value) {
     }
     if(shouldCacheData(container)){
         container.cachedValues.values.emplace_back(value);
-        if (container.cachedValues.startTimestamp == NULL){
+        if (container.cachedValues.startTimestamp == 0){
             container.cachedValues.startTimestamp = timestamp;
         }
     }
@@ -100,7 +100,7 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     } else {
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
     }
-    if (finishedSegment.cachedValues.startTimestamp != NULL){
+    if (finishedSegment.cachedValues.startTimestamp != 0){
         CachedValues innerCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
