@@ -35,7 +35,7 @@ private:
     std::unordered_map<
         int, // key
         std::tuple<
-                std::function<CompressionType(std::string*)>,
+                std::function<CompressionType(std::string*, int &lineNum)>,
                 CompressionType,
                 int
                 > // value (function, compressiontype, count)

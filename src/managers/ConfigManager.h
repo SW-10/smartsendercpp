@@ -27,10 +27,12 @@ public:
     std::string getInputFile() { return "../" + inputFile;}
     std::vector<int>* getTextColumns() { return &text_cols; }
     int getNumberOfCols() { return numberOfCols; }
+    int getTotalNumberOfCols() { return totalCount; }
 
 
 private:
     void column_or_text(int* count, char* token);
+    int totalCount = 0;
     columns latCol, longCol;
     std::vector<columns> cols;
     std::vector<int> text_cols;
