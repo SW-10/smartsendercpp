@@ -23,7 +23,8 @@ struct CachedValues {
 };
 
 struct TimeSeriesModelContainer {
-    int id;
+    int localId;
+    int globalId;
     double errorBound;
     bool errorAbsolute;
     int startTimestamp;
@@ -32,15 +33,16 @@ struct TimeSeriesModelContainer {
     Swing swing;
     Status status;
     CachedValues cachedValues;
-    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int id);
+    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int localId, int globalId);
     //TimeSeriesModelContainer& operator= (const TimeSeriesModelContainer& t);
 };
 
 struct TextModelContainer{
-    int id;
+    int localId;
+    int globalId;
     std::string text;
     bool reCheck;
-    TextModelContainer(int id);
+    TextModelContainer(int localId, int globalId);
 };
 
 
@@ -58,7 +60,7 @@ public:
 
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
-    void fitTextModels(int id, const std::string &value);
+    void fitTextModels(int localId, const std::string &value);
 };
 
 

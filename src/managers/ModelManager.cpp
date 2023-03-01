@@ -6,11 +6,12 @@
 
 #include <utility>
 #include "vector"
-TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int id)
+TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int localId, int globalId)
         : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute) {
     this->errorBound = errorBound;
     this->errorAbsolute = errorAbsolute;
-    this->id = id;
+    this->localId = localId;
+    this->globalId = globalId;
 }
 
 /*TimeSeriesModelContainer &TimeSeriesModelContainer::operator=(const TimeSeriesModelContainer& t) {
@@ -61,11 +62,15 @@ void ModelManager::fitTimeSeriesModels(int id, float value) {
 }
 
 ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager) : timestampManager(timestampManager) {
+    int count = 0;
     for (auto &column : timeSeriesConfig){
-        timeSeries.emplace_back(column.error, column.isAbsolute, column.col);
+        timeSeries.emplace_back(column.error, column.isAbsolute, count, column.col);
+        count++;
     }
+    count = 0;
     for (auto &textColumn : text_cols){
-        textModels.emplace_back(textColumn);
+        textModels.emplace_back(count, textColumn);
+        count++;
     }
 }
 
@@ -98,20 +103,21 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     if (finishedSegment.cachedValues.startTimestamp != NULL){
         CachedValues innerCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
-        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.id);
+        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
         // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
         int startIndex = 0, endIndex = 0;
         timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
         std::vector<int> stamps;
         //timestampManager.getTimestampFromIndex()
         for (auto value : finishedSegment.cachedValues.values){
-            fitTimeSeriesModels(finishedSegment.id, value);
+            fitTimeSeriesModels(finishedSegment.localId, value);
         }
     }
 }
 
-TextModelContainer::TextModelContainer(int id) {
-    this->id = id;
+TextModelContainer::TextModelContainer(int localId, int globalId) {
+    this->localId = localId;
+    this->globalId = globalId;
     this->reCheck = true;
 }
 

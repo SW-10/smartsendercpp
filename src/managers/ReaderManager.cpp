@@ -30,7 +30,8 @@ ReaderManager::ReaderManager(std::string configFile)
     int i = 0;
     for(const auto &c : *configManager.getTimeSeriesColumns()){
         std::get<0>(myMap[c.col]) = [this, i](std::string* in) {
-            test("time series column ");
+            //test("time series column ");
+            //modelManager.fitTimeSeriesModels()
             return CompressionType::VALUES;
         };
 
