@@ -141,3 +141,68 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
     elem->timestampPrevious = elem->timestampCurrent;
     elem->readyForOffset = true;
 }
+
+/**
+ *
+ * @param globID Global ID of column
+ * @param indexA EXCLUDING indexA
+ * @param indexB INCLUDING indexB
+ * @return Vector with all the column's timestamps in the specified range
+ */
+std::vector<int> TimestampManager::getTimestampRangeForColumns(int globID, int indexA, int indexB) {
+    auto localOffsets = localOffsetList[globID];
+    auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
+
+    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: We just need to reconstruct the first max(indexA, indexB) timestamps
+    std::vector<int> res;
+
+    int count = firstLocalTimestamp;
+    int index = indexA + 1;
+
+    for(int i = 0; i < localOffsets.size(); i++){
+        for(int j = 0; j < localOffsets[i].second; j++){
+
+            if(index > indexB ) { break; }
+
+//            std::cout << "count: " << count << std::endl;
+            res.push_back(allTimestampsReconstructed.at(count));
+            index++;
+            count += localOffsets[i].first;
+        }
+    }
+
+    return res;
+}
+
+
+/**
+ *
+ * @param globID Global ID of column
+ * @param indexA EXCLUDING indexA
+ * @param indexB INCLUDING indexB
+ * @return Vector with all the column's timestamps in the specified range
+ */
+int TimestampManager::getTimestampsFromIndexForColumns(int globID, int index) {
+    auto localOffsets = localOffsetList[globID];
+    auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
+
+    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: We just need to reconstruct the first max(indexA, indexB) timestamps
+    std::vector<int> res;
+
+    int count = firstLocalTimestamp;
+    int indexCount = 0;
+
+    for(int i = 0; i < localOffsets.size(); i++){
+        for(int j = 0; j < localOffsets[i].second; j++){
+
+            if(indexCount == index ) { return allTimestampsReconstructed.at(count); }
+
+//            std::cout << "count: " << count << std::endl;
+            res.push_back(allTimestampsReconstructed.at(count));
+            indexCount++;
+            count += localOffsets[i].first;
+        }
+    }
+
+    return -1;
+}

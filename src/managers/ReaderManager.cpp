@@ -103,7 +103,6 @@ void ReaderManager::runCompressor() {
 
     int lineNumber = 0;
     while(!this->csvFileStream.eof()){
-        lineNumber++;
         row.clear();
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
@@ -123,7 +122,8 @@ void ReaderManager::runCompressor() {
 
             count++;
         }
-        std::cout << "line: " << lineNumber << std::endl;
+//        std::cout << "line: " << lineNumber << std::endl;
+        lineNumber++;
       }
     this->csvFileStream.close();
 
@@ -139,8 +139,10 @@ void ReaderManager::runCompressor() {
 //
     int a, b;
     auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
+    auto hej = timestampManager.getTimestampRangeForColumns(2, 0, 10);
 
 
+    std::cout << "YO: " << timestampManager.getTimestampsFromIndexForColumns(2, 10);
     //std::cout << a << ", " << b << std::endl;
 
     //std::cout << timestampManager.getTimestampFromIndex(b) << std::endl;
