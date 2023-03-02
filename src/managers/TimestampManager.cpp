@@ -153,7 +153,7 @@ std::vector<int> TimestampManager::getTimestampRangeForColumns(int globID, int i
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
 
-    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: We just need to reconstruct the first max(indexA, indexB) timestamps
+    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: Find a way to limit the number of reconstructed timestamps
     std::vector<int> res;
 
     int count = firstLocalTimestamp;
@@ -186,7 +186,7 @@ int TimestampManager::getTimestampsFromIndexForColumns(int globID, int index) {
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
 
-    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: We just need to reconstruct the first max(indexA, indexB) timestamps
+    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: Find a way to limit the number of reconstructed timestamps
     std::vector<int> res;
 
     int count = firstLocalTimestamp;
