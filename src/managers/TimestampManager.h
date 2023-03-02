@@ -40,6 +40,7 @@ public:
 
     void makeLocalOffsetList(int lineNumber, int globalID);
     std::vector<int> getTimestampRangeForColumns(int globID, int indexA, int indexB);
+    std::vector<int> getTimestampRangeForColumnsByTimestamp(int globID, int timestampA, int timestampB);
     int getTimestampsFromIndexForColumns(int globID, int index);
     int getCurrentTimestamp(){return timestampCurrent;}
     std::vector<int> reconstructNTimestamps(int n);

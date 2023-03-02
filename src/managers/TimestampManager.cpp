@@ -178,15 +178,14 @@ std::vector<int> TimestampManager::getTimestampRangeForColumns(int globID, int i
 /**
  *
  * @param globID Global ID of column
- * @param indexA EXCLUDING indexA
- * @param indexB INCLUDING indexB
- * @return Vector with all the column's timestamps in the specified range
+ * @param index Index of the returned timestamp, relative to the chosen column
+ * @return The timestamp that corresponds to the given index
  */
 int TimestampManager::getTimestampsFromIndexForColumns(int globID, int index) {
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
 
-//    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: Find a way to limit the number of reconstructed timestamps
+//    auto allTimestampsReconstructed = reconstructTimestamps();
     std::vector<int> res;
 
     int count = firstLocalTimestamp;
@@ -205,4 +204,33 @@ int TimestampManager::getTimestampsFromIndexForColumns(int globID, int index) {
     }
 
     return -1;
+}
+
+
+std::vector<int> TimestampManager::getTimestampRangeForColumnsByTimestamp(int globID, int timestampA, int timestampB) {
+    auto localOffsets = localOffsetList[globID];
+    auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
+
+//    auto allTimestampsReconstructed = reconstructTimestamps();
+    std::vector<int> res;
+
+    int count = firstLocalTimestamp;
+
+    for(int i = 0; i < localOffsets.size(); i++){
+        for(int j = 0; j < localOffsets[i].second; j++){
+
+            if(!(allTimestampsReconstructed.at(count) <= timestampA )){
+                if(allTimestampsReconstructed.at(count) > timestampB){
+                    break;
+                }
+
+                res.push_back(allTimestampsReconstructed.at(count));
+            }
+
+            count += localOffsets[i].first;
+        }
+
+    }
+
+    return res;
 }
