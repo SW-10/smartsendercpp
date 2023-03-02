@@ -106,7 +106,7 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
         // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
         int startIndex = 0, endIndex = 0;
-        timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
+//        timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
         std::vector<int> stamps;
         //timestampManager.getTimestampFromIndex()
         for (auto value : finishedSegment.cachedValues.values){
