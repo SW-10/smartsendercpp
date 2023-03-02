@@ -31,9 +31,8 @@ void ModelManager::fitTextModels(int id, const std::string& value){
 }
 
 //Recursive chain call is in purpose
-void ModelManager::fitTimeSeriesModels(int id, float value) {
+void ModelManager::fitTimeSeriesModels(int id, float value, int timestamp) {
     TimeSeriesModelContainer& container = timeSeries[id];
-    int timestamp = 1000;
     if(container.status.SwingReady){
         container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
     }
@@ -93,13 +92,17 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     float swingSize = finishedSegment.swing.getBytesPerValue();
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
     int lastModelledTimestamp = 0;
+    size_t indexToStart = std::min<size_t>(finishedSegment.pmcMean.get_length(), std::min<size_t>(finishedSegment.gorilla.get_length_gorilla(), finishedSegment.swing.getLength()));
 
     if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
+        indexToStart = finishedSegment.pmcMean.get_length() - indexToStart;
     } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.swing.get_last_timestamp();
+        indexToStart = finishedSegment.swing.getLength() - indexToStart;
     } else {
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
+        indexToStart = finishedSegment.gorilla.get_length_gorilla() - indexToStart;
     }
     if (finishedSegment.cachedValues.startTimestamp != 0){
         CachedValues innerCache = std::move(finishedSegment.cachedValues);
@@ -107,11 +110,11 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
         // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
         int startIndex = 0, endIndex = 0;
-        //timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
+        //timestampManager.getTimestampRangeForColumns(finishedSegment.globalId, )
         //std::vector<int> stamps;
-        //timestampManager.getTimestampFromIndex()
-        for (auto value : innerCache.values){
-            fitTimeSeriesModels(finishedSegment.localId, value);
+
+        for (size_t i = indexToStart+1; i< innerCache.values.size(); i++){
+            //fitTimeSeriesModels(finishedSegment.localId, innerCache.values[i]);
         }
     }
 }

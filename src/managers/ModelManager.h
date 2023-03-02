@@ -53,7 +53,7 @@ private:
     TimestampManager& timestampManager;
     static bool shouldCacheData(TimeSeriesModelContainer &);
 public:
-    void fitTimeSeriesModels(int id, float value);
+    void fitTimeSeriesModels(int id, float value, int timestamp);
     ModelManager(std::vector<columns>& timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager);
 
     void constructFinishedModels(TimeSeriesModelContainer &finishedSegment, int lastTimestamp);

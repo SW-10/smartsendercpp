@@ -33,7 +33,7 @@ ReaderManager::ReaderManager(std::string configFile)
             if (!in->empty()){
                 timestampManager.makeLocalOffsetList(lineNum, c.col); //c.col is the global ID
                 test("time series column ");
-                modelManager.fitTimeSeriesModels(i, std::stof(*in));
+                modelManager.fitTimeSeriesModels(i, std::stof(*in), timestampManager.getCurrentTimestamp());
             }
             return CompressionType::VALUES;
         };

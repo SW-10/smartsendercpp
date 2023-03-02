@@ -69,6 +69,7 @@ public:
     double get_upper_bound_intercept(){ return upper_bound_intercept; }
     double get_lower_bound_slope(){ return lower_bound_slope; }
     double get_lower_bound_intercept(){ return lower_bound_intercept; }
+    int getLength(){ return length; }
     float getBytesPerValue() const;
     Swing &operator=(const Swing &instance);
 
