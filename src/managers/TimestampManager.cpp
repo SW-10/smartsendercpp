@@ -12,7 +12,7 @@ TimestampManager::TimestampManager(ConfigManager &confMan){
 
 void TimestampManager::compressTimestamps(int timestamp){
 //    timestampCount++;
-//    timestamps.push_back(timestamp);
+    allTimestampsReconstructed.push_back(timestamp);
 
     timestampCurrent = timestamp;
     if(!readyForOffset) firstTimestamp = timestamp;
@@ -153,7 +153,7 @@ std::vector<int> TimestampManager::getTimestampRangeForColumns(int globID, int i
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
 
-    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: Find a way to limit the number of reconstructed timestamps
+//    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: Find a way to limit the number of reconstructed timestamps
     std::vector<int> res;
 
     int count = firstLocalTimestamp;
@@ -186,7 +186,7 @@ int TimestampManager::getTimestampsFromIndexForColumns(int globID, int index) {
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
 
-    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: Find a way to limit the number of reconstructed timestamps
+//    auto allTimestampsReconstructed = reconstructTimestamps(); // TODO: Find a way to limit the number of reconstructed timestamps
     std::vector<int> res;
 
     int count = firstLocalTimestamp;

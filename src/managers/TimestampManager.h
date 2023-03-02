@@ -15,7 +15,7 @@ struct TwoLatestTimestamps {
 
 class TimestampManager{
 private:
-//    std::vector<int> timestamps;
+    std::vector<int> allTimestampsReconstructed;
     int firstTimestamp;
     int timestampCurrent;
     int timestampPrevious;
