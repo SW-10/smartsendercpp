@@ -5,4 +5,6 @@ target_sources(smartsendercpp PRIVATE doctest.h)
 target_sources(smartsendercpp PRIVATE doctest_main.cpp)
 target_sources(smartsendercpp PUBLIC getopt.h)
 target_sources(smartsendercpp PUBLIC getopt.c)
+target_sources(smartsendercpp PUBLIC ArrowFlight.cpp)
+target_sources(smartsendercpp PUBLIC ArrowFlight.h)
 

@@ -81,19 +81,19 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer& container){
     container.status.SwingReady ||
     container.gorilla.get_length_gorilla() < GORILLA_MAX);
 }
-SelectedModel selectPmcMean(PmcMean* pmcMean){
+SelectedModel ModelManager::selectPmcMean(PmcMean &pmcMean){
     SelectedModel model = SelectedModel();
     model.modelTypeId = PMC_MEAN;
     model.values[0] = 0;
-    model.minValue = (pmcMean->get_sum_of_values()/pmcMean->get_length());
+    model.minValue = (pmcMean.get_sum_of_values()/pmcMean.get_length());
     model.maxValue = 0;
     return model;
 };
 
-SelectedModel ModelManager::selectSwing(Swing* swing){
+SelectedModel ModelManager::selectSwing(Swing &swing){
     SelectedModel model = SelectedModel();
-    float start_value = swing->get_upper_bound_slope() * swing->get_first_timestamp() + swing->get_upper_bound_intercept();
-    float end_value = swing->get_lower_bound_slope() * swing->get_last_timestamp() + swing->get_lower_bound_intercept();
+    float start_value = swing.get_upper_bound_slope() * swing.get_first_timestamp() + swing.get_upper_bound_intercept();
+    float end_value = swing.get_lower_bound_slope() * swing.get_last_timestamp() + swing.get_lower_bound_intercept();
 
     if(start_value < end_value){
         model.maxValue = end_value;
@@ -121,13 +121,12 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     int lastModelledTimestamp = 0;
 
     if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
-        SelectedModel selectedModel = selectPmcMean(&finishedSegment.pmcMean);
+        SelectedModel selectedModel = selectPmcMean(finishedSegment.pmcMean);
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
     } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
-        SelectedModel selectedModel = selectSwing(&finishedSegment.swing);
+        SelectedModel selectedModel = selectSwing(finishedSegment.swing);
         lastModelledTimestamp = finishedSegment.swing.get_last_timestamp();
     } else {
-
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
     }
     if (finishedSegment.cachedValues.startTimestamp != NULL){

@@ -43,6 +43,7 @@
 /build/
 /.vscode
 /.vs/
+/CMakeFiles
 
 # Data sets
 Cobham_hour.csv
