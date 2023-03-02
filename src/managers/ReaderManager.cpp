@@ -143,7 +143,6 @@ void ReaderManager::runCompressor() {
 
     auto hej2 = timestampManager.getTimestampRangeForColumnsByTimestamp(2, 1645157065, 1645203865);
 
-    std::cout << "YO: " << timestampManager.getTimestampsFromIndexForColumns(2, 10);
     //std::cout << a << ", " << b << std::endl;
 
     //std::cout << timestampManager.getTimestampFromIndex(b) << std::endl;
