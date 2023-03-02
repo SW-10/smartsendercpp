@@ -30,6 +30,7 @@ void ModelManager::fitTextModels(int id, const std::string& value){
     }
 }
 
+//Recursive chain call is in purpose
 void ModelManager::fitTimeSeriesModels(int id, float value) {
     TimeSeriesModelContainer& container = timeSeries[id];
     int timestamp = 1000;
@@ -109,7 +110,7 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         //timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
         //std::vector<int> stamps;
         //timestampManager.getTimestampFromIndex()
-        for (auto value : finishedSegment.cachedValues.values){
+        for (auto value : innerCache.values){
             fitTimeSeriesModels(finishedSegment.localId, value);
         }
     }
