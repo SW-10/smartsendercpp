@@ -93,9 +93,9 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
     int lastModelledTimestamp = 0;
 
-    if (pmcMeanSize > swingSize && pmcMeanSize > gorillaSize){
+    if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
-    } else if (swingSize > pmcMeanSize && swingSize > gorillaSize){
+    } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.swing.get_last_timestamp();
     } else {
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
@@ -106,8 +106,8 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
         // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
         int startIndex = 0, endIndex = 0;
-        timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
-        std::vector<int> stamps;
+        //timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
+        //std::vector<int> stamps;
         //timestampManager.getTimestampFromIndex()
         for (auto value : finishedSegment.cachedValues.values){
             fitTimeSeriesModels(finishedSegment.localId, value);
