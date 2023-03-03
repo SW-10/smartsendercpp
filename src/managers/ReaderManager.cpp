@@ -121,8 +121,9 @@ void ReaderManager::runCompressor() {
 
 
             count++;
+            //std::cout << "c: " << count << std::endl;
         }
-//        std::cout << "line: " << lineNumber << std::endl;
+        //std::cout << "line: " << lineNumber << std::endl;
         lineNumber++;
       }
     this->csvFileStream.close();

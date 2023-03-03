@@ -216,10 +216,10 @@ std::vector<int> TimestampManager::getTimestampRangeForColumnsByTimestamp(int gl
 
     int count = firstLocalTimestamp;
 
-    for(int i = 0; i < localOffsets.size(); i++){
-        for(int j = 0; j < localOffsets[i].second; j++){
+    for(auto & localOffset : localOffsets){
+        for(int j = 0; j <= localOffset.second; j++){
 
-            if(!(allTimestampsReconstructed.at(count) <= timestampA )){
+            if(allTimestampsReconstructed.at(count) > timestampA){
                 if(allTimestampsReconstructed.at(count) > timestampB){
                     break;
                 }
@@ -227,7 +227,7 @@ std::vector<int> TimestampManager::getTimestampRangeForColumnsByTimestamp(int gl
                 res.push_back(allTimestampsReconstructed.at(count));
             }
 
-            count += localOffsets[i].first;
+            count += localOffset.first;
         }
 
     }

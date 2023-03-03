@@ -3,7 +3,7 @@
 //
 #define GORILLA_MAX 50
 #include "ModelManager.h"
-
+#include <iostream>
 #include <utility>
 #include "vector"
 TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int localId, int globalId)
@@ -35,20 +35,18 @@ void ModelManager::fitTimeSeriesModels(int id, float value, int timestamp) {
     TimeSeriesModelContainer& container = timeSeries[id];
     if(container.status.SwingReady){
         container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
+        //Swing sets last constructed timestamp internally
     }
     if(container.status.pmcMeanReady){
         container.status.pmcMeanReady = container.pmcMean.fit_value_pmc(value);
-        //TODO use timestamp index on model creation instead of check each time - Optimization
-        if (!container.status.pmcMeanReady){
+        if (container.status.pmcMeanReady){
             container.pmcMean.lastTimestamp = timestamp;
         }
     }
     if(container.gorilla.get_length_gorilla() < GORILLA_MAX){
         container.gorilla.fitValueGorilla(value);
+        container.gorilla.lastTimestamp = timestamp;
         //TODO use timestamp index on model creation instead of check each time - Optimization
-        if (container.gorilla.get_length_gorilla() < GORILLA_MAX){
-            container.gorilla.lastTimestamp = timestamp;
-        }
     }
     if(shouldCacheData(container)){
         container.cachedValues.values.emplace_back(value);
@@ -97,10 +95,13 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
         indexToStart = finishedSegment.pmcMean.get_length() - indexToStart;
+        std::cout << "PMC"<< std::endl;
     } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.swing.get_last_timestamp();
         indexToStart = finishedSegment.swing.getLength() - indexToStart;
+        std::cout << "Swing"<< std::endl;
     } else {
+        std::cout << "Gorilla"<< std::endl;
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.get_length_gorilla() - indexToStart;
     }
@@ -109,12 +110,16 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
         // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
-        int startIndex = 0, endIndex = 0;
-        //timestampManager.getTimestampRangeForColumns(finishedSegment.globalId, )
-        //std::vector<int> stamps;
 
-        for (size_t i = indexToStart+1; i< innerCache.values.size(); i++){
-            //fitTimeSeriesModels(finishedSegment.localId, innerCache.values[i]);
+        std::vector<int> timestamps = timestampManager.getTimestampRangeForColumnsByTimestamp(finishedSegment.globalId, lastModelledTimestamp, lastTimestamp);
+        int count = 0;
+        for (size_t i = indexToStart; i< innerCache.values.size(); i++){
+            if (innerCache.values.size()-indexToStart != timestamps.size()){
+                std::cout << "nono" << std::endl;
+            }
+            //std::cout << finishedSegment.localId << std::endl;
+            fitTimeSeriesModels(finishedSegment.localId, innerCache.values[i], timestamps[count]);
+            count++;
         }
     }
 }
