@@ -209,6 +209,14 @@ std::vector<float> Swing::gridSwing(float min, float max, uint8_t values, std::v
 }
 
 Swing &Swing::operator=(const Swing &instance) {
+    first_timestamp = instance.first_timestamp;
+    last_timestamp = instance.last_timestamp;
+    first_value = instance.first_value;
+    upper_bound_slope = instance.upper_bound_slope;
+    upper_bound_intercept = instance.upper_bound_intercept;
+    lower_bound_slope = instance.upper_bound_intercept;
+    lower_bound_intercept = instance.lower_bound_intercept;
+    length = instance.upper_bound_intercept;
     return *this;
 }
 

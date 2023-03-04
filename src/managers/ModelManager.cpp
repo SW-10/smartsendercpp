@@ -109,12 +109,14 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         CachedValues innerCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
+        //finishedSegment.cachedValues.values.;
+
         // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
 
         std::vector<int> timestamps = timestampManager.getTimestampRangeForColumnsByTimestamp(finishedSegment.globalId, lastModelledTimestamp, lastTimestamp);
         int count = 0;
-        for (size_t i = indexToStart; i< innerCache.values.size(); i++){
-            if (innerCache.values.size()-indexToStart != timestamps.size()){
+        for (size_t i = indexToStart; i< innerCache.values.size()-1; i++){
+            if (innerCache.values.size()-1-indexToStart != timestamps.size()-1){
                 std::cout << "nono" << std::endl;
             }
             //std::cout << finishedSegment.localId << std::endl;
