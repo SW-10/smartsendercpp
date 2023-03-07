@@ -217,8 +217,9 @@ std::vector<int> TimestampManager::getTimestampRangeForColumnsByTimestamp(int gl
     int count = firstLocalTimestamp;
 
     for(auto & localOffset : localOffsets){
-        for(int j = 0; j < localOffset.second; j++){ // HAR ÆNDRET <= TIL < HER
-//            std::cout << "GlobID: " << globID << " COUNT OUTER: " << count << std::endl;
+        int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
+        for(int j = 0; j < localOffset.second+firstTimeOffset; j++){ // HAR ÆNDRET <= TIL < HER
+            //std::cout << "GlobID: " << j << std::endl;
             if(allTimestampsReconstructed.at(count) > timestampA){
                 if(allTimestampsReconstructed.at(count) > timestampB){
                     break;

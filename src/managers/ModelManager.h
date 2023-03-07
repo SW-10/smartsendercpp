@@ -51,7 +51,7 @@ private:
     std::vector<TimeSeriesModelContainer> timeSeries;
     std::vector<TextModelContainer> textModels;
     TimestampManager& timestampManager;
-    static bool shouldCacheData(TimeSeriesModelContainer &);
+    static bool shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
 public:
     void fitTimeSeriesModels(int id, float value, int timestamp);
     ModelManager(std::vector<columns>& timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager);

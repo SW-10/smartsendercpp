@@ -6,6 +6,7 @@
 #include <iostream>
 #include <utility>
 #include "vector"
+
 TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int localId, int globalId)
         : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute) {
     this->errorBound = errorBound;
@@ -33,6 +34,15 @@ void ModelManager::fitTextModels(int id, const std::string& value){
 //Recursive chain call is in purpose
 void ModelManager::fitTimeSeriesModels(int id, float value, int timestamp) {
     TimeSeriesModelContainer& container = timeSeries[id];
+    bool cachedOnce = false;
+
+    if(container.gorilla.get_length_gorilla() >= GORILLA_MAX){
+        cachedOnce = true;
+        container.cachedValues.values.emplace_back(value);
+        if (container.cachedValues.startTimestamp == 0){
+            container.cachedValues.startTimestamp = timestamp;
+        }
+    }
     if(container.status.SwingReady){
         container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
         //Swing sets last constructed timestamp internally
@@ -48,7 +58,7 @@ void ModelManager::fitTimeSeriesModels(int id, float value, int timestamp) {
         container.gorilla.lastTimestamp = timestamp;
         //TODO use timestamp index on model creation instead of check each time - Optimization
     }
-    if(shouldCacheData(container)){
+    if(shouldCacheDataBasedOnPmcSwing(container) && !cachedOnce){
         container.cachedValues.values.emplace_back(value);
         if (container.cachedValues.startTimestamp == 0){
             container.cachedValues.startTimestamp = timestamp;
@@ -72,13 +82,11 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig, std::vector<i
     }
 }
 
-bool ModelManager::shouldCacheData(TimeSeriesModelContainer& container) {
+bool ModelManager::shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer& container) {
 //    std::cout << !(container.status.SwingReady &&
 //                   container.status.pmcMeanReady &&
 //                   container.gorilla.get_length_gorilla() < GORILLA_MAX) << std::endl;
-    return !(container.status.SwingReady &&
-    container.status.pmcMeanReady &&
-    container.gorilla.get_length_gorilla() < GORILLA_MAX);
+    return !(container.status.SwingReady && container.status.pmcMeanReady);
 }
 
 bool ModelManager::shouldConstructModel(TimeSeriesModelContainer& container){
@@ -98,13 +106,14 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
         indexToStart = finishedSegment.pmcMean.get_length() - indexToStart;
-        std::cout << "PMC"<< std::endl;
+        /*std::cout << "PMC"<< std::endl;
+        std::cout << finishedSegment.globalId<< std::endl;*/
     } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
         lastModelledTimestamp = finishedSegment.swing.get_last_timestamp();
         indexToStart = finishedSegment.swing.getLength() - indexToStart;
-        std::cout << "Swing"<< std::endl;
+        //std::cout << "Swing"<< std::endl;
     } else {
-        std::cout << "Gorilla"<< std::endl;
+        //std::cout << "Gorilla"<< std::endl;
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.get_length_gorilla() - indexToStart;
     }
@@ -118,14 +127,17 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
 
         std::vector<int> timestamps = timestampManager.getTimestampRangeForColumnsByTimestamp(finishedSegment.globalId, lastModelledTimestamp, lastTimestamp);
         int count = 0;
-        for (size_t i = indexToStart+1; i< innerCache.values.size()-1; i++){ // Har tilføjet '+1' til indexToStart. Ved ikke, om det er rigtigt?
-            if (innerCache.values.size()-1-indexToStart != timestamps.size()-1){
-                std::cout << "nono lfs:" << innerCache.values.size()-1-indexToStart  << " rhs: " << timestamps.size()-1 << std::endl;
-            }
+        for (size_t i = indexToStart; i < innerCache.values.size(); i++){ // Har tilføjet '+1' til indexToStart. Ved ikke, om det er rigtigt?
+            /*if (innerCache.values.size()-indexToStart != timestamps.size()){
+                std::cout << "nono lfs:" << innerCache.values.size()-indexToStart  << " rhs: " << timestamps.size() << std::endl;
+            }*/
             //std::cout << finishedSegment.localId << std::endl;
             fitTimeSeriesModels(finishedSegment.localId, innerCache.values[i], timestamps[count]);
             count++;
         }
+    }
+    else {
+        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
     }
 }
 

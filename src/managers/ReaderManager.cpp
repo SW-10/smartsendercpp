@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include "../utils/Timer.h"
 #include <utility>
 #include <functional>
 
@@ -100,6 +101,8 @@ void ReaderManager::runCompressor() {
     std::string line, word;
 
     std::getline(this->csvFileStream, line);
+    Timer time;
+    time.begin();
 
     int lineNumber = 0;
     while(!this->csvFileStream.eof()){
@@ -127,6 +130,7 @@ void ReaderManager::runCompressor() {
         lineNumber++;
       }
     this->csvFileStream.close();
+    std::cout << "Time Taken: " << time.end() << std::endl;
 
 
 //     The following lines should probably be called elsewhere, but I'll leave it here for now ...
@@ -138,11 +142,11 @@ void ReaderManager::runCompressor() {
 //    std::cout << timestampManager.getFirstTimestamp() << std::endl;
 //    timestampManager.reconstructTimestamps();
 //
-    int a, b;
-    auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
-    auto hej = timestampManager.getTimestampRangeForColumns(2, 0, 10);
+    //int a, b;
+    //auto res = timestampManager.calcIndexRangeFromTimestamps(1645153465,1645311865, a,b);
+    //auto hej = timestampManager.getTimestampRangeForColumns(2, 0, 10);
 
-    auto hej2 = timestampManager.getTimestampRangeForColumnsByTimestamp(2, 1645157065, 1645203865);
+    //auto hej2 = timestampManager.getTimestampRangeForColumnsByTimestamp(2, 1645157065, 1645203865);
 
     //std::cout << a << ", " << b << std::endl;
 
