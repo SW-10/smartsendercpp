@@ -73,6 +73,9 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig, std::vector<i
 }
 
 bool ModelManager::shouldCacheData(TimeSeriesModelContainer& container) {
+//    std::cout << !(container.status.SwingReady &&
+//                   container.status.pmcMeanReady &&
+//                   container.gorilla.get_length_gorilla() < GORILLA_MAX) << std::endl;
     return !(container.status.SwingReady &&
     container.status.pmcMeanReady &&
     container.gorilla.get_length_gorilla() < GORILLA_MAX);
@@ -115,9 +118,9 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
 
         std::vector<int> timestamps = timestampManager.getTimestampRangeForColumnsByTimestamp(finishedSegment.globalId, lastModelledTimestamp, lastTimestamp);
         int count = 0;
-        for (size_t i = indexToStart; i< innerCache.values.size()-1; i++){
+        for (size_t i = indexToStart+1; i< innerCache.values.size()-1; i++){ // Har tilføjet '+1' til indexToStart. Ved ikke, om det er rigtigt?
             if (innerCache.values.size()-1-indexToStart != timestamps.size()-1){
-                std::cout << "nono" << std::endl;
+                std::cout << "nono lfs:" << innerCache.values.size()-1-indexToStart  << " rhs: " << timestamps.size()-1 << std::endl;
             }
             //std::cout << finishedSegment.localId << std::endl;
             fitTimeSeriesModels(finishedSegment.localId, innerCache.values[i], timestamps[count]);
