@@ -6,6 +6,7 @@
 #include <filesystem>
 #include "ConfigManager.h"
 #include "../getopt.h"
+#include <algorithm>
 #include "memory"
 
 
@@ -39,7 +40,7 @@ ConfigManager::ConfigManager(std::string &path){
     }
     
     //Rotate vector to get empty char* in element 0, as getopt need
-    std::rotate(outerCharVector.rbegin(), outerCharVector.rbegin() + 1, outerCharVector.rend());
+    rotate(outerCharVector.rbegin(), outerCharVector.rbegin() + 1, outerCharVector.rend());
     char** argsEmulator = outerCharVector.data();
 
     while (true)
