@@ -54,6 +54,7 @@ private:
     static bool shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
 public:
     void fitSegment(int id, float value, int timestamp);
+    
     ModelManager(std::vector<columns>& timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager);
 
     void constructFinishedModels(TimeSeriesModelContainer &finishedSegment, int lastTimestamp);
