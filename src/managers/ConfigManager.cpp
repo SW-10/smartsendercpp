@@ -6,6 +6,7 @@
 #include <filesystem>
 #include "ConfigManager.h"
 #include "../getopt.h"
+#include <algorithm>
 #include "memory"
 
 
@@ -39,7 +40,7 @@ ConfigManager::ConfigManager(std::string &path){
     }
     
     //Rotate vector to get empty char* in element 0, as getopt need
-    std::rotate(outerCharVector.rbegin(), outerCharVector.rbegin() + 1, outerCharVector.rend());
+    rotate(outerCharVector.rbegin(), outerCharVector.rbegin() + 1, outerCharVector.rend());
     char** argsEmulator = outerCharVector.data();
 
     while (true)
@@ -57,16 +58,12 @@ ConfigManager::ConfigManager(std::string &path){
 
         c = getopt_long(outerCharVector.size(), argsEmulator, "p:c:t:o:x:",
                         long_options, &option_index);
-        if (c == -1)
-            break;
-        // printf("DEBUG: %d\n", debug);
-        //innerCharVector;
+        if (c == -1) break;
         switch (c)
         {
             case 'p':
                 // Debug mode seems to add single quotation marks around the arguments.
                 // The following two if's remove those
-
                 if(optarg[0] == '\'' || optarg[0] == '\"'){
                     optarg = &optarg[1];
                 }
@@ -79,20 +76,23 @@ ConfigManager::ConfigManager(std::string &path){
                 while( token != NULL ) {
                     count++;
                     // Handle args here
-                    //printf( " %s\n", token );
-                    if(count==1) latCol.col = atoi(token);
-                    if(count==2) longCol.col = atoi(token);
+                    if(count==1){
+                        latCol.col = atoi(token)-1;
+                        totalCount++;
+                    }
+                    if(count==2){
+                        longCol.col = atoi(token)-1;
+                        totalCount++;
+                    }
                     if(count==3){
                         latCol.error  = atof(token);
                         longCol.error = atof(token);
                         containsPosition = true;
                     }
-
                     if(count>3){
                         printf("Too many arguments for position. Arguments should be: <lat> <long> <error>\n");
                         exit(1);
                     }
-
                     // Get next arg
                     token = strtok(NULL, s); // NULL is not a mistake!
                 }
@@ -101,7 +101,6 @@ ConfigManager::ConfigManager(std::string &path){
                     printf("Too few arguments for position. Arguments should be: <lat> <long> <error>\n");
                     exit(1);
                 }
-
                 break;
             case 'c':
                 //From documentation. Not sure what it does
@@ -119,11 +118,9 @@ ConfigManager::ConfigManager(std::string &path){
                 }
 
                 count = 0;
-
                 token = strtok(optarg, s);
                 while (token != NULL) {
                     column_or_text(&count, token);
-
                     token = strtok(NULL, s); // NULL is not a mistake!
                     count++;
                 }
@@ -131,8 +128,9 @@ ConfigManager::ConfigManager(std::string &path){
                 if (count % 3 != 0) {
                     printf("Not the expected number of arguments for columns. Number of parameters should be divisible by 3 and follow the following format:\n");
                     printf("<column (int)> <error (float)> <absolute (A) / relative (R)>\n");
-                    //exit(1);
                 }
+
+                totalCount += (count/3);
                 break;
             case 'x':
                 //From documentation. Not sure what it does
@@ -150,21 +148,13 @@ ConfigManager::ConfigManager(std::string &path){
                 }
 
                 count = 0;
-
                 token = strtok(optarg, s);
                 while (token != NULL) {
-
-                        // argStruct.cols->currentSize++;
-                        text_cols.emplace_back(atoi(token));
-                        number_of_text_cols++;
-                        //printf("SIZE: %d\n", sizeof(*argStruct.text_cols) * argStruct.number_of_text_cols);
-                        //text_cols = realloc(text_cols, sizeof(*text_cols) * number_of_text_cols);
-                        //text_cols[number_of_text_cols-1] = atoi(token);
-
-                    //printf("Column: %s\n", token);
-
+                    text_cols.emplace_back(atoi(token)-1);
+                    number_of_text_cols++;
                     token = strtok(NULL, s); // NULL is not a mistake!
                     count++;
+                    totalCount++;
                 }
                 break;
             case 't':
@@ -174,10 +164,11 @@ ConfigManager::ConfigManager(std::string &path){
                 if(optarg[strlen(optarg)-1] == '\'' || optarg[strlen(optarg)-1] == '\"'){
                     optarg[strlen(optarg)-1] = '\0';
                 }
-                timestampCol = atoi(optarg);
+                timestampCol = atoi(optarg)-1;
+                totalCount++;
                 break;
             case 'o':
-                //Future use for MQTT credentials
+                //Future use for flight credentials
                 output = optarg;
                 outPutCsvFile = optarg;
                 outPutCsvFile += "/";
@@ -197,29 +188,22 @@ ConfigManager::ConfigManager(std::string &path){
         }
     }
 
-    if(timestampCol<1){
+    if(timestampCol<0){
         printf("Timestamp column must be specified, and it must be above 0. It should follow the following format:\n");
         printf("--timestamps <column (int)>\n");
         exit(1);
     }
 }
 void ConfigManager::column_or_text(int* count, char* token){
-    int column = *count / 3;
     // Handle arg here
     if (*count % 3 == 0) {
-            // argStruct.cols->currentSize++;
             numberOfCols++;
-            //printf("SIZE: %d\n", sizeof(**cols) * (*column_count));
-            //*cols = realloc(*cols, sizeof(**cols) * numberOfCols);
             columns &ptr = cols.emplace_back();
-            ptr.col = atoi(token);
-        //printf("Column: %s\n", token);
+            ptr.col = atoi(token)-1;
     }
     if (*count % 3 == 1) {
-        //printf("%s\n", token);
         columns &ptr = cols.back();
         ptr.error = atof(token);
-        //printf("Error: %s\n", token);
     }
     if (*count % 3 == 2) {
         columns &ptr = cols.back();
@@ -229,7 +213,6 @@ void ConfigManager::column_or_text(int* count, char* token){
         if (*token == 'R') { // Relative
             ptr.isAbsolute = 0;
         }
-        //printf("A/R: %s\n", token);
     }
 }
 

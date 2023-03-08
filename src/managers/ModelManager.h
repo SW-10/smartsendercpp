@@ -18,29 +18,31 @@ struct Status {
 };
 
 struct CachedValues {
-    int startTimestamp = NULL;
+    int startTimestamp = 0;
     std::vector<float> values;
 };
 
 struct TimeSeriesModelContainer {
-    int id;
+    int localId;
+    int globalId;
     double errorBound;
     bool errorAbsolute;
-    int startTimestamp;
+    //int startTimestamp;
     Gorilla gorilla;
     PmcMean pmcMean;
     Swing swing;
     Status status;
     CachedValues cachedValues;
-    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int id);
+    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int localId, int globalId);
     //TimeSeriesModelContainer& operator= (const TimeSeriesModelContainer& t);
 };
 
 struct TextModelContainer{
-    int id;
+    int localId;
+    int globalId;
     std::string text;
     bool reCheck;
-    TextModelContainer(int id);
+    TextModelContainer(int localId, int globalId);
 };
 
 
@@ -49,16 +51,16 @@ private:
     std::vector<TimeSeriesModelContainer> timeSeries;
     std::vector<TextModelContainer> textModels;
     TimestampManager& timestampManager;
-    static bool shouldCacheData(TimeSeriesModelContainer &);
+    static bool shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
 public:
-    void fitTimeSeriesModels(int id, float value);
+    void fitTimeSeriesModels(int id, float value, int timestamp);
     ModelManager(std::vector<columns>& timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager);
 
     void constructFinishedModels(TimeSeriesModelContainer &finishedSegment, int lastTimestamp);
 
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
-    void fitTextModels(int id, const std::string &value);
+    void fitTextModels(int localId, const std::string &value);
 };
 
 

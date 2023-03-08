@@ -25,7 +25,6 @@ public:
     ReaderManager(std::string configFile);
     void runCompressor();
 private:
-    int textCount, valuesCount, timestampCount, positionCount;
     enum class CompressionType : int { TEXT, VALUES, TIMESTAMP, POSITION, NONE};
     std::fstream csvFileStream;
     ConfigManager configManager;
@@ -35,13 +34,11 @@ private:
     std::unordered_map<
         int, // key
         std::tuple<
-                std::function<CompressionType(std::string*)>,
+                std::function<CompressionType(std::string*, int &lineNum)>,
                 CompressionType,
                 int
                 > // value (function, compressiontype, count)
     > myMap;
-
-    void test(std::string word){  }
 };
 
 

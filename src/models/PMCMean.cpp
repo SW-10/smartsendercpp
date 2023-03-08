@@ -83,6 +83,10 @@ std::vector<float> PmcMean::grid_pmc_mean(float value, int timestamp_count){
 }
 
 PmcMean &PmcMean::operator=(const PmcMean &instance) {
+    min_value = instance.min_value;
+    max_value = instance.max_value;
+    sum_of_values = instance.sum_of_values;
+    length = instance.length;
     return *this;
 }
 
