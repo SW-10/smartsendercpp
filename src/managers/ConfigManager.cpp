@@ -45,7 +45,6 @@ ConfigManager::ConfigManager(std::string &path){
 
     while (true)
     {
-
         int this_option_optind = optind ? optind : 1;
         int option_index = 0;
         static struct option long_options[] = {
@@ -59,16 +58,12 @@ ConfigManager::ConfigManager(std::string &path){
 
         c = getopt_long(outerCharVector.size(), argsEmulator, "p:c:t:o:x:",
                         long_options, &option_index);
-        if (c == -1)
-            break;
-        // printf("DEBUG: %d\n", debug);
-        //innerCharVector;
+        if (c == -1) break;
         switch (c)
         {
             case 'p':
                 // Debug mode seems to add single quotation marks around the arguments.
                 // The following two if's remove those
-
                 if(optarg[0] == '\'' || optarg[0] == '\"'){
                     optarg = &optarg[1];
                 }
@@ -81,7 +76,6 @@ ConfigManager::ConfigManager(std::string &path){
                 while( token != NULL ) {
                     count++;
                     // Handle args here
-                    //printf( " %s\n", token );
                     if(count==1){
                         latCol.col = atoi(token)-1;
                         totalCount++;
@@ -95,12 +89,10 @@ ConfigManager::ConfigManager(std::string &path){
                         longCol.error = atof(token);
                         containsPosition = true;
                     }
-
                     if(count>3){
                         printf("Too many arguments for position. Arguments should be: <lat> <long> <error>\n");
                         exit(1);
                     }
-
                     // Get next arg
                     token = strtok(NULL, s); // NULL is not a mistake!
                 }
@@ -109,7 +101,6 @@ ConfigManager::ConfigManager(std::string &path){
                     printf("Too few arguments for position. Arguments should be: <lat> <long> <error>\n");
                     exit(1);
                 }
-
                 break;
             case 'c':
                 //From documentation. Not sure what it does
@@ -127,20 +118,16 @@ ConfigManager::ConfigManager(std::string &path){
                 }
 
                 count = 0;
-
                 token = strtok(optarg, s);
                 while (token != NULL) {
                     column_or_text(&count, token);
-
                     token = strtok(NULL, s); // NULL is not a mistake!
                     count++;
-
                 }
 
                 if (count % 3 != 0) {
                     printf("Not the expected number of arguments for columns. Number of parameters should be divisible by 3 and follow the following format:\n");
                     printf("<column (int)> <error (float)> <absolute (A) / relative (R)>\n");
-                    //exit(1);
                 }
 
                 totalCount += (count/3);
@@ -161,24 +148,14 @@ ConfigManager::ConfigManager(std::string &path){
                 }
 
                 count = 0;
-
                 token = strtok(optarg, s);
                 while (token != NULL) {
-
-                        // argStruct.cols->currentSize++;
-                        text_cols.emplace_back(atoi(token)-1);
-                        number_of_text_cols++;
-                        //printf("SIZE: %d\n", sizeof(*argStruct.text_cols) * argStruct.number_of_text_cols);
-                        //text_cols = realloc(text_cols, sizeof(*text_cols) * number_of_text_cols);
-                        //text_cols[number_of_text_cols-1] = atoi(token);
-
-                    //printf("Column: %s\n", token);
-
+                    text_cols.emplace_back(atoi(token)-1);
+                    number_of_text_cols++;
                     token = strtok(NULL, s); // NULL is not a mistake!
                     count++;
                     totalCount++;
                 }
-
                 break;
             case 't':
                 if(optarg[0] == '\'' || optarg[0] == '\"'){
@@ -191,11 +168,10 @@ ConfigManager::ConfigManager(std::string &path){
                 totalCount++;
                 break;
             case 'o':
-                //Future use for MQTT credentials
+                //Future use for flight credentials
                 output = optarg;
                 outPutCsvFile = optarg;
                 outPutCsvFile += "/";
-
                 break;
             case 'i':
                 if(optarg[0] == '\'' || optarg[0] == '\"'){
@@ -205,7 +181,6 @@ ConfigManager::ConfigManager(std::string &path){
                     optarg[strlen(optarg)-1] = '\0';
                 }
                 this->inputFile = optarg;
-
                 break;
             default:
                 printf("Unknown option, exiting ...\n");
@@ -220,22 +195,15 @@ ConfigManager::ConfigManager(std::string &path){
     }
 }
 void ConfigManager::column_or_text(int* count, char* token){
-    int column = *count / 3;
     // Handle arg here
     if (*count % 3 == 0) {
-            // argStruct.cols->currentSize++;
             numberOfCols++;
-            //printf("SIZE: %d\n", sizeof(**cols) * (*column_count));
-            //*cols = realloc(*cols, sizeof(**cols) * numberOfCols);
             columns &ptr = cols.emplace_back();
             ptr.col = atoi(token)-1;
-        //printf("Column: %s\n", token);
     }
     if (*count % 3 == 1) {
-        //printf("%s\n", token);
         columns &ptr = cols.back();
         ptr.error = atof(token);
-        //printf("Error: %s\n", token);
     }
     if (*count % 3 == 2) {
         columns &ptr = cols.back();
@@ -245,7 +213,6 @@ void ConfigManager::column_or_text(int* count, char* token){
         if (*token == 'R') { // Relative
             ptr.isAbsolute = 0;
         }
-        //printf("A/R: %s\n", token);
     }
 }
 
