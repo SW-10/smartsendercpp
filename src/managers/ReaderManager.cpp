@@ -26,7 +26,7 @@ ReaderManager::ReaderManager(std::string configFile)
         std::get<0>(myMap[c.col]) = [this, i, &c](std::string* in, int &lineNum) {
             if (!in->empty()){
                 timestampManager.makeLocalOffsetList(lineNum, c.col); //c.col is the global ID
-                modelManager.fitTimeSeriesModels(i, std::stof(*in), timestampManager.getCurrentTimestamp());
+                modelManager.fitSegment(i, std::stof(*in), timestampManager.getCurrentTimestamp());
             }
             return CompressionType::VALUES;
         };

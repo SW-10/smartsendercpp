@@ -139,7 +139,7 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
     elem->readyForOffset = true;
 }
 
-std::vector<int> TimestampManager::getTimestampRangeForColumnsByTimestamp(int globID, int timestampA, int timestampB) {
+std::vector<int> TimestampManager::getTimestampsByGlobalId(int globID, int timestampA, int timestampB) {
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
 

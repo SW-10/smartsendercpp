@@ -27,12 +27,12 @@ void ModelManager::fitTextModels(int id, const std::string& value){
     }
 }
 
-//Recursive chain call is in purpose
-void ModelManager::fitTimeSeriesModels(int id, float value, int timestamp) {
+//Recursive chain call is on purpose
+void ModelManager::fitSegment(int id, float value, int timestamp) {
     TimeSeriesModelContainer& container = timeSeries[id];
     bool cachedOnce = false;
 
-    if(container.gorilla.get_length_gorilla() >= GORILLA_MAX){
+    if(container.gorilla.get_length_gorilla() > GORILLA_MAX){
         cachedOnce = true;
         container.cachedValues.values.emplace_back(value);
         if (container.cachedValues.startTimestamp == 0){
@@ -49,14 +49,14 @@ void ModelManager::fitTimeSeriesModels(int id, float value, int timestamp) {
             container.pmcMean.lastTimestamp = timestamp;
         }
     }
-    if(container.gorilla.get_length_gorilla() < GORILLA_MAX){
+    if(container.gorilla.get_length_gorilla() <= GORILLA_MAX){
         container.gorilla.fitValueGorilla(value);
         container.gorilla.lastTimestamp = timestamp;
         //TODO use timestamp index on model creation instead of check each time - Optimization
     }
     if(shouldCacheDataBasedOnPmcSwing(container) && !cachedOnce){
         container.cachedValues.values.emplace_back(value);
-        if (container.cachedValues.startTimestamp == 0){
+        if (container.cachedValues.values.empty()){
             container.cachedValues.startTimestamp = timestamp;
         }
     }
@@ -106,16 +106,17 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.get_length_gorilla() - indexToStart;
     }
-    if (finishedSegment.cachedValues.startTimestamp != 0){
-        CachedValues innerCache = std::move(finishedSegment.cachedValues);
+    if (!finishedSegment.cachedValues.values.empty()){
+        CachedValues currentCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
 
-        // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
-        std::vector<int> timestamps = timestampManager.getTimestampRangeForColumnsByTimestamp(finishedSegment.globalId, lastModelledTimestamp, lastTimestamp);
+        // TODO: get last constructed TS, and parse rest TS to fitSegment
+        std::vector<int> timestamps = timestampManager.getTimestampsByGlobalId(finishedSegment.globalId,
+                                                                               lastModelledTimestamp, lastTimestamp);
         int count = 0;
-        for (size_t i = indexToStart; i < innerCache.values.size(); i++){ // Har tilføjet '+1' til indexToStart. Ved ikke, om det er rigtigt?
-            fitTimeSeriesModels(finishedSegment.localId, innerCache.values[i], timestamps[count]);
+        for (size_t i = indexToStart; i < currentCache.values.size(); i++){ // Har tilføjet '+1' til indexToStart. Ved ikke, om det er rigtigt?
+            fitSegment(finishedSegment.localId, currentCache.values[i], timestamps[count]);
             count++;
         }
     }
