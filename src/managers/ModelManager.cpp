@@ -31,7 +31,6 @@ void ModelManager::fitTextModels(int id, const std::string& value){
 void ModelManager::fitSegment(int id, float value, int timestamp) {
     TimeSeriesModelContainer& container = timeSeries[id];
     bool cachedOnce = false;
-
     if(container.gorilla.get_length_gorilla() > GORILLA_MAX){
         cachedOnce = true;
         container.cachedValues.values.emplace_back(value);
@@ -69,6 +68,7 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig, std::vector<i
     int count = 0;
     for (auto &column : timeSeriesConfig){
         timeSeries.emplace_back(column.error, column.isAbsolute, count, column.col);
+        intermediateCaches.emplace_back();
         count++;
     }
     count = 0;
@@ -108,9 +108,10 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     }
     if (!finishedSegment.cachedValues.values.empty()){
         CachedValues currentCache = std::move(finishedSegment.cachedValues);
+
+        intermediateCaches[finishedSegment.globalId].emplace_back(&currentCache);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
-
         // TODO: get last constructed TS, and parse rest TS to fitSegment
         std::vector<int> timestamps = timestampManager.getTimestampsByGlobalId(finishedSegment.globalId,
                                                                                lastModelledTimestamp, lastTimestamp);
@@ -119,10 +120,27 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
             fitSegment(finishedSegment.localId, currentCache.values[i], timestamps[count]);
             count++;
         }
+        intermediateCaches[finishedSegment.globalId].pop_back();
     }
     else {
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
     }
+    calculateFlushTimestamp();
+}
+
+void ModelManager::calculateFlushTimestamp() {
+    int largestUsedTimestamp = 0;
+    for (auto &container : timeSeries){
+        if (!container.cachedValues.values.empty()){
+            largestUsedTimestamp = std::max(container.cachedValues.startTimestamp, largestUsedTimestamp);
+        }
+    }
+    for (auto &cache : intermediateCaches){
+        for (auto stackCache : cache){
+            largestUsedTimestamp = std::max(stackCache->startTimestamp, largestUsedTimestamp);
+        }
+    }
+    timestampManager.flushTimestamps(largestUsedTimestamp);
 }
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {

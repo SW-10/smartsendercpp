@@ -50,6 +50,7 @@ class ModelManager {
 private:
     std::vector<TimeSeriesModelContainer> timeSeries;
     std::vector<TextModelContainer> textModels;
+    std::vector<std::vector<CachedValues*>> intermediateCaches;
     TimestampManager& timestampManager;
     static bool shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
 public:
@@ -62,6 +63,8 @@ public:
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
     void fitTextModels(int localId, const std::string &value);
+
+    void calculateFlushTimestamp();
 };
 
 

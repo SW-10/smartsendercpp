@@ -20,6 +20,7 @@ private:
     int timestampCurrent;
     int timestampPrevious;
     bool readyForOffset = false;
+    int debug = 0;
 
     std::vector<TwoLatestTimestamps> latestTimestamps;
 
@@ -44,4 +45,6 @@ public:
     int getTimestampsFromIndexForColumns(int globID, int index);
     int getCurrentTimestamp(){return timestampCurrent;}
     std::vector<int> reconstructNTimestamps(int n);
+
+    void flushTimestamps(int lastUsedTimestamp);
 };
