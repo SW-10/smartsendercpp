@@ -97,7 +97,6 @@ void ReaderManager::runCompressor() {
         row.clear();
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
-
         int count = 0;
         while (std::getline(s, word, ',')){
             auto mapElement = myMap.find(count); //Get element in map
@@ -113,4 +112,5 @@ void ReaderManager::runCompressor() {
     }
     this->csvFileStream.close();
     std::cout << "Time Taken: " << time.end() << std::endl;
+    std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
 }

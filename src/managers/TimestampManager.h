@@ -24,11 +24,12 @@ private:
     std::vector<TwoLatestTimestamps> latestTimestamps;
 
     std::vector<std::pair<int, int>> offsetList;
-    std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
 
     int currentOffset;
     std::map<int, int> offsets;
 public:
+    std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
+
     TimestampManager(ConfigManager &confMan);
     std::vector<std::pair<int, int>> getOffsetList(){ return offsetList; }
     int getFirstTimestamp(){ return firstTimestamp; }

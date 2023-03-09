@@ -142,26 +142,24 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
 std::vector<int> TimestampManager::getTimestampsByGlobalId(int globID, int timestampA, int timestampB) {
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
-
-//    auto allTimestampsReconstructed = reconstructTimestamps();
     std::vector<int> res;
 
     int count = firstLocalTimestamp;
-
     for(auto & localOffset : localOffsets){
         int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
-        for(int j = 0; j < localOffset.second+firstTimeOffset; j++){
+
+        for(int j = 0; j < localOffset.second; j++){
             if(allTimestampsReconstructed.at(count) > timestampA){
                 if(allTimestampsReconstructed.at(count) > timestampB){
                     break;
                 }
-
                 res.push_back(allTimestampsReconstructed.at(count));
+
             }
             count += localOffset.first;
         }
-
     }
+    res.push_back(allTimestampsReconstructed.at(count)); // Add last time stamp
 
     return res;
 }
