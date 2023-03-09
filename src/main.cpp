@@ -5,17 +5,17 @@
 #include "arrow/api.h"
 #include "ArrowFlight.h"
 
-arrow::Status RunMain(){
+arrow::Status runMain(){
     ConnectionAddress address("127.0.0.1", 9999);
-    auto flight_client = CreateClient(address);
+    auto flightClient = createClient(address);
 
-    auto sql_flight_client = CreateSQLClient(std::move(flight_client)).ValueOrDie();
+    auto sqlFlightClient = createSqlClient(flightClient.ValueOrDie());
 
     flight::FlightCallOptions call_options;
 
     std::cout << "Executing query: '" << "SELECT * FROM intTable WHERE value >= 0" << "'" << std::endl;
-    ARROW_ASSIGN_OR_RAISE(std::unique_ptr<flight::FlightInfo> flight_info,
-                          sql_flight_client->Execute(call_options, "SELECT * FROM intTable WHERE value >= 0"));
+    ARROW_ASSIGN_OR_RAISE(std::unique_ptr<flight::FlightInfo> flightInfo,
+                          sqlFlightClient->Execute(call_options, "SELECT * FROM intTable WHERE value >= 0"));
 
     return arrow::Status::OK();
 }
@@ -26,7 +26,7 @@ int main() {
     doctest::Context context;
     int res = context.run();
     int client_stuff_return_code = 0;
-    arrow::Status st = RunMain();
+    arrow::Status st = runMain();
     if (!st.ok()) {
         std::cerr << st << std::endl;
         return 1;

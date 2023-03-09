@@ -13,5 +13,8 @@ struct ConnectionAddress {
     int32_t port;
 };
 
-arrow::Result<std::unique_ptr<flight::FlightClient>> CreateClient(const ConnectionAddress &address);
-arrow::Result<std::unique_ptr<flightsql::FlightSqlClient>> CreateSQLClient(auto flightClient);
+arrow::Result<std::unique_ptr<flight::FlightClient>>
+createClient(const ConnectionAddress &address);
+
+arrow::Result<std::unique_ptr<flightsql::FlightSqlClient>>
+createSqlClient(std::unique_ptr<flight::FlightClient> flightClient);

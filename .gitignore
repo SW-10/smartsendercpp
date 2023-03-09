@@ -48,3 +48,4 @@
 # Data sets
 Cobham_hour.csv
 smartsendercpp.code-workspace
+*.csv
