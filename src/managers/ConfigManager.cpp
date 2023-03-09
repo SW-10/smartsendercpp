@@ -172,7 +172,10 @@ ConfigManager::ConfigManager(std::string &path) {
                 outPutCsvFile += "/";
                 break;
             case 'i':
-                if (optarg[0] == '\'' || optarg[0] == '\"') {
+                if(optarg[strlen(optarg)-1] == '\r'){
+                    optarg[strlen(optarg)-1] = '\0';
+                }
+                if(optarg[0] == '\'' || optarg[0] == '\"'){
                     optarg = &optarg[1];
                 }
                 if (optarg[strlen(optarg) - 1] == '\'' ||

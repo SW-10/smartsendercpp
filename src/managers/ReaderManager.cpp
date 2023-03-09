@@ -127,5 +127,5 @@ void ReaderManager::runCompressor() {
         lineNumber++;
     }
     this->csvFileStream.close();
-    std::cout << "Time Taken: " << time.end() << std::endl;
+    std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
 }
