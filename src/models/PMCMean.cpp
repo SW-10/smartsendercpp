@@ -7,27 +7,28 @@
 #include <iostream>
 
 PmcMean::PmcMean(double &error_bound, bool error_absolute)
-        : error(error_bound){
+        : error(error_bound) {
     error = error_bound;
-    min_value = NAN;
-    max_value = NAN;
-    sum_of_values = 0;
+    minValue = NAN;
+    maxValue = NAN;
+    sumOfValues = 0;
     length = 0;
-    is_error_absolute = error_absolute;
+    isErrorAbsolute = error_absolute;
     lastTimestamp = 0;
 }
 
-int PmcMean::fit_value_pmc(float value){
-    float next_min_value = min_value < value ? min_value : value;
-    float next_max_value = max_value > value ? max_value : value;
-    float next_sum_of_values = sum_of_values + value;
-    size_t next_length = length+1;
+int PmcMean::fitValuePmc(float value) {
+    float next_min_value = minValue < value ? minValue : value;
+    float next_max_value = maxValue > value ? maxValue : value;
+    float next_sum_of_values = sumOfValues + value;
+    size_t next_length = length + 1;
     float average = (next_sum_of_values / next_length);
 
-    if(is_value_within_error_bound(next_min_value, average) && is_value_within_error_bound(next_max_value, average)){
-        min_value = next_min_value;
-        max_value = next_max_value;
-        sum_of_values = next_sum_of_values;
+    if (isValueWithinErrorBound(next_min_value, average) &&
+        isValueWithinErrorBound(next_max_value, average)) {
+        minValue = next_min_value;
+        maxValue = next_max_value;
+        sumOfValues = next_sum_of_values;
         length = next_length;
         return 1;
     } else {
@@ -35,47 +36,32 @@ int PmcMean::fit_value_pmc(float value){
     }
 }
 
-int PmcMean::is_value_within_error_bound(float real_value, float approx_value){
-    if(equal_or_nan_pmc(real_value, approx_value)){
+int
+PmcMean::isValueWithinErrorBound(float real_value, float approx_value) const {
+    if (equalOrNanPmc(real_value, approx_value)) {
         return 1;
     } else {
         float difference = real_value - approx_value;
         float result = fabsf(difference / real_value);
-        if(is_error_absolute){  // check if relative or absolute error
+        if (isErrorAbsolute) {  // check if relative or absolute error
             return fabsf(difference) <= error;
         }
         return (result * 100) <= error;
     }
 }
 
-float PmcMean::getBytesPerValue() const{
+float PmcMean::getBytesPerValue() const {
     return static_cast<float>(VALUE_SIZE_IN_BYTES) / static_cast<float>(length);
 }
 
 
-int PmcMean::equal_or_nan_pmc(float v1, float v2){
-    return v1==v2 || (std::isnan(v1) && std::isnan(v2));
+int PmcMean::equalOrNanPmc(float v1, float v2) {
+    return v1 == v2 || (std::isnan(v1) && std::isnan(v2));
 }
 
-
-float PmcMean::get_model_pmcmean(){
-    return (float) (sum_of_values / (double) length);
-}
-
-size_t PmcMean::get_length_pmcmean (){
-    return length;
-}
-
-void PmcMean::reset_pmc_mean(){
-  min_value = NAN;
-  max_value = NAN;
-  sum_of_values = 0;
-  length = 0;
-}
-
-std::vector<float> PmcMean::grid_pmc_mean(float value, int timestamp_count){
+std::vector<float> PmcMean::gridPmcMean(float value, int timestamp_count) {
     std::vector<float> result;
-    for(int i = 0; i < timestamp_count; i++){
+    for (int i = 0; i < timestamp_count; i++) {
         result.push_back(value);
     }
 
@@ -83,74 +69,89 @@ std::vector<float> PmcMean::grid_pmc_mean(float value, int timestamp_count){
 }
 
 PmcMean &PmcMean::operator=(const PmcMean &instance) {
-    min_value = instance.min_value;
-    max_value = instance.max_value;
-    sum_of_values = instance.sum_of_values;
+    minValue = instance.minValue;
+    maxValue = instance.maxValue;
+    sumOfValues = instance.sumOfValues;
     length = instance.length;
     return *this;
 }
 
-TEST_CASE("All values fit"){
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
+
+TEST_CASE("All values fit") {
     double error = 0.5;
     PmcMean p(error, true);
-    p.fit_value_pmc(1.0);
-    p.fit_value_pmc(1.3);
-    p.fit_value_pmc(1.24);
-    p.fit_value_pmc(1.045);
+    p.fitValuePmc(1.0);
+    p.fitValuePmc(1.3);
+    p.fitValuePmc(1.24);
+    p.fitValuePmc(1.045);
 
-    CHECK(p.get_error() == 0.5);
-    CHECK(p.get_length() == 4);
-    CHECK(p.get_max_value() == 1.3f);
-    CHECK(p.get_min_value() == 1.0f);
-    CHECK(p.get_sum_of_values() == 4.585f);
+    CHECK(p.error == 0.5);
+    CHECK(p.length == 4);
+    CHECK(p.maxValue == 1.3f);
+    CHECK(p.minValue == 1.0f);
+    CHECK(p.sumOfValues == 4.585f);
 
-    p.fit_value_pmc(0.9);
-    p.fit_value_pmc(1.54);
-    p.fit_value_pmc(1.45);
-    p.fit_value_pmc(1.12);
-    p.fit_value_pmc(1.12);
-    
-    CHECK(p.get_error() == 0.5);
-    CHECK(p.get_length() == 9);
-    CHECK(p.get_max_value() == 1.54f);
-    CHECK(p.get_min_value() == 0.9f);
-    CHECK(p.get_sum_of_values() == 10.715f);
+    p.fitValuePmc(0.9);
+    p.fitValuePmc(1.54);
+    p.fitValuePmc(1.45);
+    p.fitValuePmc(1.12);
+    p.fitValuePmc(1.12);
+
+    CHECK(p.error == 0.5);
+    CHECK(p.length == 9);
+    CHECK(p.maxValue == 1.54f);
+    CHECK(p.minValue == 0.9f);
+    CHECK(p.sumOfValues == 10.715f);
 }
 
-TEST_CASE("Not all values fit"){
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
+
+TEST_CASE("Not all values fit") {
     double error = 0.2;
     PmcMean p(error, true);
-    
-    CHECK(p.fit_value_pmc(1.0)  == 1);
-    CHECK(p.fit_value_pmc(1.3)  == 1);
-    CHECK(p.fit_value_pmc(1.24)  == 1);
-    CHECK(p.fit_value_pmc(1.045) == 1);
-    CHECK(p.fit_value_pmc(0.9)   == 0);
-    CHECK(p.fit_value_pmc(1.54)  == 0);
-    CHECK(p.fit_value_pmc(1.45)  == 0);
-    CHECK(p.fit_value_pmc(1.12)  == 1);
-    CHECK(p.fit_value_pmc(1.12)  == 1);
+
+    CHECK(p.fitValuePmc(1.0) == 1);
+    CHECK(p.fitValuePmc(1.3) == 1);
+    CHECK(p.fitValuePmc(1.24) == 1);
+    CHECK(p.fitValuePmc(1.045) == 1);
+    CHECK(p.fitValuePmc(0.9) == 0);
+    CHECK(p.fitValuePmc(1.54) == 0);
+    CHECK(p.fitValuePmc(1.45) == 0);
+    CHECK(p.fitValuePmc(1.12) == 1);
+    CHECK(p.fitValuePmc(1.12) == 1);
 }
 
-TEST_CASE("Grid"){
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
+
+TEST_CASE("Grid") {
 
     //Grid
     double error_bound = 1;
     PmcMean p(error_bound, true);
 
     std::vector<float> vals{1.0, 1.3, 1.24, 1.045, 0.9, 1.54, 1.45, 1.12, 1.12};
-    for(auto v : vals){
-        p.fit_value_pmc(v);
+    for (auto v: vals) {
+        p.fitValuePmc(v);
     }
 
-    auto res = p.grid_pmc_mean(p.get_sum_of_values()/p.get_length(), vals.size());
+    auto res = p.gridPmcMean(p.sumOfValues / p.length, vals.size());
     bool equal = true;
-    for(int i = 0; i < vals.size(); i++){
-        if(std::fabs(vals[i]-res[i]) > error_bound){
+    for (int i = 0; i < vals.size(); i++) {
+        if (std::fabs(vals[i] - res[i]) > error_bound) {
             equal = false;
         }
     }
 
     CHECK(equal == true);
 }
+
+#pragma clang diagnostic pop
 

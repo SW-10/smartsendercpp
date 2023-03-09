@@ -13,6 +13,12 @@ struct Vector {
 };
 
 class VectorBased {
+public:
+    VectorBased();
+
+    int
+    fitValue(long timeStamp, double latitude, double longitude, float error);
+
 private:
     Position prev;
     Position current;
@@ -24,15 +30,12 @@ private:
     unsigned int modelLength;
     Vector vec;
     float errorSum;
-    
+
     int currentDelta;
     std::vector<long> timestamps;
     int maxTimestamps;
     int currentTimestampIndex;
-    
-    double haversineDistance(double lat1, double lon1, double lat2, double lon2);
 
-public:
-    VectorBased();
-    int fitValue(long timeStamp, double latitude, double longitude, float error);
+    double
+    haversineDistance(double lat1, double lon1, double lat2, double lon2);
 };

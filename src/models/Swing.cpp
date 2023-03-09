@@ -1,53 +1,46 @@
 #include "Swing.h"
 #include "../constants.h"
-#include <cstdio>
 #include <cmath>
-#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 #include <iostream>
 #include "../doctest.h"
 
 Swing::Swing(double &error, bool is_error_absolute)
-        : error_bound(error){
-  first_timestamp = 0;
-  last_timestamp = 0;
-  first_value = 0;
-  upper_bound_slope = 0;
-  upper_bound_intercept = 0;
-  lower_bound_slope = 0;
-  lower_bound_intercept = 0;
-  length = 0;
-  error_absolute = is_error_absolute;
+        : errorBound(error) {
+    firstTimestamp = 0;
+    lastTimestamp = 0;
+    firstValue = 0;
+    upperBoundSlope = 0;
+    upperBoundIntercept = 0;
+    lowerBoundSlope = 0;
+    lowerBoundIntercept = 0;
+    length = 0;
+    errorAbsolute = is_error_absolute;
 }
 
-bool Swing::fitValueSwing(long timestamp, double value){
-    double maximum_deviation = 0;
-    if (error_absolute)  // check if using relative or absolute error bounds
+bool Swing::fitValueSwing(long timestamp, double value) {
+    double maximumDeviation;
+    if (errorAbsolute)  // check if using relative or absolute error bounds
     {
-        maximum_deviation = error_bound;
+        maximumDeviation = errorBound;
+    } else {
+        maximumDeviation = fabs(value * (errorBound / 100.0));
     }
-    else
-    {
-        maximum_deviation = fabs(value * (error_bound / 100.0));
-
-    }
-    
     if (length == 0) {
         // Line 1 - 2 of Algorithm 1 in the Swing and Slide paper.
-        first_timestamp = timestamp;
-        last_timestamp = timestamp;
-        first_value = value;
+        firstTimestamp = timestamp;
+        lastTimestamp = timestamp;
+        firstValue = value;
         length += 1;
         return true;
-    } else if (isNan(first_value) || isNan(value)) {
+    } else if (isNan(firstValue) || isNan(value)) {
         // Extend Swing to handle both types of infinity and NAN.
-        if (equalOrNAN(first_value, value)) {
-            last_timestamp = timestamp;
-            upper_bound_slope = value;
-            upper_bound_intercept = value;
-            lower_bound_slope = value;
-            lower_bound_intercept = value;
+        if (equalOrNAN(firstValue, value)) {
+            lastTimestamp = timestamp;
+            upperBoundSlope = value;
+            upperBoundIntercept = value;
+            lowerBoundSlope = value;
+            lowerBoundIntercept = value;
             length += 1;
             return true;
         } else {
@@ -55,64 +48,65 @@ bool Swing::fitValueSwing(long timestamp, double value){
         }
     } else if (length == 1) {
         // Line 3 of Algorithm 1 in the Swing and Slide paper.
-        last_timestamp = timestamp;
-        struct slopeAndIntercept slopes = compute_slope_and_intercept(
-                first_timestamp,
-                first_value,
+        lastTimestamp = timestamp;
+        struct slopeAndIntercept slopes = computeSlopeAndIntercept(
+                firstTimestamp,
+                firstValue,
                 timestamp,
-                value + maximum_deviation
+                value + maximumDeviation
         );
 
-        upper_bound_slope = slopes.slope;
-        upper_bound_intercept = slopes.intercept;
+        upperBoundSlope = slopes.slope;
+        upperBoundIntercept = slopes.intercept;
 
-        slopes = compute_slope_and_intercept(
-                first_timestamp,
-                first_value,
+        slopes = computeSlopeAndIntercept(
+                firstTimestamp,
+                firstValue,
                 timestamp,
-                value - maximum_deviation
+                value - maximumDeviation
         );
 
-        lower_bound_slope = slopes.slope;
-        lower_bound_intercept = slopes.intercept;
+        lowerBoundSlope = slopes.slope;
+        lowerBoundIntercept = slopes.intercept;
         length += 1;
         return true;
     } else {
         // Line 6 of Algorithm 1 in the Swing and Slide paper.
-        double upper_bound_approximate_value = upper_bound_slope * timestamp + upper_bound_intercept;
-        double lower_bound_approximate_value = lower_bound_slope * timestamp + lower_bound_intercept;
+        double upperBoundApproximateValue =
+                upperBoundSlope * timestamp + upperBoundIntercept;
+        double lowerBoundApproximateValue =
+                lowerBoundSlope * timestamp + lowerBoundIntercept;
 
-        if (upper_bound_approximate_value + maximum_deviation < value
-           || lower_bound_approximate_value - maximum_deviation > value)
-        {
+        if (upperBoundApproximateValue + maximumDeviation < value
+            || lowerBoundApproximateValue - maximumDeviation > value) {
             return false;
         } else {
-            last_timestamp = timestamp;
+            lastTimestamp = timestamp;
 
             // Line 17 of Algorithm 1 in the Swing and Slide paper.
-            if (upper_bound_approximate_value - maximum_deviation > value) {
+            if (upperBoundApproximateValue - maximumDeviation > value) {
                 struct slopeAndIntercept slopes =
-                        compute_slope_and_intercept(
-                                first_timestamp,
-                                first_value,
+                        computeSlopeAndIntercept(
+                                firstTimestamp,
+                                firstValue,
                                 timestamp,
-                                value + maximum_deviation
+                                value + maximumDeviation
                         );
-                upper_bound_slope = slopes.slope;
-                upper_bound_intercept = slopes.intercept;
+                upperBoundSlope = slopes.slope;
+                upperBoundIntercept = slopes.intercept;
             }
 
             // Line 15 of Algorithm 1 in the Swing and Slide paper.
-            if (lower_bound_approximate_value + maximum_deviation < value) {
+            if (lowerBoundApproximateValue + maximumDeviation < value) {
                 struct slopeAndIntercept slopes =
-                        compute_slope_and_intercept(
-                                first_timestamp,
-                                first_value,
+                        computeSlopeAndIntercept(
+                                firstTimestamp,
+                                firstValue,
                                 timestamp,
-                                value - maximum_deviation
+                                value - maximumDeviation
                         );
-                lower_bound_slope = slopes.slope;
-                lower_bound_intercept = slopes.intercept;
+                lowerBoundSlope = slopes.slope;
+                lowerBoundIntercept = slopes.intercept;
             }
             length += 1;
             return true;
@@ -120,115 +114,106 @@ bool Swing::fitValueSwing(long timestamp, double value){
     }
 }
 
-slopeAndIntercept Swing::compute_slope_and_intercept(
-        long first_timestamp,
-        double first_value,
-        long final_timestamp,
-        double final_value) {
+slopeAndIntercept Swing::computeSlopeAndIntercept(
+        long firstTimestamp,
+        double firstValue,
+        long finalTimestamp,
+        double finalValue) {
     // An if expression is used as it seems that no values can be assigned to
-    // first_value and final_value so slope * timestamp + intercept = INFINITY
+    // firstValue and finalValue so slope * timestamp + intercept = INFINITY
     // or slope * timestamp + intercept = NEG_INFINITY.
-    if (!isNan(first_value) && !isNan(final_value)){
+    if (!isNan(firstValue) && !isNan(finalValue)) {
         struct slopeAndIntercept sample;
-        if(first_value == final_value){
-            sample.intercept = first_value;
+        if (firstValue == finalValue) {
+            sample.intercept = firstValue;
             sample.slope = 0.0;
             return sample;
         }
-        double slope = (final_value - first_value) / (final_timestamp - first_timestamp);
-        double intercept = first_value - slope * first_timestamp;
+        double slope =
+                (finalValue - firstValue) / (finalTimestamp - firstTimestamp);
+        double intercept = firstValue - slope * firstTimestamp;
         sample.slope = slope;
         sample.intercept = intercept;
         return sample;
     } else {
         struct slopeAndIntercept sample;
-        sample.slope = first_value;
-        sample.intercept = final_value;
+        sample.slope = firstValue;
+        sample.intercept = finalValue;
         return sample;
     }
 }
 
-double Swing::getModelFirst(){
-    return upper_bound_slope * first_timestamp + upper_bound_intercept;
+double Swing::getModelFirst() {
+    return upperBoundSlope * firstTimestamp + upperBoundIntercept;
 }
 
-double Swing::getModelLast(){
-    return upper_bound_slope * last_timestamp + upper_bound_intercept;
+double Swing::getModelLast() {
+    return upperBoundSlope * lastTimestamp + upperBoundIntercept;
 }
 
-int Swing::isNan(double val){
+int Swing::isNan(double val) {
     return std::isnan(val) || std::isinf(val);
 }
 
-int Swing::equalOrNAN(double v1, double v2){
-    return v1==v2 || (isNan(v1) && isNan(v2));
+int Swing::equalOrNAN(double v1, double v2) {
+    return v1 == v2 || (isNan(v1) && isNan(v2));
 }
 
-float Swing::getBytesPerValue() const{
-    return static_cast<float>(2 * VALUE_SIZE_IN_BYTES) / static_cast<float>(length);
-}
-void Swing::get_model_swing(float *arr){
-  double first_value = upper_bound_slope * (double) first_timestamp + upper_bound_intercept;
-
-  double last_value = upper_bound_slope * (double) last_timestamp + upper_bound_intercept;
-
-  arr[0] = (float) first_value;
-  arr[1] = (float) last_value;
+float Swing::getBytesPerValue() const {
+    return static_cast<float>(2 * VALUE_SIZE_IN_BYTES) /
+           static_cast<float>(length);
 }
 
-size_t Swing::get_length_swing(){
-  return length;
-}
-
-void Swing::resetSwing(){
-    first_timestamp = 0;
-    last_timestamp = 0;
-    first_value = 0;
-    upper_bound_slope = 0;
-    upper_bound_intercept = 0;
-    lower_bound_slope = 0;
-    lower_bound_intercept = 0;
-    length = 0;
-}
-
-slopeAndIntercept Swing::decode_and_compute_slope_and_intercept(long firstTimestamp, long lastTimestamp, double min_value, double max_value, int value){
-    if(value == 1){
-        return compute_slope_and_intercept(firstTimestamp, min_value, lastTimestamp, max_value);
-    }else{
-        return compute_slope_and_intercept(firstTimestamp, max_value, lastTimestamp, min_value);
+slopeAndIntercept
+Swing::decodeAndComputeSlopeAndIntercept(long firstTimestamp,
+                                         long lastTimestamp, double min_value,
+                                         double maxValue,
+                                         int value) {
+    if (value == 1) {
+        return computeSlopeAndIntercept(firstTimestamp, min_value,
+                                        lastTimestamp, maxValue);
+    } else {
+        return computeSlopeAndIntercept(firstTimestamp, maxValue, lastTimestamp,
+                                        min_value);
     }
 }
 
-std::vector<float> Swing::gridSwing(float min, float max, uint8_t values, std::vector<long> timestamps,int timestamp_count){
+std::vector<float>
+Swing::gridSwing(float min, float max, uint8_t values,
+                 std::vector<long> timestamps, int timestampCount) {
     std::vector<float> result;
-    struct slopeAndIntercept slopeAndIntercept = decode_and_compute_slope_and_intercept(timestamps[0], timestamps[timestamp_count-1], min, max, values);
-    for(int i = 0; i < timestamp_count; i++){
-        result.push_back(slopeAndIntercept.slope * timestamps[i] + slopeAndIntercept.intercept);
+    struct slopeAndIntercept slopeAndIntercept = decodeAndComputeSlopeAndIntercept(
+            timestamps[0],
+            timestamps[timestampCount - 1], min,
+            max, values);
+    for (int i = 0; i < timestampCount; i++) {
+        result.push_back(slopeAndIntercept.slope * timestamps[i] +
+                         slopeAndIntercept.intercept);
     }
     return result;
 }
 
 Swing &Swing::operator=(const Swing &instance) {
-    first_timestamp = instance.first_timestamp;
-    last_timestamp = instance.last_timestamp;
-    first_value = instance.first_value;
-    upper_bound_slope = instance.upper_bound_slope;
-    upper_bound_intercept = instance.upper_bound_intercept;
-    lower_bound_slope = instance.upper_bound_intercept;
-    lower_bound_intercept = instance.lower_bound_intercept;
-    length = instance.upper_bound_intercept;
+    firstTimestamp = instance.firstTimestamp;
+    lastTimestamp = instance.lastTimestamp;
+    firstValue = instance.firstValue;
+    upperBoundSlope = instance.upperBoundSlope;
+    upperBoundIntercept = instance.upperBoundIntercept;
+    lowerBoundSlope = instance.upperBoundIntercept;
+    lowerBoundIntercept = instance.lowerBoundIntercept;
+    length = instance.upperBoundIntercept;
     return *this;
 }
 
-bool float_equal(float a, float b){
-    return (std::fabs(a-b) < 0.00001);
+bool float_equal(float a, float b) {
+    return (std::fabs(a - b) < 0.00001);
 }
 
-TEST_CASE("Swing"){
+TEST_CASE("Swing") {
     double error_bound = 0.3;
     Swing p(error_bound, true);
-    // p = p.getSwing(error_bound);
-    CHECK(p.fitValueSwing (1, 1.0) == 1);
+    // p = p.getSwing(errorBound);
+    CHECK(p.fitValueSwing(1, 1.0) == 1);
     CHECK(p.fitValueSwing(2, 1.3) == 1);
     CHECK(p.fitValueSwing(3, 1.24) == 1);
     CHECK(p.fitValueSwing(4, 1.045) == 1);
@@ -238,46 +223,47 @@ TEST_CASE("Swing"){
     CHECK(p.fitValueSwing(8, 1.12) == 1);
     CHECK(p.fitValueSwing(9, 1.12) == 1);
 
-    SUBCASE("Results"){
-        CHECK(float_equal(p.get_error_bound(), 0.3f));
-        CHECK(float_equal(p.get_first_timestamp(), 1.0f));
-        CHECK(float_equal(p.get_upper_bound_slope(), 0.0525f));
-        CHECK(float_equal(p.get_upper_bound_intercept(), 0.9475f));
-        CHECK(float_equal(p.get_lower_bound_slope(), 0.048f));
-        CHECK(float_equal(p.get_lower_bound_intercept(), 0.952f));
+    SUBCASE("Results") {
+        CHECK(float_equal(p.errorBound, 0.3f));
+        CHECK(float_equal(p.firstTimestamp, 1.0f));
+        CHECK(float_equal(p.upperBoundSlope, 0.0525f));
+        CHECK(float_equal(p.upperBoundIntercept, 0.9475f));
+        CHECK(float_equal(p.lowerBoundSlope, 0.048f));
+        CHECK(float_equal(p.lowerBoundIntercept, 0.952f));
     }
 
+    SUBCASE("Swing grid") {
 
-    SUBCASE("Swing grid"){
+        //Grid
+        std::vector<float> vals{1.0, 1.3, 1.24, 1.045, 1.23, 1.54, 1.45, 1.12,
+                                1.12};
+        std::vector<long> timestamps{1, 2, 3, 4, 5, 6, 7, 8, 9};
 
-    //Grid
-    std::vector<float> vals{1.0, 1.3, 1.24, 1.045, 1.23, 1.54, 1.45, 1.12, 1.12};
-    std::vector<long> timestamps{1,2,3,4,5,6,7,8,9};
+        //Get y-coordinate for first and last point
+        auto y_first = p.getModelFirst();
+        auto y_last = p.getModelLast();
 
-    //Get y-coordinate for first and last point
-    auto y_first = p.getModelFirst();
-    auto y_last = p.getModelLast();
+        CHECK(y_first == 1);
+        CHECK(float_equal(y_last, 1.42f));
 
-    CHECK(y_first == 1);
-    CHECK(float_equal(y_last, 1.42f));
-
-    auto res = p.gridSwing(y_first, y_last, 1, timestamps, timestamps.size());
-    bool equal = true;
-    for(int i = 0; i < vals.size(); i++){
-        if(std::fabs(vals[i]-res[i]) > error_bound){
-            equal = false;
+        auto res = p.gridSwing(y_first, y_last, 1, timestamps,
+                               timestamps.size());
+        bool equal = true;
+        for (int i = 0; i < vals.size(); i++) {
+            if (std::fabs(vals[i] - res[i]) > error_bound) {
+                equal = false;
+            }
         }
-    }
 
-    CHECK(equal == true);
-    } 
+        CHECK(equal == true);
+    }
 }
 
-TEST_CASE("Not all values fit"){
+TEST_CASE("Not all values fit") {
     double error_bound = 0.2;
     Swing p(error_bound, true);
     // p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
-    
+
     CHECK(p.fitValueSwing(1, 1.0) == 1);
     CHECK(p.fitValueSwing(2, 1.3) == 1);
     CHECK(p.fitValueSwing(3, 1.24) == 1);
