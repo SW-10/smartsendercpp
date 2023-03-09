@@ -14,7 +14,7 @@ ReaderManager::ReaderManager(std::string configFile)
             "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
             std::ios::in);
 
-    auto bothLatLongSeen = false;
+    bothLatLongSeen = false;
 
     // Initialise all elements in the map
     for (int i = 0; i < configManager.totalNumberOfCols; i++) {
@@ -70,7 +70,7 @@ ReaderManager::ReaderManager(std::string configFile)
         auto longCol = &configManager.longCol;
 
         // Package lat and long into a pair instead of calling them separately.
-        std::get<0>(myMap[latCol->col]) = [this, latCol, &bothLatLongSeen](
+        std::get<0>(myMap[latCol->col]) = [this, latCol](
                 std::string *in, int &lineNum) {
             if (bothLatLongSeen) { // Ensure that both lat and long are available before calling the function
                 bothLatLongSeen = false;
@@ -81,7 +81,7 @@ ReaderManager::ReaderManager(std::string configFile)
                                                  latCol->col); //c.col is the global ID
             return CompressionType::POSITION;
         };
-        std::get<0>(myMap[longCol->col]) = [this, longCol, &bothLatLongSeen](
+        std::get<0>(myMap[longCol->col]) = [this, longCol](
                 std::string *in, int &lineNum) {
             if (bothLatLongSeen) { // Ensure that both lat and long are available before calling the function
                 bothLatLongSeen = false;
@@ -116,10 +116,12 @@ void ReaderManager::runCompressor() {
             // Get the lambda function from the map.
             // 0th index in second() contains the  lambda function responsible for calling further compression methods
             auto compressFunction = std::get<0>(mapElement->second);
-            CompressionType ct = compressFunction(&word,
-                                                  lineNumber); // Call the compression function
-            std::get<1>(
-                    mapElement->second) = ct; // Update the compression type in the map
+
+            // Call the compression function
+            CompressionType ct = compressFunction(&word,lineNumber);
+
+            // Update the compression type in the map
+            std::get<1>(mapElement->second) = ct;
             count++;
         }
         lineNumber++;

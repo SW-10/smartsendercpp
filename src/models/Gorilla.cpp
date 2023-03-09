@@ -46,13 +46,13 @@ uint32_t Gorilla::floatToBit(float val) {
 }
 
 void Gorilla::fitValueGorilla(float value) {
-    uint32_t value_as_integer = floatToBit(
+    uint32_t valueAsInteger = floatToBit(
             value); // Read the binary representation of the float value as an integer, which can then be used for bitwise operations.
-    uint32_t last_value_as_integer = floatToBit(lastValue);
-    uint32_t valueXorLastValue = value_as_integer ^ last_value_as_integer;
+    uint32_t lastValueAsInteger = floatToBit(lastValue);
+    uint32_t valueXorLastValue = valueAsInteger ^ lastValueAsInteger;
 
     if (compressedValues.bytesCounter == 0) {
-        appendBits(&compressedValues, value_as_integer, VALUE_SIZE_IN_BITS);
+        appendBits(&compressedValues, valueAsInteger, VALUE_SIZE_IN_BITS);
 
     } else if (valueXorLastValue == 0) {
         appendAZeroBit(&compressedValues);

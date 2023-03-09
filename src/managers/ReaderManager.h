@@ -24,6 +24,7 @@ private:
     ConfigManager configManager;
     ModelManager modelManager;
     TimestampManager timestampManager;
+    bool bothLatLongSeen;
     std::unordered_map<
             int, // key
             std::tuple<
