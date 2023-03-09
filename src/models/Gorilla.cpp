@@ -49,41 +49,41 @@ void Gorilla::fitValueGorilla(float value) {
     uint32_t value_as_integer = floatToBit(
             value); // Read the binary representation of the float value as an integer, which can then be used for bitwise operations.
     uint32_t last_value_as_integer = floatToBit(lastValue);
-    uint32_t value_xor_last_value = value_as_integer ^ last_value_as_integer;
+    uint32_t valueXorLastValue = value_as_integer ^ last_value_as_integer;
 
     if (compressedValues.bytesCounter == 0) {
         appendBits(&compressedValues, value_as_integer, VALUE_SIZE_IN_BITS);
 
-    } else if (value_xor_last_value == 0) {
+    } else if (valueXorLastValue == 0) {
         appendAZeroBit(&compressedValues);
     } else {
-        uint8_t leading_zero_bits = leadingZeros(value_xor_last_value);
-        uint8_t trailing_zero_bits = trailingZeros(value_xor_last_value);
+        uint8_t leadingZeroBits = leadingZeros(valueXorLastValue);
+        uint8_t trailingZeroBits = trailingZeros(valueXorLastValue);
         appendAOneBit(&compressedValues);
 
-        if (leading_zero_bits >= lastLeadingZeroBits
-            && trailing_zero_bits >= lastTrailingZeroBits) {
+        if (leadingZeroBits >= lastLeadingZeroBits
+            && trailingZeroBits >= lastTrailingZeroBits) {
             appendAZeroBit(&compressedValues);
-            uint8_t meaningful_bits = VALUE_SIZE_IN_BITS
-                                      - lastLeadingZeroBits
-                                      - lastTrailingZeroBits;
+            uint8_t meaningfulBits = VALUE_SIZE_IN_BITS
+                                     - lastLeadingZeroBits
+                                     - lastTrailingZeroBits;
             appendBits(&compressedValues,
-                       value_xor_last_value >> lastTrailingZeroBits,
-                       meaningful_bits
+                       valueXorLastValue >> lastTrailingZeroBits,
+                       meaningfulBits
             );
 
         } else {
             appendAOneBit(&compressedValues);
-            appendBits(&compressedValues, leading_zero_bits, 5);
-            uint8_t meaningful_bits =
-                    VALUE_SIZE_IN_BITS - leading_zero_bits - trailing_zero_bits;
-            appendBits(&compressedValues, meaningful_bits, 6);
+            appendBits(&compressedValues, leadingZeroBits, 5);
+            uint8_t meaningfulBits =
+                    VALUE_SIZE_IN_BITS - leadingZeroBits - trailingZeroBits;
+            appendBits(&compressedValues, meaningfulBits, 6);
             appendBits(&compressedValues,
-                       value_xor_last_value >> trailing_zero_bits,
-                       meaningful_bits);
+                       valueXorLastValue >> trailingZeroBits,
+                       meaningfulBits);
 
-            lastLeadingZeroBits = leading_zero_bits;
-            lastTrailingZeroBits = trailing_zero_bits;
+            lastLeadingZeroBits = leadingZeroBits;
+            lastTrailingZeroBits = trailingZeroBits;
 
         }
     }
@@ -110,24 +110,23 @@ void Gorilla::appendAOneBit(BitVecBuilder *data) {
 }
 
 void
-Gorilla::appendBits(BitVecBuilder *data, long bits, uint8_t number_of_bits) {
-    uint8_t _number_of_bits = number_of_bits;
+Gorilla::appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits) {
 
-    while (_number_of_bits > 0) {
-        uint8_t bits_written;
+    while (numberOfBits > 0) {
+        uint8_t bitsWritten;
 
-        if (_number_of_bits > data->remainingBits) {
-            uint8_t shift = _number_of_bits - data->remainingBits;
+        if (numberOfBits > data->remainingBits) {
+            uint8_t shift = numberOfBits - data->remainingBits;
             data->currentByte |= (uint8_t) ((bits >> shift) &
                                             ((1 << data->remainingBits) - 1));
-            bits_written = data->remainingBits;
+            bitsWritten = data->remainingBits;
         } else {
-            uint8_t shift = data->remainingBits - _number_of_bits;
+            uint8_t shift = data->remainingBits - numberOfBits;
             data->currentByte |= (uint8_t) (bits << shift);
-            bits_written = _number_of_bits;
+            bitsWritten = numberOfBits;
         }
-        _number_of_bits -= bits_written;
-        data->remainingBits -= bits_written;
+        numberOfBits -= bitsWritten;
+        data->remainingBits -= bitsWritten;
 
         if (data->remainingBits == 0) {
             data->bytes.push_back(data->currentByte);
@@ -151,21 +150,21 @@ Gorilla::Gorilla() {
 }
 
 std::vector<float>
-Gorilla::gridGorilla(std::vector<uint8_t> values, int values_count,
-                     int timestamp_count) {
+Gorilla::gridGorilla(std::vector<uint8_t> values, int valuesCount,
+                     int timestampCount) {
     std::vector<float> result;
-    BitReader bitReader = tryNewBitReader(values, values_count);
+    BitReader bitReader = tryNewBitReader(values, valuesCount);
     int leadingZeros = 255;
     int trailingZeros = 0;
     uint32_t lastValue = readBits(&bitReader, VALUE_SIZE_IN_BITS);
     result.push_back(intToFloat(lastValue));
-    for (int i = 0; i < timestamp_count - 1; i++) {
+    for (int i = 0; i < timestampCount - 1; i++) {
         if (readBit(&bitReader)) {
             if (readBit(&bitReader)) {
                 leadingZeros = readBits(&bitReader, 5);
                 uint8_t meaningfulBits = readBits(&bitReader, 6);
                 if (meaningfulBits == 63) {
-                    for (int j = 0; j < values_count; j++) {
+                    for (int j = 0; j < valuesCount; j++) {
                         printf("ERROR %d,", values[j]);
                     }
                 }

@@ -9,7 +9,6 @@ struct slopeAndIntercept {
     double intercept;
 };
 
-
 class Swing {
 public:
     double &errorBound;
@@ -22,9 +21,8 @@ public:
     double lowerBoundIntercept;
     int length;
     bool errorAbsolute;
-    bool bothLatLongSeen;
 
-    Swing(double &error_bound, bool is_error_absolute);
+    Swing(double &errorBound, bool isErrorAbsolute);
 
     bool fitValueSwing(long timestamp, double value);
 
@@ -54,7 +52,7 @@ private:
 
     slopeAndIntercept
     decodeAndComputeSlopeAndIntercept(long firstTimestamp, long lastTimestamp,
-                                      double min_value, double maxValue,
+                                      double minValue, double maxValue,
                                       int value);
 
 

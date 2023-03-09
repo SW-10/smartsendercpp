@@ -31,8 +31,6 @@ void ModelManager::fitTextModels(int id, const std::string &value) {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
-
-//Recursive chain call is on purpose
 void ModelManager::fitSegment(int id, float value, int timestamp) {
     TimeSeriesModelContainer &container = timeSeries[id];
     bool cachedOnce = false;
@@ -74,7 +72,7 @@ void ModelManager::fitSegment(int id, float value, int timestamp) {
 #pragma clang diagnostic pop
 
 ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig,
-                           std::vector<int> &text_cols,
+                           std::vector<int> &textCols,
                            TimestampManager &timestampManager)
         : timestampManager(timestampManager) {
     int count = 0;
@@ -84,7 +82,7 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig,
         count++;
     }
     count = 0;
-    for (auto &textColumn: text_cols) {
+    for (auto &textColumn: textCols) {
         textModels.emplace_back(count, textColumn);
         count++;
     }

@@ -13,11 +13,11 @@ public:
     size_t length;
     double &error;
 
-    PmcMean(double &error_bound, bool error_absolute);
+    PmcMean(double &errorBound, bool errorAbsolute);
 
     int fitValuePmc(float value);
 
-    static std::vector<float> gridPmcMean(float value, int timestamp_count);
+    static std::vector<float> gridPmcMean(float value, int timestampCount);
 
     [[nodiscard]] float getBytesPerValue() const;
 
@@ -26,7 +26,7 @@ public:
 private:
     bool isErrorAbsolute;
 
-    int isValueWithinErrorBound(float real_value, float approx_value) const;
+    int isValueWithinErrorBound(float realValue, float approxValue) const;
 
     static int equalOrNanPmc(float v1, float v2);
 };

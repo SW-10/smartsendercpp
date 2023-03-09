@@ -5,8 +5,8 @@
 #include <iostream>
 #include "../doctest.h"
 
-Swing::Swing(double &error, bool is_error_absolute)
-        : errorBound(error) {
+Swing::Swing(double &errorBound, bool isErrorAbsolute)
+        : errorBound(errorBound) {
     firstTimestamp = 0;
     lastTimestamp = 0;
     firstValue = 0;
@@ -15,7 +15,7 @@ Swing::Swing(double &error, bool is_error_absolute)
     lowerBoundSlope = 0;
     lowerBoundIntercept = 0;
     length = 0;
-    errorAbsolute = is_error_absolute;
+    errorAbsolute = isErrorAbsolute;
 }
 
 bool Swing::fitValueSwing(long timestamp, double value) {
@@ -166,15 +166,15 @@ float Swing::getBytesPerValue() const {
 
 slopeAndIntercept
 Swing::decodeAndComputeSlopeAndIntercept(long firstTimestamp,
-                                         long lastTimestamp, double min_value,
+                                         long lastTimestamp, double minValue,
                                          double maxValue,
                                          int value) {
     if (value == 1) {
-        return computeSlopeAndIntercept(firstTimestamp, min_value,
+        return computeSlopeAndIntercept(firstTimestamp, minValue,
                                         lastTimestamp, maxValue);
     } else {
         return computeSlopeAndIntercept(firstTimestamp, maxValue, lastTimestamp,
-                                        min_value);
+                                        minValue);
     }
 }
 

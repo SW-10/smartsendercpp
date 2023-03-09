@@ -6,30 +6,30 @@
 
 #include <iostream>
 
-PmcMean::PmcMean(double &error_bound, bool error_absolute)
-        : error(error_bound) {
-    error = error_bound;
+PmcMean::PmcMean(double &errorBound, bool errorAbsolute)
+        : error(errorBound) {
+    error = errorBound;
     minValue = NAN;
     maxValue = NAN;
     sumOfValues = 0;
     length = 0;
-    isErrorAbsolute = error_absolute;
+    isErrorAbsolute = errorAbsolute;
     lastTimestamp = 0;
 }
 
 int PmcMean::fitValuePmc(float value) {
-    float next_min_value = minValue < value ? minValue : value;
-    float next_max_value = maxValue > value ? maxValue : value;
-    float next_sum_of_values = sumOfValues + value;
-    size_t next_length = length + 1;
-    float average = (next_sum_of_values / next_length);
+    float nextMinValue = minValue < value ? minValue : value;
+    float nextMaxValue = maxValue > value ? maxValue : value;
+    float nextSumOfValues = sumOfValues + value;
+    size_t nextLength = length + 1;
+    float average = (nextSumOfValues / nextLength);
 
-    if (isValueWithinErrorBound(next_min_value, average) &&
-        isValueWithinErrorBound(next_max_value, average)) {
-        minValue = next_min_value;
-        maxValue = next_max_value;
-        sumOfValues = next_sum_of_values;
-        length = next_length;
+    if (isValueWithinErrorBound(nextMinValue, average) &&
+        isValueWithinErrorBound(nextMaxValue, average)) {
+        minValue = nextMinValue;
+        maxValue = nextMaxValue;
+        sumOfValues = nextSumOfValues;
+        length = nextLength;
         return 1;
     } else {
         return 0;
@@ -37,12 +37,12 @@ int PmcMean::fitValuePmc(float value) {
 }
 
 int
-PmcMean::isValueWithinErrorBound(float real_value, float approx_value) const {
-    if (equalOrNanPmc(real_value, approx_value)) {
+PmcMean::isValueWithinErrorBound(float realValue, float approxValue) const {
+    if (equalOrNanPmc(realValue, approxValue)) {
         return 1;
     } else {
-        float difference = real_value - approx_value;
-        float result = fabsf(difference / real_value);
+        float difference = realValue - approxValue;
+        float result = fabsf(difference / realValue);
         if (isErrorAbsolute) {  // check if relative or absolute error
             return fabsf(difference) <= error;
         }
@@ -59,9 +59,9 @@ int PmcMean::equalOrNanPmc(float v1, float v2) {
     return v1 == v2 || (std::isnan(v1) && std::isnan(v2));
 }
 
-std::vector<float> PmcMean::gridPmcMean(float value, int timestamp_count) {
+std::vector<float> PmcMean::gridPmcMean(float value, int timestampCount) {
     std::vector<float> result;
-    for (int i = 0; i < timestamp_count; i++) {
+    for (int i = 0; i < timestampCount; i++) {
         result.push_back(value);
     }
 
@@ -134,8 +134,8 @@ TEST_CASE("Not all values fit") {
 TEST_CASE("Grid") {
 
     //Grid
-    double error_bound = 1;
-    PmcMean p(error_bound, true);
+    double errorBound = 1;
+    PmcMean p(errorBound, true);
 
     std::vector<float> vals{1.0, 1.3, 1.24, 1.045, 0.9, 1.54, 1.45, 1.12, 1.12};
     for (auto v: vals) {
@@ -145,7 +145,7 @@ TEST_CASE("Grid") {
     auto res = p.gridPmcMean(p.sumOfValues / p.length, vals.size());
     bool equal = true;
     for (int i = 0; i < vals.size(); i++) {
-        if (std::fabs(vals[i] - res[i]) > error_bound) {
+        if (std::fabs(vals[i] - res[i]) > errorBound) {
             equal = false;
         }
     }

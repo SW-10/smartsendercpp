@@ -48,7 +48,8 @@ ConfigManager::ConfigManager(std::string &path) {
                 {"output",     required_argument, 0, 'o'},
                 {"text",       required_argument, 0, 'x'},
                 {"inputFile",  required_argument, 0, 'i'},
-                {0, 0,                            0, 0}};
+                {0          ,  0                , 0,  0 }
+        };
 
         c = getopt_long(outerCharVector.size(), argsEmulator, "p:c:t:o:x:",
                         long_options, &option_index);

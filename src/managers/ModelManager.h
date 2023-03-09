@@ -47,7 +47,7 @@ public:
     void fitSegment(int id, float value, int timestamp);
 
     ModelManager(std::vector<columns> &timeSeriesConfig,
-                 std::vector<int> &text_cols,
+                 std::vector<int> &textCols,
                  TimestampManager &timestampManager);
 
     void constructFinishedModels(TimeSeriesModelContainer &finishedSegment,

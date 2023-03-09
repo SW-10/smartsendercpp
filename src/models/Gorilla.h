@@ -30,14 +30,14 @@ public:
     [[nodiscard]] float getBytesPerValue() const;
 
     static std::vector<float>
-    gridGorilla(std::vector<uint8_t> values, int values_count,
-                int timestamp_count);
+    gridGorilla(std::vector<uint8_t> values, int valuesCount,
+                int timestampCount);
 
 private:
     float lastValue;
 
     static void
-    appendBits(BitVecBuilder *data, long bits, uint8_t number_of_bits);
+    appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits);
 
     static void appendAZeroBit(BitVecBuilder *data);
 
