@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include "../utils/Timer.h"
+#include "../utils/Utils.h"
 #include <functional>
 
 ReaderManager::ReaderManager(std::string configFile)
@@ -83,7 +84,7 @@ ReaderManager::ReaderManager(std::string configFile)
         };
     }
 }
-
+int fields = 0;
 void ReaderManager::runCompressor() {
     std::vector<std::string> row;
     std::string line, word;
@@ -99,6 +100,7 @@ void ReaderManager::runCompressor() {
         std::stringstream s(line);
         int count = 0;
         while (std::getline(s, word, ',')){
+            if(!word.empty()) fields ++;
             auto mapElement = myMap.find(count); //Get element in map
 
             //Get the lambda function from the map.
@@ -112,5 +114,7 @@ void ReaderManager::runCompressor() {
     }
     this->csvFileStream.close();
     std::cout << "Time Taken: " << time.end() << std::endl;
-    std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
+    std::cout << "Total number of timestamps in timestamp column: " << timestampManager.getAllTimestamps().size() << std::endl;
+    std::cout << "Size of global+local offset lists: " << Utils::getSizeOfOffsetLists(timestampManager.getOffsetList(), timestampManager.localOffsetList) << std::endl;
+    std::cout << "Number of non-null fields in dataset: " << fields << std::endl;
 }

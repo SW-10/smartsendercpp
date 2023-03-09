@@ -45,4 +45,5 @@ public:
     int getTimestampsFromIndexForColumns(int globID, int index);
     int getCurrentTimestamp(){return timestampCurrent;}
     std::vector<int> reconstructNTimestamps(int n);
+    std::vector<int> getAllTimestamps() { return allTimestampsReconstructed; }
 };
