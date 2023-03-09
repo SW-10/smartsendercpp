@@ -1,4 +1,5 @@
 #pragma once
+
 #include <vector>
 #include <utility>
 #include <map>
@@ -13,35 +14,47 @@ struct TwoLatestTimestamps {
     bool readyForOffset;
 };
 
-class TimestampManager{
-private:
-    std::vector<int> allTimestampsReconstructed;
+class TimestampManager {
+public:
     int firstTimestamp;
     int timestampCurrent;
-    int timestampPrevious;
-    bool readyForOffset = false;
-
-    std::vector<TwoLatestTimestamps> latestTimestamps;
 
     std::vector<std::pair<int, int>> offsetList;
-    std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
 
-    int currentOffset;
-    std::map<int, int> offsets;
-public:
     TimestampManager(ConfigManager &confMan);
-    std::vector<std::pair<int, int>> getOffsetList(){ return offsetList; }
-    int getFirstTimestamp(){ return firstTimestamp; }
+
     void compressTimestamps(int timestamp);
+
     std::vector<int> reconstructTimestamps();
-    bool calcIndexRangeFromTimestamps(int first, int second, int& first_out, int& second_out);
+
+    bool calcIndexRangeFromTimestamps(int first, int second, int &first_out,
+                                      int &second_out);
+
     int getTimestampFromIndex(int index);
+
     std::vector<int> getTimestampsFromIndices(int index1, int index2);
 
     void makeLocalOffsetList(int lineNumber, int globalID);
-    std::vector<int> getTimestampRangeForColumns(int globID, int indexA, int indexB);
-    std::vector<int> getTimestampsByGlobalId(int globID, int timestampA, int timestampB);
+
+    std::vector<int>
+    getTimestampRangeForColumns(int globID, int indexA, int indexB);
+
+    std::vector<int>
+    getTimestampsByGlobalId(int globID, int timestampA, int timestampB);
+
     int getTimestampsFromIndexForColumns(int globID, int index);
-    int getCurrentTimestamp(){return timestampCurrent;}
+
     std::vector<int> reconstructNTimestamps(int n);
+
+private:
+    int currentOffset;
+    int timestampPrevious;
+    bool readyForOffset = false;
+    std::vector<int> allTimestampsReconstructed;
+
+    std::vector<TwoLatestTimestamps> latestTimestamps;
+
+    std::map<int, int> offsets;
+
+    std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
 };

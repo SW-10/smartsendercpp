@@ -7,14 +7,19 @@
 #include <functional>
 
 ReaderManager::ReaderManager(std::string configFile)
-        : configManager(configFile), timestampManager(configManager), modelManager(*configManager.getTimeSeriesColumns(), *configManager.getTextColumns(), timestampManager) {
-    this->csvFileStream.open(this->configManager.getInputFile()/*"../Cobham_hour.csv"*/, std::ios::in);
+        : configManager(configFile), timestampManager(configManager),
+          modelManager(configManager.timeseriesCols, configManager.textCols,
+                       timestampManager) {
+    this->csvFileStream.open(
+            "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
+            std::ios::in);
 
     bothLatLongSeen = false;
 
     // Initialise all elements in the map
-    for(int i = 0; i < configManager.getTotalNumberOfCols(); i ++){
-        std::get<0>(myMap[i]) = [this](std::string* in, int &lineNum) { return CompressionType::NONE;};
+    for (int i = 0; i < configManager.totalNumberOfCols; i++) {
+        std::get<0>(myMap[i]) = [](std::string *in,
+                                   int &lineNum) { return CompressionType::NONE; };
         std::get<1>(myMap[i]) = CompressionType::NONE;
 
     }
@@ -22,11 +27,14 @@ ReaderManager::ReaderManager(std::string configFile)
     // TODO: Change all test-functions
     // Handle time series columns
     int i = 0;
-    for(const auto &c : *configManager.getTimeSeriesColumns()){
-        std::get<0>(myMap[c.col]) = [this, i, &c](std::string* in, int &lineNum) {
-            if (!in->empty()){
-                timestampManager.makeLocalOffsetList(lineNum, c.col); //c.col is the global ID
-                modelManager.fitSegment(i, std::stof(*in), timestampManager.getCurrentTimestamp());
+    for (const auto &c: configManager.timeseriesCols) {
+        std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
+                                                  int &lineNum) {
+            if (!in->empty()) {
+                timestampManager.makeLocalOffsetList(lineNum,
+                                                     c.col); //c.col is the global ID
+                modelManager.fitSegment(i, std::stof(*in),
+                                        timestampManager.timestampCurrent);
             }
             return CompressionType::VALUES;
         };
@@ -37,9 +45,9 @@ ReaderManager::ReaderManager(std::string configFile)
 
     // Handle text series columns
     i = 0;
-    for(const auto &c : *configManager.getTextColumns()){
-        std::get<0>(myMap[c]) = [this, i](std::string* in, int &lineNum) {
-            if (!in->empty()){
+    for (const auto &c: configManager.textCols) {
+        std::get<0>(myMap[c]) = [this, i](std::string *in, int &lineNum) {
+            if (!in->empty()) {
                 modelManager.fitTextModels(i, *in);
             }
             return CompressionType::TEXT;
@@ -50,35 +58,38 @@ ReaderManager::ReaderManager(std::string configFile)
     }
 
     // Handle time stamp columns
-    i = 0;
-    auto timestampCol = configManager.getTimestampColumn();
-    std::get<0>(myMap[timestampCol]) =  [this, i, timestampCol](std::string* in, int &lineNum) {
-        timestampManager.compressTimestamps( std::stoi(*in) );
+    auto timestampCol = configManager.timestampCol;
+    std::get<0>(myMap[timestampCol]) = [this](std::string *in, int &lineNum) {
+        timestampManager.compressTimestamps(std::stoi(*in));
         return CompressionType::TIMESTAMP;
     };
 
-    //Handle position columns
-    if(configManager.getContainsPosition()){
-        auto latCol  = configManager.getLatColumn();
-        auto longCol = configManager.getLongColumn();
+    // Handle position columns
+    if (configManager.containsPosition) {
+        auto latCol = &configManager.latCol;
+        auto longCol = &configManager.longCol;
 
-        //Pak lat og long sammen i et pair i stedet for at kalde dem separat
-        std::get<0>(myMap[latCol->col]) = [this, latCol](std::string* in, int &lineNum) {
-            if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
+        // Package lat and long into a pair instead of calling them separately.
+        std::get<0>(myMap[latCol->col]) = [this, latCol](
+                std::string *in, int &lineNum) {
+            if (bothLatLongSeen) { // Ensure that both lat and long are available before calling the function
                 bothLatLongSeen = false;
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum, latCol->col); //c.col is the global ID
+            timestampManager.makeLocalOffsetList(lineNum,
+                                                 latCol->col); //c.col is the global ID
             return CompressionType::POSITION;
         };
-        std::get<0>(myMap[longCol->col]) = [this, longCol](std::string* in, int &lineNum) {
-            if(bothLatLongSeen){ // Ensure that both lat and long are available before calling the function
+        std::get<0>(myMap[longCol->col]) = [this, longCol](
+                std::string *in, int &lineNum) {
+            if (bothLatLongSeen) { // Ensure that both lat and long are available before calling the function
                 bothLatLongSeen = false;
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum, longCol->col); //c.col is the global ID
+            timestampManager.makeLocalOffsetList(lineNum,
+                                                 longCol->col); //c.col is the global ID
             return CompressionType::POSITION;
         };
     }
@@ -93,20 +104,24 @@ void ReaderManager::runCompressor() {
     time.begin();
 
     int lineNumber = 0;
-    while(!this->csvFileStream.eof()){
+    while (!this->csvFileStream.eof()) {
         row.clear();
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
 
         int count = 0;
-        while (std::getline(s, word, ',')){
+        while (std::getline(s, word, ',')) {
             auto mapElement = myMap.find(count); //Get element in map
 
-            //Get the lambda function from the map.
+            // Get the lambda function from the map.
             // 0th index in second() contains the  lambda function responsible for calling further compression methods
             auto compressFunction = std::get<0>(mapElement->second);
-            CompressionType ct = compressFunction(&word, lineNumber); // Call the compression function
-            std::get<1>(mapElement->second) = ct; // Update the compression type in the map
+
+            // Call the compression function
+            CompressionType ct = compressFunction(&word,lineNumber);
+
+            // Update the compression type in the map
+            std::get<1>(mapElement->second) = ct;
             count++;
         }
         lineNumber++;
