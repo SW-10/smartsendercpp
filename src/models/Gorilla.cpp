@@ -1,7 +1,7 @@
 #include "Gorilla.h"
 #include <cmath>
 #include "../doctest.h"
-
+#define GORILLA_MAX 50
 const int debug = 0;
 
 const uint8_t SIZE_OF_32INT = (uint8_t) sizeof(int32_t) * 8;
@@ -56,7 +56,10 @@ uint32_t Gorilla::float_to_bit(float val){
 }
 
 
-void Gorilla::fitValueGorilla(float value){
+bool Gorilla::fitValueGorilla(float value){
+    if (length >= GORILLA_MAX){
+        return false;
+    }
     uint32_t value_as_integer = float_to_bit(value); // Læs den binære repræsentation af float value som en integer, som vi herefter kan lave bitwise operationer på
     uint32_t last_value_as_integer = float_to_bit(last_value);
     uint32_t value_xor_last_value = value_as_integer ^ last_value_as_integer;
@@ -98,6 +101,7 @@ void Gorilla::fitValueGorilla(float value){
     
     last_value = value;
     length++;
+    return true;
 }
 
 float Gorilla::getBytesPerValue(){

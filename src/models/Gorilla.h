@@ -40,7 +40,7 @@ private:
         std::vector<uint8_t> finish_with_one_bits(Bit_vec_builder* data);
 
 public: 
-        void fitValueGorilla(float value);
+        bool fitValueGorilla(float value);
         std::vector<float> grid_gorilla(std::vector<uint8_t> values, int values_count, int timestamp_count);
         Bit_vec_builder compressed_values;
         size_t get_length_gorilla();

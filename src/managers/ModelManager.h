@@ -15,6 +15,7 @@
 struct Status {
     bool pmcMeanReady = true;
     bool SwingReady = true;
+    bool gorillaReady = true;
 };
 
 struct CachedValues {
@@ -52,7 +53,7 @@ private:
     std::vector<TextModelContainer> textModels;
     std::vector<std::vector<CachedValues*>> intermediateCaches;
     TimestampManager& timestampManager;
-    static bool shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
+    static bool shouldCacheData(TimeSeriesModelContainer &container);
 public:
     void fitSegment(int id, float value, int timestamp);
     
