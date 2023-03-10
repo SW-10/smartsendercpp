@@ -101,42 +101,42 @@ size_t Gorilla::len(const BitVecBuilder &data) {
     return data.bytesCounter + (size_t) (data.remainingBits != 8);
 }
 
-void Gorilla::appendAZeroBit(BitVecBuilder *data) {
-    appendBits(data, 0, 1);
-}
+//void Gorilla::appendAZeroBit(BitVecBuilder *data) {
+//    appendBits(data, 0, 1);
+//}
+//
+//void Gorilla::appendAOneBit(BitVecBuilder *data) {
+//    appendBits(data, 1, 1);
+//}
 
-void Gorilla::appendAOneBit(BitVecBuilder *data) {
-    appendBits(data, 1, 1);
-}
-
-void
-Gorilla::appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits) {
-
-    while (numberOfBits > 0) {
-        uint8_t bitsWritten;
-
-        if (numberOfBits > data->remainingBits) {
-            uint8_t shift = numberOfBits - data->remainingBits;
-            data->currentByte |= (uint8_t) ((bits >> shift) &
-                                            ((1 << data->remainingBits) - 1));
-            bitsWritten = data->remainingBits;
-        } else {
-            uint8_t shift = data->remainingBits - numberOfBits;
-            data->currentByte |= (uint8_t) (bits << shift);
-            bitsWritten = numberOfBits;
-        }
-        numberOfBits -= bitsWritten;
-        data->remainingBits -= bitsWritten;
-
-        if (data->remainingBits == 0) {
-            data->bytes.push_back(data->currentByte);
-            data->bytesCounter = data->bytesCounter + 1;
-            data->currentByte = 0;
-            data->remainingBits = 8;
-        }
-
-    }
-}
+//void
+//Gorilla::appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits) {
+//
+//    while (numberOfBits > 0) {
+//        uint8_t bitsWritten;
+//
+//        if (numberOfBits > data->remainingBits) {
+//            uint8_t shift = numberOfBits - data->remainingBits;
+//            data->currentByte |= (uint8_t) ((bits >> shift) &
+//                                            ((1 << data->remainingBits) - 1));
+//            bitsWritten = data->remainingBits;
+//        } else {
+//            uint8_t shift = data->remainingBits - numberOfBits;
+//            data->currentByte |= (uint8_t) (bits << shift);
+//            bitsWritten = numberOfBits;
+//        }
+//        numberOfBits -= bitsWritten;
+//        data->remainingBits -= bitsWritten;
+//
+//        if (data->remainingBits == 0) {
+//            data->bytes.push_back(data->currentByte);
+//            data->bytesCounter = data->bytesCounter + 1;
+//            data->currentByte = 0;
+//            data->remainingBits = 8;
+//        }
+//
+//    }
+//}
 
 Gorilla::Gorilla() {
     lastValue = 0;

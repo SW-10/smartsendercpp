@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include "../utils/Timer.h"
+#include "../utils/Utils.h"
 #include <functional>
 
 ReaderManager::ReaderManager(std::string configFile)
@@ -129,4 +130,7 @@ void ReaderManager::runCompressor() {
     this->csvFileStream.close();
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
+    Utils::binaryCompressGlobOffsets(timestampManager.offsetList);
+    Utils::binaryCompressLocOffsets(timestampManager.localOffsetList);
+
 }
