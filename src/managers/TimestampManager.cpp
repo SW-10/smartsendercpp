@@ -166,7 +166,7 @@ std::vector<int> TimestampManager::getTimestampsByGlobalId(int globID, int times
 
 void TimestampManager::flushTimestamps(int lastUsedTimestamp){
     int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
-    //std::cout << index << std::endl;
+    std::cout << index << std::endl;
     debug++;
     if (debug > 40){
         //std::cout << debug << std::endl;

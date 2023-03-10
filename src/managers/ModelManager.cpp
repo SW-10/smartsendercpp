@@ -55,7 +55,7 @@ void ModelManager::fitSegment(int id, float value, int timestamp) {
     }
     if(shouldCacheDataBasedOnPmcSwing(container) && !cachedOnce){
         container.cachedValues.values.emplace_back(value);
-        if (container.cachedValues.values.empty()){
+        if (container.cachedValues.startTimestamp == 0){
             container.cachedValues.startTimestamp = timestamp;
         }
     }
@@ -128,17 +128,17 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
 }
 
 void ModelManager::calculateFlushTimestamp() {
-    int largestUsedTimestamp = 0;
+    int largestUsedTimestamp = INT32_MAX;
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
-            largestUsedTimestamp = std::max(container.cachedValues.startTimestamp, largestUsedTimestamp);
+            largestUsedTimestamp = std::min(container.cachedValues.startTimestamp, largestUsedTimestamp);
         }
     }
-    for (auto &cache : intermediateCaches){
+    /*for (auto &cache : intermediateCaches){
         for (auto stackCache : cache){
             largestUsedTimestamp = std::max(stackCache->startTimestamp, largestUsedTimestamp);
         }
-    }
+    }*/
     timestampManager.flushTimestamps(largestUsedTimestamp);
 }
 
