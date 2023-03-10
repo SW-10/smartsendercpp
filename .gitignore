@@ -26,6 +26,9 @@
 *.a
 *.lib
 
+# CSV
+*.csv
+
 # Workspace files
 *.code-workspace
 

@@ -151,17 +151,16 @@ TimestampManager::getTimestampsByGlobalId(int globID, int timestampA,
                                           int timestampB) {
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
-
-//    auto allTimestampsReconstructed = reconstructTimestamps();
     std::vector<int> res;
 
     int count = firstLocalTimestamp;
 
-    for (auto &localOffset: localOffsets) {
+    for(auto & localOffset : localOffsets){
         int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
-        for (int j = 0; j < localOffset.second + firstTimeOffset; j++) {
-            if (allTimestampsReconstructed.at(count) > timestampA) {
-                if (allTimestampsReconstructed.at(count) > timestampB) {
+
+        for(int j = 0; j < localOffset.second; j++){
+            if(allTimestampsReconstructed.at(count) > timestampA){
+                if(allTimestampsReconstructed.at(count) > timestampB){
                     break;
                 }
 
@@ -169,8 +168,8 @@ TimestampManager::getTimestampsByGlobalId(int globID, int timestampA,
             }
             count += localOffset.first;
         }
-
     }
+    res.push_back(allTimestampsReconstructed.at(count)); // Add last time stamp
 
     return res;
 }

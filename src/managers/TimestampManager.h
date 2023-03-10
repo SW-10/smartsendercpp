@@ -17,9 +17,16 @@ struct TwoLatestTimestamps {
 class TimestampManager {
 public:
     int firstTimestamp;
+
     int timestampCurrent;
 
     std::vector<std::pair<int, int>> offsetList;
+
+    int currentOffset;
+
+    std::map<int, int> offsets;
+
+    std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
 
     TimestampManager(ConfigManager &confMan);
 
@@ -47,14 +54,8 @@ public:
     std::vector<int> reconstructNTimestamps(int n);
 
 private:
-    int currentOffset;
     int timestampPrevious;
     bool readyForOffset = false;
     std::vector<int> allTimestampsReconstructed;
-
     std::vector<TwoLatestTimestamps> latestTimestamps;
-
-    std::map<int, int> offsets;
-
-    std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
 };
