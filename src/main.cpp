@@ -1,4 +1,4 @@
-#include <iostream>
+//#include <iostream>
 #include "models/Gorilla.h"
 #include "doctest.h"
 #include "managers/ConfigManager.h"

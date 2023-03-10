@@ -108,8 +108,7 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     }
     if (!finishedSegment.cachedValues.values.empty()){
         CachedValues currentCache = std::move(finishedSegment.cachedValues);
-
-        intermediateCaches[finishedSegment.globalId].emplace_back(&currentCache);
+        intermediateCaches[finishedSegment.localId].emplace_back(&currentCache);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
         // TODO: get last constructed TS, and parse rest TS to fitSegment
@@ -120,7 +119,7 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
             fitSegment(finishedSegment.localId, currentCache.values[i], timestamps[count]);
             count++;
         }
-        intermediateCaches[finishedSegment.globalId].pop_back();
+        intermediateCaches[finishedSegment.localId].pop_back();
     }
     else {
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);

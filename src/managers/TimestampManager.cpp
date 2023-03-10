@@ -146,7 +146,7 @@ std::vector<int> TimestampManager::getTimestampsByGlobalId(int globID, int times
 
     int count = firstLocalTimestamp;
     for(auto & localOffset : localOffsets){
-        int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
+        //int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
 
         for(int j = 0; j < localOffset.second; j++){
             if(allTimestampsReconstructed.at(count) > timestampA){
@@ -166,9 +166,9 @@ std::vector<int> TimestampManager::getTimestampsByGlobalId(int globID, int times
 
 void TimestampManager::flushTimestamps(int lastUsedTimestamp){
     int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
-    std::cout << index << std::endl;
+    //std::cout << index << std::endl;
     debug++;
     if (debug > 40){
-        std::cout << debug << std::endl;
+        //std::cout << debug << std::endl;
     }
 }
