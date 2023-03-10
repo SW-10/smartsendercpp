@@ -13,17 +13,39 @@ int Utils::BinarySearch(std::vector<int> v, int data) {
 }
 
 void Utils::binaryCompress(BitVecBuilder* builder, int val){
-    if(val >= -63 && val <= 64){
+//    if(val >= -63 && val <= 64){
+//        appendBits(builder, 0b10, 2);
+//        appendBits(builder, val, 7);
+//    } else if(val >= -255 && val <= 256){
+//        appendBits(builder, 0b110, 3);
+//        appendBits(builder, val, 9);
+//    } else if(val >= -2047 && val <= 2048){
+//        appendBits(builder, 0b1110, 4);
+//        appendBits(builder, val, 12);
+//    } else {
+//        appendBits(builder, 0b1111, 4);
+//        appendBits(builder, val, 32);
+//    }
+    if(val >= -2 && val <= 3){
         appendBits(builder, 0b10, 2);
+        appendBits(builder, val, 3);
+    } else if(val >= -14 && val <= 15){
+        appendBits(builder, 0b110, 3);
+        appendBits(builder, val, 5);
+    } else if(val >= -63 && val <= 64){
+        appendBits(builder, 0b1110, 4);
         appendBits(builder, val, 7);
     } else if(val >= -255 && val <= 256){
-        appendBits(builder, 0b110, 3);
+        appendBits(builder, 0b11110, 5);
         appendBits(builder, val, 9);
-    } else if(val >= -2047 && val <= 2048){
-        appendBits(builder, 0b1110, 4);
-        appendBits(builder, val, 12);
+    } else if(val >= -1023 && val <= 1024){
+        appendBits(builder, 0b111110, 6);
+        appendBits(builder, val, 11);
+    } else if(val >=  -4095 && val <= 4096){
+        appendBits(builder, 0b1111110, 7);
+        appendBits(builder, val, 13);
     } else {
-        appendBits(builder, 0b1111, 4);
+        appendBits(builder, 0b1111111, 7);
         appendBits(builder, val, 32);
     }
 }
