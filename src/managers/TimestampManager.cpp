@@ -295,6 +295,9 @@ std::vector<uint8_t>  TimestampManager::binaryCompressLocOffsets(std::unordered_
             // Compress global ID
             scheme(&builder, globID);
 
+            // Compress index of first timestamp
+            scheme(&builder, latestTimestamps.at(globID).timestampFirst);
+
             //Loop through the offset list corresponding to current column
             for (const auto &elem: list.second) {
                 std::vector<int> temp;
