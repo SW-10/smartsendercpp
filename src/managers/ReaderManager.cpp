@@ -93,6 +93,8 @@ void ReaderManager::runCompressor() {
     time.begin();
 
     int lineNumber = 0;
+    int timestampFlusherPenalty = 50;
+    int lastTimestampFlush = 0;
     while(!this->csvFileStream.eof()){
         row.clear();
         std::getline(this->csvFileStream, line);
@@ -100,13 +102,17 @@ void ReaderManager::runCompressor() {
         int count = 0;
         while (std::getline(s, word, ',')){
             auto mapElement = myMap.find(count); //Get element in map
-
             //Get the lambda function from the map.
             // 0th index in second() contains the  lambda function responsible for calling further compression methods
             auto compressFunction = std::get<0>(mapElement->second);
             CompressionType ct = compressFunction(&word, lineNumber); // Call the compression function
             std::get<1>(mapElement->second) = ct; // Update the compression type in the map
             count++;
+            // TODO: Adjust penalty dynamically
+            if (lastTimestampFlush + timestampFlusherPenalty == lineNumber){
+                lastTimestampFlush = lineNumber;
+                modelManager.calculateFlushTimestamp();
+            }
         }
         lineNumber++;
     }

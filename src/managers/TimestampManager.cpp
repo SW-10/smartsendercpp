@@ -2,6 +2,8 @@
 #include "TimestampManager.h"
 #include <iostream>
 #include <algorithm>
+#include "../doctest.h"
+
 
 TimestampManager::TimestampManager(ConfigManager &confMan){
     for(int i = 0; i < confMan.getTotalNumberOfCols(); i++){
@@ -166,9 +168,58 @@ std::vector<int> TimestampManager::getTimestampsByGlobalId(int globID, int times
 
 void TimestampManager::flushTimestamps(int lastUsedTimestamp){
     int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
-    std::cout << index << std::endl;
-    debug++;
-    if (debug > 40){
-        //std::cout << debug << std::endl;
+    allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),allTimestampsReconstructed.begin()+index);
+    for (auto &lol : localOffsetList){
+        if (lol.second.empty()) continue;
+        if(latestTimestamps[lol.first].timestampFirst < index){
+            latestTimestamps[lol.first].timestampFirst += flushLocalOffsetList(lol.second, index-latestTimestamps[lol.first].timestampFirst);
+        }
+        else{
+            latestTimestamps[lol.first].timestampFirst - index;
+        }
+
     }
+    //std::cout << index << std::endl;
+    //debug++;
+    //if (debug > 40){
+        //std::cout << debug << std::endl;
+    //}
 }
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
+int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices){
+    int numFlushableTimestamps = localOffsetListRef.front().second / localOffsetListRef.front().first;
+    int firstTimestampOffset = localOffsetListRef.front().second % localOffsetListRef.front().first;
+    if(numFlushableTimestamps <= numberOfFlushedIndices){
+        localOffsetListRef.erase(localOffsetListRef.begin());
+        if (numFlushableTimestamps != numberOfFlushedIndices){
+            firstTimestampOffset = flushLocalOffsetList(localOffsetListRef, numberOfFlushedIndices - numFlushableTimestamps - firstTimestampOffset);
+        }
+    }
+    else {
+        localOffsetListRef.front().second = localOffsetListRef.front().second - std::min(numFlushableTimestamps, numberOfFlushedIndices) ;
+    }
+    return firstTimestampOffset;
+}
+
+TimestampManager::TimestampManager() {
+
+}
+
+#pragma clang diagnostic pop
+
+TEST_CASE("CHECK offset size on single offset"){
+    TimestampManager m;
+
+    std::vector<std::pair<int, int>> localOffsetList;
+
+    localOffsetList.emplace_back(1, 200);
+    int offset = m.flushLocalOffsetList(localOffsetList, 100);
+    CHECK(offset == 0);
+    CHECK(localOffsetList.front().second == 100);
+
+//CHECK(p.fitValueSwing(9, 1.12) == 0);
+}
+
+TEST_CASE("CHECK ")

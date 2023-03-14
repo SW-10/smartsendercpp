@@ -60,7 +60,6 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig, std::vector<i
     int count = 0;
     for (auto &column : timeSeriesConfig){
         timeSeries.emplace_back(column.error, column.isAbsolute, count, column.col);
-        intermediateCaches.emplace_back();
         count++;
     }
     count = 0;
@@ -100,7 +99,6 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     }
     if (!finishedSegment.cachedValues.values.empty()){
         CachedValues currentCache = std::move(finishedSegment.cachedValues);
-        intermediateCaches[finishedSegment.localId].emplace_back(&currentCache);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
         // TODO: get last constructed TS, and parse rest TS to fitSegment
@@ -111,26 +109,22 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
             fitSegment(finishedSegment.localId, currentCache.values[i], timestamps[count]);
             count++;
         }
-        intermediateCaches[finishedSegment.localId].pop_back();
     }
     else {
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.localId, finishedSegment.globalId);
     }
-    calculateFlushTimestamp();
 }
 
 void ModelManager::calculateFlushTimestamp() {
     int largestUsedTimestamp = INT32_MAX;
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
+            if (container.cachedValues.startTimestamp < 1645160665){
+                std::cout << container.globalId << std::endl;
+            }
             largestUsedTimestamp = std::min(container.cachedValues.startTimestamp, largestUsedTimestamp);
         }
     }
-    /*for (auto &cache : intermediateCaches){
-        for (auto stackCache : cache){
-            largestUsedTimestamp = std::max(stackCache->startTimestamp, largestUsedTimestamp);
-        }
-    }*/
     timestampManager.flushTimestamps(largestUsedTimestamp);
 }
 

@@ -51,7 +51,6 @@ class ModelManager {
 private:
     std::vector<TimeSeriesModelContainer> timeSeries;
     std::vector<TextModelContainer> textModels;
-    std::vector<std::vector<CachedValues*>> intermediateCaches;
     TimestampManager& timestampManager;
     static bool shouldCacheData(TimeSeriesModelContainer &container);
 public:

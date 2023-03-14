@@ -46,6 +46,8 @@ public:
     int getTimestampsFromIndexForColumns(int globID, int index);
     int getCurrentTimestamp(){return timestampCurrent;}
     std::vector<int> reconstructNTimestamps(int n);
-
+    static int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
     void flushTimestamps(int lastUsedTimestamp);
+
+    TimestampManager();
 };
