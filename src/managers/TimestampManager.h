@@ -4,6 +4,7 @@
 #include <utility>
 #include <map>
 #include <unordered_map>
+#include <functional>
 #include "ConfigManager.h"
 
 struct TwoLatestTimestamps {
@@ -27,6 +28,9 @@ public:
     std::map<int, int> offsets;
 
     std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
+
+    std::vector<std::function<void(BitVecBuilder* builder, int val)>>
+    compressionSchemes;
 
     TimestampManager(ConfigManager &confMan);
 
@@ -53,9 +57,20 @@ public:
 
     std::vector<int> reconstructNTimestamps(int n);
 
+    void makeCompressionSchemes();
+
+    std::vector<uint8_t> binaryCompressGlobOffsets(const std::vector<std::pair<int,
+            int>>&
+    offsetsl);
+
+
+    std::vector<uint8_t> binaryCompressLocOffsets(std::unordered_map<int,
+            std::vector<std::pair<int, int>>>  offsets);
 private:
     int timestampPrevious;
     bool readyForOffset = false;
     std::vector<int> allTimestampsReconstructed;
     std::vector<TwoLatestTimestamps> latestTimestamps;
+
+
 };

@@ -11,12 +11,5 @@ public:
     // (Response by Jonathan L.)
     static int BinarySearch(std::vector<int> v, int data);
 
-    static void binaryCompress(BitVecBuilder* builder, int val);
-
-    static std::vector<unsigned char> binaryCompressGlobOffsets(std::vector<std::pair<int, int>> offsets);
-
-    static std::vector<unsigned char> binaryCompressLocOffsets(std::unordered_map<int,
-            std::vector<std::pair<int, int>>>  offsets);
-
 };
 
