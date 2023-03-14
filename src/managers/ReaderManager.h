@@ -1,8 +1,11 @@
+#pragma once
+
 #include <fstream>
 #include "string"
 #include "ConfigManager.h"
 #include "ModelManager.h"
 #include "TimestampManager.h"
+#include "../ArrowFlight.h"
 #include <iostream>
 #include <unordered_map>
 #include <map>
@@ -12,9 +15,11 @@
 
 class ReaderManager {
 public:
+    ModelManager modelManager;
+
     explicit ReaderManager(std::string configFile);
 
-    void runCompressor();
+    arrow::Status runCompressor();
 
 private:
     enum class CompressionType : int {
@@ -22,7 +27,6 @@ private:
     };
     std::fstream csvFileStream;
     ConfigManager configManager;
-    ModelManager modelManager;
     TimestampManager timestampManager;
     bool bothLatLongSeen;
     std::unordered_map<

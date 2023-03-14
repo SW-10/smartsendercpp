@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include "arrow/flight/api.h"
 #include "arrow/api.h"

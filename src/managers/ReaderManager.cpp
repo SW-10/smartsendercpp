@@ -95,7 +95,9 @@ ReaderManager::ReaderManager(std::string configFile)
     }
 }
 
-void ReaderManager::runCompressor() {
+arrow::Status ReaderManager::runCompressor() {
+    ConnectionAddress address("127.0.0.1", 9999);
+
     std::vector<std::string> row;
     std::string line, word;
 
@@ -129,4 +131,20 @@ void ReaderManager::runCompressor() {
     this->csvFileStream.close();
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
+
+    auto table = VectorToColumnarTable(
+            this->modelManager.selectedModels).ValueOrDie();
+
+    auto recordBatch = MakeRecordBatch(table).ValueOrDie();
+
+    std::map<int, int> m;
+
+    ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
+    auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
+                        arrow::flight::FlightDescriptor{arrow::flight
+                                                        ::FlightDescriptor::Command("table")}, recordBatch->schema()).ValueOrDie();
+
+    ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
+
+    return arrow::Status::OK();
 }

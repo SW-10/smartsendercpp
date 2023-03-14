@@ -55,6 +55,7 @@ struct TextModelContainer {
 
 class ModelManager {
 public:
+    std::vector<SelectedModel> selectedModels;
     void fitSegment(int id, float value, int timestamp);
 
     ModelManager(std::vector<columns> &timeSeriesConfig,
@@ -73,8 +74,11 @@ private:
     std::vector<TextModelContainer> textModels;
     TimestampManager &timestampManager;
 
-    SelectedModel selectPmcMean(PmcMean &pmcMean);
-    SelectedModel selectSwing(Swing &swing);
+    static SelectedModel selectPmcMean(PmcMean &pmcMean);
+    static SelectedModel selectSwing(Swing &swing);
+    static SelectedModel selectGorilla(Gorilla &gorilla);
+
     static bool
     shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
+
 };

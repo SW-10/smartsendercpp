@@ -101,39 +101,44 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer &container) {
 SelectedModel ModelManager::selectPmcMean(PmcMean &pmcMean){
     SelectedModel model = SelectedModel();
     model.mid = PMC_MEAN;
-    model.values[0] = 0;
-    model.minValue = (pmcMean.get_sum_of_values()/pmcMean.get_length());
-    model.maxValue = 0;
+    model.values.emplace_back((pmcMean.sumOfValues/pmcMean.length));
     return model;
 };
 
 SelectedModel ModelManager::selectSwing(Swing &swing){
     SelectedModel model = SelectedModel();
-    float start_value = swing.get_upper_bound_slope() * swing.get_first_timestamp() + swing.get_upper_bound_intercept();
-    float end_value = swing.get_lower_bound_slope() * swing.get_last_timestamp() + swing.get_lower_bound_intercept();
+    float start_value = swing.upperBoundSlope * swing.firstTimestamp + swing
+            .upperBoundIntercept;
+    float end_value = swing.lowerBoundSlope * swing.lastTimestamp + swing
+            .lowerBoundIntercept;
 
     if(start_value < end_value){
-        model.maxValue = end_value;
-        model.minValue = start_value;
+        model.values.emplace_back(start_value);
+        model.values.emplace_back(end_value);
     }
     else{
-        model.maxValue = start_value;
-        model.minValue = end_value;
+        model.values.emplace_back(end_value);
+        model.values.emplace_back(start_value);
     }
 
     model.mid = SWING;
-    model.values[0] = (int)(start_value < end_value);
+    model.values.emplace_back((int)(start_value < end_value));
     return model;
 }
 
-SelectedModel selectGorilla(Gorilla* gorilla, float *uncompressed_values){
+SelectedModel ModelManager::selectGorilla(Gorilla &gorilla){
+    SelectedModel model = SelectedModel();
 
+    model.mid = GORILLA;
+    for (auto x: gorilla.compressedValues.bytes){
+        model.values.emplace_back(x);
+    }
+
+    return model;
 }
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
-
-//Recursive call chain OK
 void
 ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                       int lastTimestamp) {
@@ -147,7 +152,7 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                                    finishedSegment.swing.length));
 
     if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
-        SelectedModel selectedModel = selectPmcMean(finishedSegment.pmcMean);
+        selectedModels.emplace_back(selectPmcMean(finishedSegment.pmcMean));
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
         indexToStart = finishedSegment.pmcMean.length - indexToStart;
     } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
@@ -155,6 +160,7 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
         lastModelledTimestamp = finishedSegment.swing.lastTimestamp;
         indexToStart = finishedSegment.swing.length - indexToStart;
     } else {
+        SelectedModel selectedModel = selectGorilla(finishedSegment.gorilla);
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.length - indexToStart;
     }
