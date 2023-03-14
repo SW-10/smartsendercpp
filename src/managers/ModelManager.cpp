@@ -2,84 +2,101 @@
 // Created by power on 21-02-2023.
 //
 #define GORILLA_MAX 50
-#include "ModelManager.h"
 
+#include "ModelManager.h"
+#include <iostream>
 #include <utility>
 #include "vector"
-#include "../doctest.h"
-TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int id)
+
+TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound,
+                                                   bool errorAbsolute,
+                                                   int localId, int globalId)
         : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute) {
     this->errorBound = errorBound;
     this->errorAbsolute = errorAbsolute;
-    this->id = id;
+    this->localId = localId;
+    this->globalId = globalId;
 }
 
-/*TimeSeriesModelContainer &TimeSeriesModelContainer::operator=(const TimeSeriesModelContainer& t) {
-    pmcMean. = t.pmcMean;
-    return *this;
-}*/
-void ModelManager::fitTextModels(int id, const std::string& value){
-    TextModelContainer& container = textModels[id];
-    if(container.reCheck){
+void ModelManager::fitTextModels(int id, const std::string &value) {
+    TextModelContainer &container = textModels[id];
+    if (container.reCheck) {
         container.text = value;
         container.reCheck = false;
-    }
-    else if (container.text != value) {
+    } else if (container.text != value) {
         //TODO: Emit text model to MQTT HERE
         container.reCheck = true;
     }
 }
 
-void ModelManager::fitTimeSeriesModels(int id, float value) {
-    TimeSeriesModelContainer& container = timeSeries[id];
-    int timestamp = 1000;
-    if(container.status.SwingReady){
-        container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
-    }
-    if(container.status.pmcMeanReady){
-        container.status.pmcMeanReady = container.pmcMean.fit_value_pmc(value);
-        //TODO use timestamp index on model creation instead of check each time - Optimization
-        if (!container.status.pmcMeanReady){
-            container.pmcMean.lastTimestamp = timestamp;
-        }
-    }
-    if(container.gorilla.get_length_gorilla() < GORILLA_MAX){
-        container.gorilla.fitValueGorilla(value);
-        //TODO use timestamp index on model creation instead of check each time - Optimization
-        if (container.gorilla.get_length_gorilla() < GORILLA_MAX){
-            container.gorilla.lastTimestamp = timestamp;
-        }
-    }
-    if(shouldCacheData(container)){
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
+void ModelManager::fitSegment(int id, float value, int timestamp) {
+    TimeSeriesModelContainer &container = timeSeries[id];
+    bool cachedOnce = false;
+
+    if (container.gorilla.length > GORILLA_MAX) {
+        cachedOnce = true;
         container.cachedValues.values.emplace_back(value);
-        if (container.cachedValues.startTimestamp == NULL){
+        if (container.cachedValues.startTimestamp == 0) {
             container.cachedValues.startTimestamp = timestamp;
         }
     }
-    if(shouldConstructModel(container)){
+    if (container.status.SwingReady) {
+        container.status.SwingReady = container.swing.fitValueSwing(timestamp,
+                                                                    value);
+        //Swing sets last constructed timestamp internally
+    }
+    if (container.status.pmcMeanReady) {
+        container.status.pmcMeanReady = container.pmcMean.fitValuePmc(value);
+        if (container.status.pmcMeanReady) {
+            container.pmcMean.lastTimestamp = timestamp;
+        }
+    }
+    if (container.gorilla.length <= GORILLA_MAX) {
+        container.gorilla.fitValueGorilla(value);
+        container.gorilla.lastTimestamp = timestamp;
+        //TODO use timestamp index on model creation instead of check each time - Optimization
+    }
+    if (shouldCacheDataBasedOnPmcSwing(container) && !cachedOnce) {
+        container.cachedValues.values.emplace_back(value);
+        if (container.cachedValues.values.empty()) {
+            container.cachedValues.startTimestamp = timestamp;
+        }
+    }
+    if (shouldConstructModel(container)) {
         constructFinishedModels(container, timestamp);
     }
 }
 
-ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig, std::vector<int>& text_cols, TimestampManager& timestampManager) : timestampManager(timestampManager) {
-    for (auto &column : timeSeriesConfig){
-        timeSeries.emplace_back(column.error, column.isAbsolute, column.col);
+#pragma clang diagnostic pop
+
+ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig,
+                           std::vector<int> &textCols,
+                           TimestampManager &timestampManager)
+        : timestampManager(timestampManager) {
+    int count = 0;
+    for (auto &column: timeSeriesConfig) {
+        timeSeries.emplace_back(column.error, column.isAbsolute, count,
+                                column.col);
+        count++;
     }
-    for (auto &textColumn : text_cols){
-        textModels.emplace_back(textColumn);
+    count = 0;
+    for (auto &textColumn: textCols) {
+        textModels.emplace_back(count, textColumn);
+        count++;
     }
 }
 
-bool ModelManager::shouldCacheData(TimeSeriesModelContainer& container) {
-    return !(container.status.SwingReady &&
-    container.status.pmcMeanReady &&
-    container.gorilla.get_length_gorilla() < GORILLA_MAX);
+bool ModelManager::shouldCacheDataBasedOnPmcSwing(
+        TimeSeriesModelContainer &container) {
+    return !(container.status.SwingReady && container.status.pmcMeanReady);
 }
 
-bool ModelManager::shouldConstructModel(TimeSeriesModelContainer& container){
+bool ModelManager::shouldConstructModel(TimeSeriesModelContainer &container) {
     return !(container.status.pmcMeanReady ||
-    container.status.SwingReady ||
-    container.gorilla.get_length_gorilla() < GORILLA_MAX);
+             container.status.SwingReady ||
+             container.gorilla.length < GORILLA_MAX);
 }
 SelectedModel ModelManager::selectPmcMean(PmcMean &pmcMean){
     SelectedModel model = SelectedModel();
@@ -113,42 +130,68 @@ SelectedModel selectGorilla(Gorilla* gorilla, float *uncompressed_values){
 
 }
 
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
+
 //Recursive call chain OK
-void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSegment, int lastTimestamp){
+void
+ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
+                                      int lastTimestamp) {
     float pmcMeanSize = finishedSegment.pmcMean.getBytesPerValue();
     float swingSize = finishedSegment.swing.getBytesPerValue();
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
-    int lastModelledTimestamp = 0;
+    int lastModelledTimestamp;
+    size_t indexToStart = std::min<size_t>(finishedSegment.pmcMean.length,
+                                           std::min<size_t>(
+                                                   finishedSegment.gorilla.length,
+                                                   finishedSegment.swing.length));
 
     if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize){
         SelectedModel selectedModel = selectPmcMean(finishedSegment.pmcMean);
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
+        indexToStart = finishedSegment.pmcMean.length - indexToStart;
     } else if (swingSize < pmcMeanSize && swingSize < gorillaSize){
         SelectedModel selectedModel = selectSwing(finishedSegment.swing);
-        lastModelledTimestamp = finishedSegment.swing.get_last_timestamp();
+        lastModelledTimestamp = finishedSegment.swing.lastTimestamp;
+        indexToStart = finishedSegment.swing.length - indexToStart;
     } else {
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
+        indexToStart = finishedSegment.gorilla.length - indexToStart;
     }
-    if (finishedSegment.cachedValues.startTimestamp != NULL){
-        CachedValues innerCache = std::move(finishedSegment.cachedValues);
+    if (!finishedSegment.cachedValues.values.empty()) {
+        CachedValues currentCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
-        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound, finishedSegment.errorAbsolute, finishedSegment.id);
-        // TODO: get last constructed TS, and parse rest TS to fitTimeSeriesModels
-        int startIndex = 0, endIndex = 0;
-        timestampManager.calcIndexRangeFromTimestamps(lastModelledTimestamp, lastTimestamp, startIndex, endIndex);
-        std::vector<int> stamps;
-        //timestampManager.getTimestampFromIndex()
-        for (auto value : finishedSegment.cachedValues.values){
-            fitTimeSeriesModels(finishedSegment.id, value);
+        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
+                                                   finishedSegment.errorAbsolute,
+                                                   finishedSegment.localId,
+                                                   finishedSegment.globalId);
+
+        // TODO: get last constructed TS, and parse rest TS to fitSegment
+        std::vector<int> timestamps = timestampManager.getTimestampsByGlobalId(
+                finishedSegment.globalId,
+                lastModelledTimestamp, lastTimestamp);
+        int count = 0;
+        for (size_t i = indexToStart; i <
+                                      currentCache.values.size(); i++) { // Added +1 to indexToStart. Don't know if this is the right way?
+            fitSegment(finishedSegment.localId, currentCache.values[i],
+                       timestamps[count]);
+            count++;
         }
+    } else {
+        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
+                                                   finishedSegment.errorAbsolute,
+                                                   finishedSegment.localId,
+                                                   finishedSegment.globalId);
     }
 }
 
-TextModelContainer::TextModelContainer(int id) {
-    this->id = id;
+#pragma clang diagnostic pop
+
+TextModelContainer::TextModelContainer(int localId, int globalId) {
+    this->localId = localId;
+    this->globalId = globalId;
     this->reCheck = true;
 }
-
 
 /*TEST_CASE("Same values return 1"){
 

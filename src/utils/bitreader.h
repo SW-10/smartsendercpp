@@ -4,13 +4,16 @@
 #include <cstdlib>
 #include <vector>
 
-struct BitReader{
+struct BitReader {
     size_t nextBit;
     int bytesCount;
     std::vector<uint8_t> bytes;
-}typedef BitReader;
+};
 
-BitReader tryNewBitreader(std::vector<uint8_t> bytes, int byteCount);
-uint32_t read_bits(BitReader* bitReader, uint8_t numberOfBits);
-uint32_t read_bit(BitReader* bitReader);
+BitReader tryNewBitReader(std::vector<uint8_t> bytes, int byteCount);
+
+uint32_t readBits(BitReader *bitReader, uint8_t numberOfBits);
+
+uint32_t readBit(BitReader *bitReader);
+
 float intToFloat(uint32_t value);
