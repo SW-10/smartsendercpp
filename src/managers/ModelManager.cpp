@@ -83,7 +83,7 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer& container){
 }
 SelectedModel ModelManager::selectPmcMean(PmcMean &pmcMean){
     SelectedModel model = SelectedModel();
-    model.modelTypeId = PMC_MEAN;
+    model.mid = PMC_MEAN;
     model.values[0] = 0;
     model.minValue = (pmcMean.get_sum_of_values()/pmcMean.get_length());
     model.maxValue = 0;
@@ -104,7 +104,7 @@ SelectedModel ModelManager::selectSwing(Swing &swing){
         model.minValue = end_value;
     }
 
-    model.modelTypeId = SWING;
+    model.mid = SWING;
     model.values[0] = (int)(start_value < end_value);
     return model;
 }

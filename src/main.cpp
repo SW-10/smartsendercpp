@@ -7,15 +7,11 @@
 
 arrow::Status runMain(){
     ConnectionAddress address("127.0.0.1", 9999);
-    auto flightClient = createClient(address);
 
-    auto sqlFlightClient = createSqlClient(flightClient.ValueOrDie());
-
-    flight::FlightCallOptions call_options;
-
-    std::cout << "Executing query: '" << "SELECT * FROM intTable WHERE value >= 0" << "'" << std::endl;
-    ARROW_ASSIGN_OR_RAISE(std::unique_ptr<flight::FlightInfo> flightInfo,
-                          sqlFlightClient->Execute(call_options, "SELECT * FROM intTable WHERE value >= 0"));
+    ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
+    flightClient->DoPut(arrow::flight::FlightCallOptions(),
+                        arrow::flight::FlightDescriptor{arrow::flight
+                        ::FlightDescriptor::Command("table")}, );
 
     return arrow::Status::OK();
 }

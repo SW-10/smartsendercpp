@@ -24,10 +24,11 @@ struct CachedValues {
 };
 
 struct SelectedModel{
-    int modelTypeId;
-    float minValue;
-    float maxValue;
-    std::vector<int> values;
+    int8_t mid;
+    int16_t cid;
+    int64_t startTime;
+    int64_t endTime;
+    std::vector<float> values;
     float error;
 };
 
