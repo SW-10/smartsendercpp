@@ -29,8 +29,7 @@ public:
 
     std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
 
-    std::vector<std::function<void(BitVecBuilder* builder, int val)>>
-    compressionSchemes;
+    std::vector<std::function<void(BitVecBuilder *builder, int val)>> compressionSchemes;
 
     TimestampManager(ConfigManager &confMan);
 
@@ -38,8 +37,7 @@ public:
 
     std::vector<int> reconstructTimestamps();
 
-    bool calcIndexRangeFromTimestamps(int first, int second, int &first_out,
-                                      int &second_out);
+    bool calcIndexRangeFromTimestamps(int first, int second, int &first_out, int &second_out);
 
     int getTimestampFromIndex(int index);
 
@@ -59,18 +57,14 @@ public:
 
     void makeCompressionSchemes();
 
-    std::vector<uint8_t> binaryCompressGlobOffsets(const std::vector<std::pair<int,
-            int>>&
-    offsetsl);
+    std::vector<uint8_t> binaryCompressGlobOffsets(const std::vector<std::pair<int, int>> &offsets);
 
+    std::vector<uint8_t>
+    binaryCompressLocOffsets(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
 
-    std::vector<uint8_t> binaryCompressLocOffsets(std::unordered_map<int,
-            std::vector<std::pair<int, int>>>  offsets);
 private:
     int timestampPrevious;
     bool readyForOffset = false;
     std::vector<int> allTimestampsReconstructed;
     std::vector<TwoLatestTimestamps> latestTimestamps;
-
-
 };

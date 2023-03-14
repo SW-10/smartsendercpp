@@ -50,8 +50,7 @@ std::vector<int> TimestampManager::reconstructTimestamps() {
     return reconstructed;
 }
 
-bool TimestampManager::calcIndexRangeFromTimestamps(int first, int second,
-                                                    int &first_out,
+bool TimestampManager::calcIndexRangeFromTimestamps(int first, int second, int &first_out,
                                                     int &second_out) {
     int out1, out2;
     bool success = true;
@@ -132,15 +131,12 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
 
         // Insert new offset if first element or if current offset is not equal to previous offset
         // Else, increase counter for current offset
-        if (localOffsetList[globalID].empty() || elem->currentOffset !=
-                                                 localOffsetList[globalID][
-                                                         localOffsetList[globalID].size() -
-                                                         1].first) {
+        if (localOffsetList[globalID].empty() || elem->currentOffset != localOffsetList[globalID][
+                localOffsetList[globalID].size() - 1].first) {
             localOffsetList[globalID].emplace_back(elem->currentOffset, 1);
         } else {
 
-            localOffsetList[globalID][localOffsetList[globalID].size() -
-                                      1].second++;
+            localOffsetList[globalID][localOffsetList[globalID].size() - 1].second++;
         }
     }
 
@@ -149,20 +145,19 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
 }
 
 std::vector<int>
-TimestampManager::getTimestampsByGlobalId(int globID, int timestampA,
-                                          int timestampB) {
+TimestampManager::getTimestampsByGlobalId(int globID, int timestampA, int timestampB) {
     auto localOffsets = localOffsetList[globID];
     auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
     std::vector<int> res;
 
     int count = firstLocalTimestamp;
 
-    for(auto & localOffset : localOffsets){
+    for (auto &localOffset: localOffsets) {
         int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
 
-        for(int j = 0; j < localOffset.second; j++){
-            if(allTimestampsReconstructed.at(count) > timestampA){
-                if(allTimestampsReconstructed.at(count) > timestampB){
+        for (int j = 0; j < localOffset.second; j++) {
+            if (allTimestampsReconstructed.at(count) > timestampA) {
+                if (allTimestampsReconstructed.at(count) > timestampB) {
                     break;
                 }
 
@@ -177,62 +172,61 @@ TimestampManager::getTimestampsByGlobalId(int globID, int timestampA,
 }
 
 
-void TimestampManager::makeCompressionSchemes(){
-    // ===== SCHEMA 1 =====:
-    compressionSchemes.emplace_back([](BitVecBuilder* builder, int val) {
-            if(val >= -2 && val <= 3){
-                appendBits(builder, 0b10, 2);
-                appendBits(builder, val, 3);
-            } else if(val >= -14 && val <= 15){
-                appendBits(builder, 0b110, 3);
-                appendBits(builder, val, 5);
-            } else if(val >= -63 && val <= 64){
-                appendBits(builder, 0b1110, 4);
-                appendBits(builder, val, 7);
-            } else if(val >= -255 && val <= 256){
-                appendBits(builder, 0b11110, 5);
-                appendBits(builder, val, 9);
-            } else if(val >= -1023 && val <= 1024){
-                appendBits(builder, 0b111110, 6);
-                appendBits(builder, val, 11);
-            } else if(val >=  -4095 && val <= 4096){
-                appendBits(builder, 0b1111110, 7);
-                appendBits(builder, val, 13);
-            } else {
-                appendBits(builder, 0b1111111, 7);
-                appendBits(builder, val, 32);
-            }
-        }
+void TimestampManager::makeCompressionSchemes() {
+    // ===== SCHEME 1 =====:
+    compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
+                                        if (val >= -2 && val <= 3) {
+                                            appendBits(builder, 0b10, 2);
+                                            appendBits(builder, val, 3);
+                                        } else if (val >= -14 && val <= 15) {
+                                            appendBits(builder, 0b110, 3);
+                                            appendBits(builder, val, 5);
+                                        } else if (val >= -63 && val <= 64) {
+                                            appendBits(builder, 0b1110, 4);
+                                            appendBits(builder, val, 7);
+                                        } else if (val >= -255 && val <= 256) {
+                                            appendBits(builder, 0b11110, 5);
+                                            appendBits(builder, val, 9);
+                                        } else if (val >= -1023 && val <= 1024) {
+                                            appendBits(builder, 0b111110, 6);
+                                            appendBits(builder, val, 11);
+                                        } else if (val >= -4095 && val <= 4096) {
+                                            appendBits(builder, 0b1111110, 7);
+                                            appendBits(builder, val, 13);
+                                        } else {
+                                            appendBits(builder, 0b1111111, 7);
+                                            appendBits(builder, val, 32);
+                                        }
+                                    }
     );
 
-    // ===== SCHEMA 2 =====:
-    compressionSchemes.emplace_back([](BitVecBuilder* builder, int val) {
-            if(val >= -63 && val <= 64){
-                appendBits(builder, 0b10, 2);
-                appendBits(builder, val, 7);
-            } else if(val >= -255 && val <= 256){
-                appendBits(builder, 0b110, 3);
-                appendBits(builder, val, 9);
-            } else if(val >= -2047 && val <= 2048){
-                appendBits(builder, 0b1110, 4);
-                appendBits(builder, val, 12);
-            } else {
-                appendBits(builder, 0b1111, 4);
-                appendBits(builder, val, 32);
-            }
-        }
+    // ===== SCHEME 2 =====:
+    compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
+                                        if (val >= -63 && val <= 64) {
+                                            appendBits(builder, 0b10, 2);
+                                            appendBits(builder, val, 7);
+                                        } else if (val >= -255 && val <= 256) {
+                                            appendBits(builder, 0b110, 3);
+                                            appendBits(builder, val, 9);
+                                        } else if (val >= -2047 && val <= 2048) {
+                                            appendBits(builder, 0b1110, 4);
+                                            appendBits(builder, val, 12);
+                                        } else {
+                                            appendBits(builder, 0b1111, 4);
+                                            appendBits(builder, val, 32);
+                                        }
+                                    }
     );
 
 
     // =====================================================
-    // =============== ADD MORE SCHEMAS HERE ===============
+    // =============== ADD MORE SCHEMES HERE ===============
     // =====================================================
 }
 
-std::vector<uint8_t> TimestampManager::binaryCompressGlobOffsets
-        (const std::vector<std::pair<int, int>>& offsets) {
+std::vector<uint8_t>
+TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int>> &offsets) {
     int size = 0;
-    bool firstScheme = true;
     std::vector<unsigned char> bestCompression;
     for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
         BitVecBuilder builder;
@@ -244,7 +238,7 @@ std::vector<uint8_t> TimestampManager::binaryCompressGlobOffsets
         // Compress scheme ID.
         // Always spend 8 bits on this value, as, when decompressing, we
         // don't have a compression scheme for the first value.
-        // This allows for up to 256 different schemas.
+        // This allows for up to 256 different schemes.
         appendBits(&builder, schemeID, 8);
 
         for (const auto &elem: offsets) {
@@ -256,26 +250,24 @@ std::vector<uint8_t> TimestampManager::binaryCompressGlobOffsets
             }
         }
 
-        // Update the chosen compression if it's better
+        // Update the chosen compression if the current scheme is better
         size = builder.bytes.size();
-        if (size < bestCompression.size() || firstScheme) {
+        if (size < bestCompression.size() || bestCompression.empty()) {
             bestCompression = std::move(builder.bytes);
-            firstScheme = false;
         }
     }
     return bestCompression;
 }
 
-std::vector<uint8_t>  TimestampManager::binaryCompressLocOffsets(std::unordered_map<int,
-        std::vector<std::pair<int, int>>>  offsets){
+std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
+        std::unordered_map<int, std::vector<std::pair<int, int>>> offsets) {
 
     int size = 0;
-    bool firstScheme = true;
     std::vector<unsigned char> bestCompression;
 
     // Loop through all compression schemes and pick the one that
     // gives the best compression
-    for(int schemeID = 0; schemeID <  compressionSchemes.size(); schemeID++) {
+    for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
         BitVecBuilder builder;
         builder.currentByte = 0;
         builder.remainingBits = 8;
@@ -316,11 +308,10 @@ std::vector<uint8_t>  TimestampManager::binaryCompressLocOffsets(std::unordered_
 
         }
 
-        // Update the chosen compression if it's better
+        // Update the chosen compression if the current scheme is better
         size = builder.bytes.size();
-        if(size < bestCompression.size() || firstScheme){
+        if (size < bestCompression.size() || bestCompression.empty()) {
             bestCompression = std::move(builder.bytes);
-            firstScheme = false;
         }
     }
 
