@@ -48,8 +48,4 @@
 /.vscode
 /.vs/
 
-# Data sets
-Cobham_hour.csv
 smartsendercpp.code-workspace
-/cobham_hour_reloaded.csv
-/cobham_hour_reloaded_new.csv
