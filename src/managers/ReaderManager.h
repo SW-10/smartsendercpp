@@ -14,6 +14,9 @@
 #include <functional>
 
 class ReaderManager {
+private:
+    ConfigManager configManager;
+    TimestampManager timestampManager;
 public:
     ModelManager modelManager;
 
@@ -26,8 +29,6 @@ private:
         TEXT, VALUES, TIMESTAMP, POSITION, NONE
     };
     std::fstream csvFileStream;
-    ConfigManager configManager;
-    TimestampManager timestampManager;
     bool bothLatLongSeen;
     std::unordered_map<
             int, // key

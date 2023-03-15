@@ -96,7 +96,7 @@ ReaderManager::ReaderManager(std::string configFile)
 }
 
 arrow::Status ReaderManager::runCompressor() {
-    ConnectionAddress address("127.0.0.1", 9999);
+    ConnectionAddress address("0.0.0.0", 9999);
 
     std::vector<std::string> row;
     std::string line, word;
@@ -137,12 +137,12 @@ arrow::Status ReaderManager::runCompressor() {
 
     auto recordBatch = MakeRecordBatch(table).ValueOrDie();
 
-    std::map<int, int> m;
+    std::cout << recordBatch->ToString() << std::endl;
 
     ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
     auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
                         arrow::flight::FlightDescriptor{arrow::flight
-                                                        ::FlightDescriptor::Command("table")}, recordBatch->schema()).ValueOrDie();
+                                                        ::FlightDescriptor::Path(std::vector<std::string>{"table"})}, recordBatch->schema()).ValueOrDie();
 
     ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
 

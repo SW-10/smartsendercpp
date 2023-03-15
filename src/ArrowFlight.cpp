@@ -15,7 +15,7 @@ VectorToColumnarTable(const std::vector<struct SelectedModel> &rows) {
     arrow::MemoryPool *pool = arrow::default_memory_pool();
 
     arrow::Int8Builder midBuilder(pool);
-    arrow::Int16Builder cidBuilder(pool);
+    arrow::Int8Builder cidBuilder(pool);
     arrow::TimestampBuilder startTimeBuilder(arrow::timestamp
                                                      (arrow::TimeUnit::MILLI,
                                                       ""), pool);
@@ -57,8 +57,8 @@ VectorToColumnarTable(const std::vector<struct SelectedModel> &rows) {
     ARROW_RETURN_NOT_OK(errorBuilder.Finish(&errorArray));
 
     std::vector<std::shared_ptr<arrow::Field>> schemaVector = {
-            arrow::field("mid", arrow::int8()), arrow::field("cid",
-                                                             arrow::int16()),
+            arrow::field("mid", arrow::int8()),
+            arrow::field("cid", arrow::int8()),
             arrow::field
                     ("startTime",
                      arrow::timestamp
@@ -73,7 +73,7 @@ VectorToColumnarTable(const std::vector<struct SelectedModel> &rows) {
     auto schema = std::make_shared<arrow::Schema>(schemaVector);
 
     std::shared_ptr<arrow::Table> table =
-            arrow::Table::Make(schema, {cidArray, midArray,
+            arrow::Table::Make(schema, {midArray,cidArray,
                                         startTimeArray, endTimeArray,
                                         valuesArray, errorArray});
 
@@ -85,7 +85,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>>
 MakeRecordBatch(const std::shared_ptr<arrow::Table> &table) {
 
     std::shared_ptr<arrow::RecordBatch> rBatch;
-    ARROW_ASSIGN_OR_RAISE(rBatch,table->CombineChunksToBatch
+    ARROW_ASSIGN_OR_RAISE(rBatch, table->CombineChunksToBatch
             (arrow::default_memory_pool()))
 
     return rBatch;

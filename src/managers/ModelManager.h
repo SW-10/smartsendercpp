@@ -20,7 +20,7 @@ struct CachedValues {
 
 struct SelectedModel{
     int8_t mid;
-    int16_t cid;
+    int8_t cid;
     int64_t startTime;
     int64_t endTime;
     std::vector<float> values;
@@ -74,9 +74,9 @@ private:
     std::vector<TextModelContainer> textModels;
     TimestampManager &timestampManager;
 
-    static SelectedModel selectPmcMean(PmcMean &pmcMean);
-    static SelectedModel selectSwing(Swing &swing);
-    static SelectedModel selectGorilla(Gorilla &gorilla);
+    static SelectedModel selectPmcMean(TimeSeriesModelContainer &modelContainer);
+    static SelectedModel selectSwing(TimeSeriesModelContainer &modelContainer);
+    static SelectedModel selectGorilla(TimeSeriesModelContainer &modelContainer);
 
     static bool
     shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);

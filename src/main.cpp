@@ -3,7 +3,6 @@
 #include "doctest.h"
 #include "managers/ReaderManager.h"
 #include "arrow/api.h"
-#include "ArrowFlight.h"
 
 int main() {
     //Doctest things
