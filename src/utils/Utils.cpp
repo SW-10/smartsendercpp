@@ -11,3 +11,4 @@ int Utils::BinarySearch(std::vector<int> v, int data) {
         return index;
     }
 }
+
