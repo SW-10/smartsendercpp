@@ -1,10 +1,3 @@
-//
-// Created by power on 21-02-2023.
-//
-
-#ifndef SMARTSENDERCPP_READERMANAGER_H
-#define SMARTSENDERCPP_READERMANAGER_H
-
 #include <fstream>
 #include "string"
 #include "ConfigManager.h"
@@ -17,29 +10,27 @@
 #include <any>
 #include <functional>
 
-
-using pfunc = void (*)(std::string);
-
 class ReaderManager {
 public:
-    ReaderManager(std::string configFile);
+    explicit ReaderManager(std::string configFile);
+
     void runCompressor();
+
 private:
-    enum class CompressionType : int { TEXT, VALUES, TIMESTAMP, POSITION, NONE};
+    enum class CompressionType : int {
+        TEXT, VALUES, TIMESTAMP, POSITION, NONE
+    };
     std::fstream csvFileStream;
     ConfigManager configManager;
     ModelManager modelManager;
     TimestampManager timestampManager;
     bool bothLatLongSeen;
     std::unordered_map<
-        int, // key
-        std::tuple<
-                std::function<CompressionType(std::string*, int &lineNum)>,
-                CompressionType,
-                int
-                > // value (function, compressiontype, count)
+            int, // key
+            std::tuple<
+                    std::function<CompressionType(std::string *, int &lineNum)>,
+                    CompressionType,
+                    int
+            > // value (function, compressionType, count)
     > myMap;
 };
-
-
-#endif //SMARTSENDERCPP_READERMANAGER_H

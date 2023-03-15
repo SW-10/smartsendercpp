@@ -26,6 +26,9 @@
 *.a
 *.lib
 
+# CSV
+*.csv
+
 # Workspace files
 *.code-workspace
 
@@ -40,13 +43,9 @@
 /cmake-build-debug/
 /cmake-build-debug-coverage/
 /cmake-build-release
+/CMakeFiles
 /build/
 /.vscode
 /.vs/
 
-# Data sets
-Cobham_hour.csv
 smartsendercpp.code-workspace
-/cobham_hour_reloaded.csv
-/cobham_hour_reloaded_new.csv
-*.csv
