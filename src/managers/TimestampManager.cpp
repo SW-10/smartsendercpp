@@ -189,18 +189,6 @@ void TimestampManager::flushTimestamps(int lastUsedTimestamp){
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
 int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices){
-    /*int numFlushableTimestamps = localOffsetListRef.front().second / localOffsetListRef.front().first;
-    int firstTimestampOffset = localOffsetListRef.front().second % localOffsetListRef.front().first;
-    if(numFlushableTimestamps <= numberOfFlushedIndices){
-        localOffsetListRef.erase(localOffsetListRef.begin());
-        if (numFlushableTimestamps != numberOfFlushedIndices){
-            firstTimestampOffset = flushLocalOffsetList(localOffsetListRef, numberOfFlushedIndices - numFlushableTimestamps - firstTimestampOffset);
-        }
-    }
-    else {
-        localOffsetListRef.front().second = localOffsetListRef.front().second - std::min(numFlushableTimestamps, numberOfFlushedIndices) ;
-    }
-    return firstTimestampOffset;*/
     int numFlushableTimestamps = numberOfFlushedIndices / localOffsetListRef.front().first;
     int offset = std::max(localOffsetListRef.front().first % numberOfFlushedIndices-1, 0);
     if (numFlushableTimestamps > localOffsetListRef.front().second){

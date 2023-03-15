@@ -119,9 +119,6 @@ void ModelManager::calculateFlushTimestamp() {
     int largestUsedTimestamp = INT32_MAX;
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
-            if (container.cachedValues.startTimestamp < 1645160665){
-                std::cout << container.globalId << std::endl;
-            }
             largestUsedTimestamp = std::min(container.cachedValues.startTimestamp, largestUsedTimestamp);
         }
     }
