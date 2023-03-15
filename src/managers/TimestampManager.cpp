@@ -189,7 +189,7 @@ void TimestampManager::flushTimestamps(int lastUsedTimestamp){
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
 int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices){
-    int numFlushableTimestamps = localOffsetListRef.front().second / localOffsetListRef.front().first;
+    /*int numFlushableTimestamps = localOffsetListRef.front().second / localOffsetListRef.front().first;
     int firstTimestampOffset = localOffsetListRef.front().second % localOffsetListRef.front().first;
     if(numFlushableTimestamps <= numberOfFlushedIndices){
         localOffsetListRef.erase(localOffsetListRef.begin());
@@ -200,7 +200,28 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
     else {
         localOffsetListRef.front().second = localOffsetListRef.front().second - std::min(numFlushableTimestamps, numberOfFlushedIndices) ;
     }
-    return firstTimestampOffset;
+    return firstTimestampOffset;*/
+    int numFlushableTimestamps = numberOfFlushedIndices / localOffsetListRef.front().first;
+    int offset = std::max(localOffsetListRef.front().first % numberOfFlushedIndices-1, 0);
+    if (numFlushableTimestamps > localOffsetListRef.front().second){
+        int quantifier = localOffsetListRef.front().second;
+        int localOffset = localOffsetListRef.front().first;
+        localOffsetListRef.erase(localOffsetListRef.begin());
+        int newNumberOfIndices = numberOfFlushedIndices - quantifier * localOffset - offset;
+        if (newNumberOfIndices > 0){
+            offset = flushLocalOffsetList(localOffsetListRef, numberOfFlushedIndices - quantifier * localOffset - offset);
+        }
+        else {
+            offset = 0;
+        }
+    }
+    else if(numFlushableTimestamps == localOffsetListRef.front().second){
+        localOffsetListRef.erase(localOffsetListRef.begin());
+    }
+    else{
+        localOffsetListRef.front().second = localOffsetListRef.front().second - numFlushableTimestamps;
+    }
+    return offset;
 }
 
 TimestampManager::TimestampManager() {
@@ -222,4 +243,18 @@ TEST_CASE("CHECK offset size on single offset"){
 //CHECK(p.fitValueSwing(9, 1.12) == 0);
 }
 
-TEST_CASE("CHECK ")
+TEST_CASE("CHECK localoffset is remove"){
+    TimestampManager m;
+
+    std::vector<std::pair<int, int>> localOffsetList;
+    localOffsetList.emplace_back(2, 100);
+    localOffsetList.emplace_back(3,3);
+    localOffsetList.emplace_back(1,20);
+    int offset = m.flushLocalOffsetList(localOffsetList, 202);
+    CHECK(offset == 0);
+    CHECK(localOffsetList[0].second == 3);
+}
+
+TEST_CASE("CHECK localoffset other than zero"){
+
+}
