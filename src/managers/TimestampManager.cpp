@@ -242,11 +242,12 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
         appendBits(&builder, schemeID, 8);
 
         for (const auto &elem: offsets) {
-            std::vector<int> temp;
-            temp.push_back(elem.first);
-            temp.push_back(elem.second);
-            for (const auto &t: temp) {
-                scheme(&builder, t);
+            scheme(&builder, elem.first);
+            scheme(&builder, elem.second);
+
+            // Stop trying if size becomes larger than what we have already stored
+            if (builder.bytes.size() >= bestCompression.size() && !bestCompression.empty()) {
+                break;
             }
         }
 
@@ -290,14 +291,10 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
             // Compress index of first timestamp
             scheme(&builder, latestTimestamps.at(globID).timestampFirst);
 
-            //Loop through the offset list corresponding to current column
+            // Loop through the offset list corresponding to current column
             for (const auto &elem: list.second) {
-                std::vector<int> temp;
-                temp.push_back(elem.first);
-                temp.push_back(elem.second);
-                for (const auto &t: temp) {
-                    scheme(&builder, t);
-                }
+                scheme(&builder, elem.first);
+                scheme(&builder, elem.second);
             }
 
             // Zero bit indicates end of column, i.e. the following compressed
@@ -306,6 +303,10 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
 
             globID++;
 
+            // Stop trying if size becomes larger than what we have already stored
+            if (builder.bytes.size() >= bestCompression.size() && !bestCompression.empty()) {
+                break;
+            }
         }
 
         // Update the chosen compression if the current scheme is better
