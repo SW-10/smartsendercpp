@@ -166,24 +166,22 @@ std::vector<int> TimestampManager::getTimestampsByGlobalId(int globID, int times
     return res;
 }
 
-void TimestampManager::flushTimestamps(int lastUsedTimestamp){
+bool TimestampManager::flushTimestamps(int lastUsedTimestamp){
     int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
-    allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),allTimestampsReconstructed.begin()+index);
-    for (auto &lol : localOffsetList){
-        if (lol.second.empty()) continue;
-        if(latestTimestamps[lol.first].timestampFirst < index){
-            latestTimestamps[lol.first].timestampFirst += flushLocalOffsetList(lol.second, index-latestTimestamps[lol.first].timestampFirst);
+    if (index != 0){
+        allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),allTimestampsReconstructed.begin()+index);
+        for (auto &lol : localOffsetList){
+            if (lol.second.empty()) continue;
+            if(latestTimestamps[lol.first].timestampFirst < index){
+                latestTimestamps[lol.first].timestampFirst += flushLocalOffsetList(lol.second, index-latestTimestamps[lol.first].timestampFirst);
+            }
+            else{
+                latestTimestamps[lol.first].timestampFirst - index;
+            }
         }
-        else{
-            latestTimestamps[lol.first].timestampFirst - index;
-        }
-
+        return true;
     }
-    //std::cout << index << std::endl;
-    //debug++;
-    //if (debug > 40){
-        //std::cout << debug << std::endl;
-    //}
+    return false;
 }
 
 #pragma clang diagnostic push

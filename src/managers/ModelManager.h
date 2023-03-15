@@ -64,7 +64,7 @@ public:
 
     void fitTextModels(int localId, const std::string &value);
 
-    void calculateFlushTimestamp();
+    bool calculateFlushTimestamp();
 };
 
 

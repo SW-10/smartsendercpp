@@ -115,14 +115,14 @@ void ModelManager::constructFinishedModels(TimeSeriesModelContainer& finishedSeg
     }
 }
 
-void ModelManager::calculateFlushTimestamp() {
+bool ModelManager::calculateFlushTimestamp() {
     int largestUsedTimestamp = INT32_MAX;
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
             largestUsedTimestamp = std::min(container.cachedValues.startTimestamp, largestUsedTimestamp);
         }
     }
-    timestampManager.flushTimestamps(largestUsedTimestamp);
+    return timestampManager.flushTimestamps(largestUsedTimestamp);
 }
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {

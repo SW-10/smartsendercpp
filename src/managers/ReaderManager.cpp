@@ -91,7 +91,6 @@ void ReaderManager::runCompressor() {
     std::getline(this->csvFileStream, line);
     Timer time;
     time.begin();
-
     int lineNumber = 0;
     int timestampFlusherPenalty = 50;
     int lastTimestampFlush = 0;
@@ -111,7 +110,13 @@ void ReaderManager::runCompressor() {
             // TODO: Adjust penalty dynamically
             if (lastTimestampFlush + timestampFlusherPenalty == lineNumber){
                 lastTimestampFlush = lineNumber;
-                modelManager.calculateFlushTimestamp();
+                bool didFlush = modelManager.calculateFlushTimestamp();
+                if (didFlush){
+                    timestampFlusherPenalty -= 5;
+                }
+                else {
+                    timestampFlusherPenalty +=5;
+                }
             }
         }
         lineNumber++;
