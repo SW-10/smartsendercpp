@@ -53,9 +53,12 @@ public:
 
     std::vector<int> reconstructNTimestamps(int n);
 
+    std::vector<TwoLatestTimestamps> latestTimestamps;
+
+    std::vector<int> allTimestampsReconstructed;
 private:
     int timestampPrevious;
     bool readyForOffset = false;
-    std::vector<int> allTimestampsReconstructed;
-    std::vector<TwoLatestTimestamps> latestTimestamps;
+
+
 };

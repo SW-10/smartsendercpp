@@ -17,10 +17,10 @@ VectorToColumnarTable(const std::vector<struct SelectedModel> &rows) {
     arrow::Int8Builder midBuilder(pool);
     arrow::Int8Builder cidBuilder(pool);
     arrow::TimestampBuilder startTimeBuilder(arrow::timestamp
-                                                     (arrow::TimeUnit::MILLI,
+                                                     (arrow::TimeUnit::SECOND,
                                                       ""), pool);
     arrow::TimestampBuilder endTimeBuilder(arrow::timestamp
-                                                   (arrow::TimeUnit::MILLI,
+                                                   (arrow::TimeUnit::SECOND,
                                                     ""), pool);
 
     arrow::ListBuilder valuesBuilder(pool, std::make_shared<arrow::FloatBuilder>
@@ -62,11 +62,11 @@ VectorToColumnarTable(const std::vector<struct SelectedModel> &rows) {
             arrow::field
                     ("startTime",
                      arrow::timestamp
-                             (arrow::TimeUnit::MILLI)),
+                             (arrow::TimeUnit::SECOND)),
             arrow::field
                     ("endTime",
                      arrow::timestamp(
-                             arrow::TimeUnit::MILLI)),
+                             arrow::TimeUnit::SECOND)),
             arrow::field("values", arrow::list(arrow::float32())),
             arrow::field("error", arrow::float32())};
 
