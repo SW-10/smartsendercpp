@@ -264,33 +264,32 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
         std::unordered_map<int, std::vector<std::pair<int, int>>> offsets) {
 
     int size = 0;
-    std::vector<unsigned char> bestCompression;
 
     //Sort unordered map
     std::map<int, std::vector<std::pair<int, int>>> ordered(offsets.begin(), offsets.end());
 
+    std::vector<unsigned char> allColumnsCompressed;
 
-    // Loop through all compression schemes and pick the one that
-    // gives the best compression
-    for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
+    // Loop through all columns
+    int globID = 0;
+    for (const auto &list: ordered) {
         BitVecBuilder builder;
         builder.currentByte = 0;
         builder.remainingBits = 8;
         builder.bytesCounter = 0;
-        const auto scheme = compressionSchemes.at(schemeID);
+        std::vector<unsigned char> bestCompression;
 
-        // Compress scheme ID.
-        // Always spend 8 bits on this value, as, when decompressing, we
-        // don't have a compression scheme for the first value.
-        // This allows for up to 256 different schemas.
-        appendBits(&builder, schemeID, 8);
+        // Loop through all compression schemes and pick the one that
+        // gives the best compression
+        for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
 
-        // Loop through all columns
-        int globID = 0;
-        for (const auto &list: ordered) {
+            const auto scheme = compressionSchemes.at(schemeID);
 
-            // Compress global ID
-            scheme(&builder, globID);
+            // Compress scheme ID.
+            // Always spend 8 bits on this value, as, when decompressing, we
+            // don't have a compression scheme for the first value.
+            // This allows for up to 256 different schemes.
+            appendBits(&builder, schemeID, 8);
 
             // Compress index of first timestamp
             scheme(&builder, latestTimestamps.at(globID).timestampFirst);
@@ -305,20 +304,25 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
             // number is the global id of the next column
             appendAZeroBit(&builder);
 
-            globID++;
+            std::cout << "GlobID: " << globID << " scheme: " << schemeID << " size: " << builder.bytes.size() << std::endl;
 
             // Stop trying if size becomes larger than what we have already stored
             if (builder.bytes.size() >= bestCompression.size() && !bestCompression.empty()) {
                 break;
             }
+
+            // Update the chosen compression if the current scheme is better
+            size = builder.bytes.size();
+            if (size < bestCompression.size() || bestCompression.empty()) {
+                bestCompression = std::move(builder.bytes);
+            }
         }
 
-        // Update the chosen compression if the current scheme is better
-        size = builder.bytes.size();
-        if (size < bestCompression.size() || bestCompression.empty()) {
-            bestCompression = std::move(builder.bytes);
-        }
+        globID++;
+        // Append the result from the best compression scheme to the result vector
+        allColumnsCompressed.insert(allColumnsCompressed.end(), bestCompression.begin(),
+                                    bestCompression.end());
     }
 
-    return bestCompression;
+    return allColumnsCompressed;
 }
