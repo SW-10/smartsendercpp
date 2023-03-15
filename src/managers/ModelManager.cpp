@@ -50,7 +50,7 @@ void ModelManager::fitSegment(int id, float value, int timestamp) {
     if(shouldCacheData(container)) {
         container.cachedValues.values.emplace_back(value);
         //TODO Check on empty vector, but bug now
-        if (container.cachedValues.startTimestamp == 0){
+        if (container.cachedValues.startTimestamp == -1){
             container.cachedValues.startTimestamp = timestamp;
         }
     }

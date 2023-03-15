@@ -127,7 +127,7 @@ void ReaderManager::runCompressor() {
             std::get<1>(mapElement->second) = ct;
             count++;
             // TODO: Adjust penalty dynamically
-            if (lastTimestampFlush + timestampFlusherPenalty == lineNumber){
+            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
                 lastTimestampFlush = lineNumber;
                 bool didFlush = modelManager.calculateFlushTimestamp();
                 if (didFlush){

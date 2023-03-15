@@ -13,7 +13,7 @@ struct Status {
 };
 
 struct CachedValues {
-    int startTimestamp = 0;
+    int startTimestamp = -1;
     std::vector<float> values;
 };
 

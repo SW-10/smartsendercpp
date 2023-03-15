@@ -326,15 +326,19 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
 }
 bool TimestampManager::flushTimestamps(int lastUsedTimestamp){
     int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
+    // Flush timestamps when last used timestamp is not the first in vector
     if (index != 0){
+        // Erase global timestamps
         allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),allTimestampsReconstructed.begin()+index);
+        // Deletion of local offset lists
         for (auto &lol : localOffsetList){
             if (lol.second.empty()) continue;
+            //Check whether the corresponding offset list contains deleted timestamps
             if(latestTimestamps[lol.first].timestampFirst < index){
                 latestTimestamps[lol.first].timestampFirst += flushLocalOffsetList(lol.second, index-latestTimestamps[lol.first].timestampFirst);
             }
             else{
-                latestTimestamps[lol.first].timestampFirst - index;
+                latestTimestamps[lol.first].timestampFirst -= index;
             }
         }
         return true;
@@ -345,12 +349,16 @@ bool TimestampManager::flushTimestamps(int lastUsedTimestamp){
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
 int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices){
+    // Calculate max flushable delta count
     int numFlushableTimestamps = numberOfFlushedIndices / localOffsetListRef.front().first;
+    // Calculate offset to next timestamp
+    // Minus 1 as rest of code treats 0 as current timestamp
     int offset = std::max(localOffsetListRef.front().first % numberOfFlushedIndices-1, 0);
     if (numFlushableTimestamps > localOffsetListRef.front().second){
         int quantifier = localOffsetListRef.front().second;
         int localOffset = localOffsetListRef.front().first;
         localOffsetListRef.erase(localOffsetListRef.begin());
+        // How many timestamps which has not been flushed in current instance
         int newNumberOfIndices = numberOfFlushedIndices - quantifier * localOffset - offset;
         if (newNumberOfIndices > 0){
             offset = flushLocalOffsetList(localOffsetListRef, numberOfFlushedIndices - quantifier * localOffset - offset);
