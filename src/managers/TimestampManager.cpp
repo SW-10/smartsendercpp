@@ -266,6 +266,10 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     int size = 0;
     std::vector<unsigned char> bestCompression;
 
+    //Sort unordered map
+    std::map<int, std::vector<std::pair<int, int>>> ordered(offsets.begin(), offsets.end());
+
+
     // Loop through all compression schemes and pick the one that
     // gives the best compression
     for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
@@ -283,7 +287,7 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
 
         // Loop through all columns
         int globID = 0;
-        for (const auto &list: offsets) {
+        for (const auto &list: ordered) {
 
             // Compress global ID
             scheme(&builder, globID);
