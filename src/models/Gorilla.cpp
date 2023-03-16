@@ -2,6 +2,8 @@
 #include <cmath>
 #include "../doctest.h"
 
+#define GORILLA_MAX 50
+
 const uint8_t SIZE_OF_32INT = (uint8_t) sizeof(int32_t) * 8;
 
 uint8_t Gorilla::leadingZeros(const uint32_t &num) {
@@ -45,7 +47,10 @@ uint32_t Gorilla::floatToBit(float val) {
     return *(uint32_t *) &val;
 }
 
-void Gorilla::fitValueGorilla(float value) {
+bool Gorilla::fitValueGorilla(float value) {
+    if (length >= GORILLA_MAX){
+        return false;
+    }
     uint32_t valueAsInteger = floatToBit(
             value); // Read the binary representation of the float value as an integer, which can then be used for bitwise operations.
     uint32_t lastValueAsInteger = floatToBit(lastValue);
@@ -90,6 +95,7 @@ void Gorilla::fitValueGorilla(float value) {
 
     lastValue = value;
     length++;
+    return true;
 }
 
 float Gorilla::getBytesPerValue() const {

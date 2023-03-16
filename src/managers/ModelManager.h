@@ -9,10 +9,11 @@
 struct Status {
     bool pmcMeanReady = true;
     bool SwingReady = true;
+    bool gorillaReady = true;
 };
 
 struct CachedValues {
-    int startTimestamp = 0;
+    int startTimestamp = -1;
     std::vector<float> values;
 };
 
@@ -57,11 +58,12 @@ public:
 
     void fitTextModels(int localId, const std::string &value);
 
+    bool calculateFlushTimestamp();
+
 private:
     std::vector<TimeSeriesModelContainer> timeSeries;
     std::vector<TextModelContainer> textModels;
     TimestampManager &timestampManager;
 
-    static bool
-    shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
+    static bool shouldCacheData(TimeSeriesModelContainer &container);
 };
