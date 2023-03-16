@@ -358,7 +358,7 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
         int quantifier = localOffsetListRef.front().second;
         int localOffset = localOffsetListRef.front().first;
         localOffsetListRef.erase(localOffsetListRef.begin());
-        // How many timestamps which has not been flushed in current instance
+        // How many timestamps that have not been flushed in current instance
         int newNumberOfIndices = numberOfFlushedIndices - quantifier * localOffset - offset;
         if (newNumberOfIndices > 0){
             offset = flushLocalOffsetList(localOffsetListRef, numberOfFlushedIndices - quantifier * localOffset - offset);
@@ -391,8 +391,6 @@ TEST_CASE("CHECK offset size on single offset"){
     int offset = m.flushLocalOffsetList(localOffsetList, 100);
     CHECK(offset == 0);
     CHECK(localOffsetList.front().second == 100);
-
-//CHECK(p.fitValueSwing(9, 1.12) == 0);
 }
 
 TEST_CASE("CHECK localoffset is remove"){
