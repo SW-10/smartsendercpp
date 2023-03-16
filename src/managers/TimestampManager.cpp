@@ -272,17 +272,21 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
 
     // Loop through all columns
     int globID = 0;
+
+
+    std::vector<int> bestSchemes(63, -1);
+
     for (const auto &list: ordered) {
-        BitVecBuilder builder;
-        builder.currentByte = 0;
-        builder.remainingBits = 8;
-        builder.bytesCounter = 0;
+
         std::vector<unsigned char> bestCompression;
 
         // Loop through all compression schemes and pick the one that
         // gives the best compression
         for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
-
+            BitVecBuilder builder;
+            builder.currentByte = 0;
+            builder.remainingBits = 8;
+            builder.bytesCounter = 0;
             const auto scheme = compressionSchemes.at(schemeID);
 
             // Compress scheme ID.
@@ -314,14 +318,29 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
             // Update the chosen compression if the current scheme is better
             size = builder.bytes.size();
             if (size < bestCompression.size() || bestCompression.empty()) {
-                bestCompression = std::move(builder.bytes);
+                bestSchemes.at(globID) = schemeID;
+                bestCompression = builder.bytes;
             }
         }
 
         globID++;
-        // Append the result from the best compression scheme to the result vector
-        allColumnsCompressed.insert(allColumnsCompressed.end(), bestCompression.begin(),
-                                    bestCompression.end());
+
+    }
+
+    // Run through everything again, use the best compression scheme found above and append to the same builder
+    BitVecBuilder finalCompression;
+    finalCompression.currentByte = 0;
+    finalCompression.remainingBits = 8;
+    finalCompression.bytesCounter = 0;
+    for(int i = 1; i < ordered.size(); i++){
+        auto scheme = compressionSchemes.at(bestSchemes.at(i));
+        appendBits(&finalCompression, bestSchemes.at(i), 8);
+        scheme(&finalCompression, latestTimestamps.at(i).timestampFirst);
+        for(auto j : ordered[i]){
+            scheme(&finalCompression, j.first);
+            scheme(&finalCompression, j.second);
+        }
+        appendAZeroBit(&finalCompression);
     }
 
     return allColumnsCompressed;
