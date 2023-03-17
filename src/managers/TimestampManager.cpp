@@ -1,6 +1,8 @@
 #include "../utils/Utils.h"
 #include "TimestampManager.h"
 #include <iostream>
+#include "../constants.h"
+#include <tuple>
 
 
 TimestampManager::TimestampManager(ConfigManager &confMan) {
@@ -274,7 +276,8 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     int globID = 0;
 
 
-    std::vector<int> bestSchemes(63, -1);
+    // TODO: Count shouldn't be hardcoded here
+    std::vector<int> bestSchemes(ordered.size(), -1);
 
     for (const auto &list: ordered) {
 
@@ -299,21 +302,24 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
             scheme(&builder, latestTimestamps.at(globID).timestampFirst);
 
             // Loop through the offset list corresponding to current column
+            int count = 0;
             for (const auto &elem: list.second) {
                 scheme(&builder, elem.first);
                 scheme(&builder, elem.second);
+                count++;
             }
 
             // Zero bit indicates end of column, i.e. the following compressed
             // number is the global id of the next column
             appendAZeroBit(&builder);
 
-            std::cout << "GlobID: " << globID << " scheme: " << schemeID << " size: " << builder.bytes.size() << std::endl;
+            std::cout << "GlobID: " << globID << " scheme: " << schemeID << " size: "
+                      << builder.bytes.size() << std::endl;
 
             // Stop trying if size becomes larger than what we have already stored
-            if (builder.bytes.size() >= bestCompression.size() && !bestCompression.empty()) {
-                break;
-            }
+//            if (builder.bytes.size() >= bestCompression.size() && !bestCompression.empty()) {
+//                break;
+//            }
 
             // Update the chosen compression if the current scheme is better
             size = builder.bytes.size();
@@ -332,16 +338,125 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     finalCompression.currentByte = 0;
     finalCompression.remainingBits = 8;
     finalCompression.bytesCounter = 0;
-    for(int i = 1; i < ordered.size(); i++){
+    for (int i = 0; i < ordered.size(); i++) {
         auto scheme = compressionSchemes.at(bestSchemes.at(i));
         appendBits(&finalCompression, bestSchemes.at(i), 8);
         scheme(&finalCompression, latestTimestamps.at(i).timestampFirst);
-        for(auto j : ordered[i]){
+        std::cout << "i: " << i << " " << "FIRST TIMESTAMP: "
+                  << latestTimestamps.at(i).timestampFirst << std::endl;
+        for (auto j: ordered[i + 1]) {
             scheme(&finalCompression, j.first);
             scheme(&finalCompression, j.second);
         }
         appendAZeroBit(&finalCompression);
     }
+    finalCompression.bytes.push_back(finalCompression.currentByte);
 
+    grid(finalCompression.bytes);
     return allColumnsCompressed;
+}
+
+
+std::vector<int>
+TimestampManager::grid(std::vector<uint8_t> values) {
+    int globID = 0;
+    std::map<int, std::vector<std::tuple<int, int>>> offsetsDecompressed;
+    std::vector<int> temp;
+    bool firstTimestamp = true;
+    int count = 0;
+    std::vector<int> decompressed;
+    BitReader bitReader = tryNewBitReader(values, values.size());
+    int leadingZeros = 255;
+    int trailingZeros = 0;
+    uint8_t schemeID = readBits(&bitReader, 8);
+    decompressed.push_back(schemeID);
+
+    for (int i = 0; i < values.size()+542; i++) {  // <==== values.size()+300 skal rettes til antallet af dekomprimerede værdier
+        int firstTimestamp = 0;
+        if (readBit(&bitReader)) {
+            if (readBit(&bitReader)) {
+                if (readBit(&bitReader)) {
+                    if (readBit(&bitReader)) {
+                        if (readBit(&bitReader)) {
+                            if (readBit(&bitReader)) {
+                                if (readBit(&bitReader)) {
+                                    //1111111
+//                                    decompressed.push_back(readBits(&bitReader, 32));
+                                    std::cout << "1: i: " << i << std::endl;
+                                    if (!firstTimestamp) {
+                                        temp.push_back(readBits(&bitReader, 32));
+                                    } else { readBits(&bitReader, 32); }
+                                    goto done;
+                                }
+                                //1111110
+//                                decompressed.push_back(readBits(&bitReader, 13));
+                                std::cout << "2: i: " << i << std::endl;
+                                if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 13)); }
+                                else { readBits(&bitReader, 13); }
+                                goto done;
+                            }
+                            //111110
+//                            decompressed.push_back(readBits(&bitReader, 11));
+                            std::cout << "3: i: " << i << std::endl;
+                            if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 11)); }
+                            else { readBits(&bitReader, 11); }
+                            goto done;
+                        }
+                        //11110
+//                        decompressed.push_back(readBits(&bitReader, 9));
+                        std::cout << "4: i: " << i << std::endl;
+                        if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 9)); }
+                        else { readBits(&bitReader, 9); }
+
+                        goto done;
+                    }
+                    //1110
+//                    decompressed.push_back(readBits(&bitReader, 7));
+                    std::cout << "5: i: " << i << std::endl;
+                    if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 7)); }
+                    else { readBits(&bitReader, 7); }
+
+                    goto done;
+                }
+                //110
+//                decompressed.push_back(readBits(&bitReader, 5));
+                std::cout << "6: i: " << i << std::endl;
+                if (!firstTimestamp) {
+                    temp.push_back(readBits(&bitReader, 5));
+                } else {
+                    readBits(&bitReader, 5);
+                }
+
+                goto done;
+            }
+            //10
+//            decompressed.push_back(readBits(&bitReader, 3));
+            std::cout << "7: i: " << i << std::endl;
+            if (!firstTimestamp) {
+                temp.push_back(readBits(&bitReader, 3));
+            } else {
+                readBits(&bitReader, 3);
+            }
+
+            goto done;
+        } else {
+            std::cout << "NONO i: " << i << std::endl;
+            uint8_t schemeID = readBits(&bitReader, 8);
+            firstTimestamp = true;
+            decompressed.push_back(schemeID);
+            globID++;
+            count=0;
+            continue;
+        }
+        done:
+        firstTimestamp = false;
+        if (temp.size() == 2) {
+            offsetsDecompressed[globID].push_back(std::make_pair(temp.at(0), temp.at(1)));
+            std::cout << "GLOB-ID: " << globID << " count: " << count << std::endl;
+            count++;
+            temp.clear();
+        };
+    }
+
+    return decompressed;
 }

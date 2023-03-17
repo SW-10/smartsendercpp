@@ -62,6 +62,8 @@ public:
     std::vector<uint8_t>
     binaryCompressLocOffsets(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
 
+    std::vector<int> grid(std::vector<uint8_t> values);
+
 private:
     int timestampPrevious;
     bool readyForOffset = false;
