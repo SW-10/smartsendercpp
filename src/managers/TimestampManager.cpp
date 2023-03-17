@@ -275,8 +275,6 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     // Loop through all columns
     int globID = 0;
 
-
-    // TODO: Count shouldn't be hardcoded here
     std::vector<int> bestSchemes(ordered.size(), -1);
 
     for (const auto &list: ordered) {
@@ -313,14 +311,6 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
             // number is the global id of the next column
             appendAZeroBit(&builder);
 
-            std::cout << "GlobID: " << globID << " scheme: " << schemeID << " size: "
-                      << builder.bytes.size() << std::endl;
-
-            // Stop trying if size becomes larger than what we have already stored
-//            if (builder.bytes.size() >= bestCompression.size() && !bestCompression.empty()) {
-//                break;
-//            }
-
             // Update the chosen compression if the current scheme is better
             size = builder.bytes.size();
             if (size < bestCompression.size() || bestCompression.empty()) {
@@ -333,11 +323,48 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
 
     }
 
-    // Run through everything again, use the best compression scheme found above and append to the same builder
+    // The following code finds best compression scheme for compressing the size of the local offset list
+
+    int lolSize = getSizeOfLocalOffsetList();
+    int bestSchemeForSize = 0;
+    std::vector<unsigned char> bestCompressionForSize;
+    for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
+        BitVecBuilder builder;
+        builder.currentByte = 0;
+        builder.remainingBits = 8;
+        builder.bytesCounter = 0;
+        const auto scheme = compressionSchemes.at(schemeID);
+
+        // Compress scheme ID.
+        // Always spend 8 bits on this value, as, when decompressing, we
+        // don't have a compression scheme for the first value.
+        // This allows for up to 256 different schemes.
+        appendBits(&builder, schemeID, 8);
+
+        // Compress size of local offset list
+        scheme(&builder, lolSize);
+        builder.bytes.push_back(builder.currentByte);
+        // Update the chosen compression if the current scheme is better
+        size = (builder.bytes.size() * 8) - builder.remainingBits;
+
+        if (size < bestCompressionForSize.size() || bestCompressionForSize.empty()) {
+            bestSchemeForSize = schemeID;
+            bestCompressionForSize = builder.bytes;
+        }
+    }
+
+
+    // The following code runs through everything again, uses the best compression schemes found above and appends to the same builder
+
     BitVecBuilder finalCompression;
     finalCompression.currentByte = 0;
     finalCompression.remainingBits = 8;
     finalCompression.bytesCounter = 0;
+
+    auto schemeForSize = compressionSchemes.at(bestSchemeForSize);
+    appendBits(&finalCompression, bestSchemeForSize, 8);
+    schemeForSize(&finalCompression, lolSize);
+
     for (int i = 0; i < ordered.size(); i++) {
         auto scheme = compressionSchemes.at(bestSchemes.at(i));
         appendBits(&finalCompression, bestSchemes.at(i), 8);
@@ -365,12 +392,51 @@ TimestampManager::grid(std::vector<uint8_t> values) {
     bool firstTimestamp = true;
     std::vector<int> decompressed;
     BitReader bitReader = tryNewBitReader(values, values.size());
-    int leadingZeros = 255;
-    int trailingZeros = 0;
+
+    //Get size of offset list. The compression scheme of the size is the first 8 bits, the next value is the actual size
+    uint8_t sizeSchemeID = readBits(&bitReader, 8);
+    int lolSize = 0;
+    if (readBit(&bitReader)) {
+        if (readBit(&bitReader)) {
+            if (readBit(&bitReader)) {
+                if (readBit(&bitReader)) {
+                    if (readBit(&bitReader)) {
+                        if (readBit(&bitReader)) {
+                            if (readBit(&bitReader)) {
+                                //1111111
+                                lolSize = readBits(&bitReader, 32);
+                                goto size_received;
+                            }
+                            //1111110
+                            lolSize = readBits(&bitReader, 13);
+                            goto size_received;
+                        }
+                        //111110
+                        lolSize = readBits(&bitReader, 11);
+                        goto size_received;
+                    }
+                    //11110
+                    lolSize = readBits(&bitReader, 9);
+                    goto size_received;
+                }
+                //1110
+                lolSize = readBits(&bitReader, 7);
+                goto size_received;
+            }
+            //110
+            lolSize = readBits(&bitReader, 5);
+            goto size_received;
+        }
+        //10
+        lolSize = readBits(&bitReader, 3);
+        goto size_received;
+    }
+    size_received:
+
     uint8_t schemeID = readBits(&bitReader, 8);
     decompressed.push_back(schemeID);
 
-    for (int i = 0; i < values.size()+542; i++) {  // <==== values.size()+300 skal rettes til antallet af dekomprimerede værdier
+    for (int i = 0; i < lolSize-1; i++) {  // <==== values.size()+300 skal rettes til antallet af dekomprimerede værdier
         int currentValue = 0;
         if (readBit(&bitReader)) {
             if (readBit(&bitReader)) {
@@ -425,4 +491,19 @@ TimestampManager::grid(std::vector<uint8_t> values) {
     }
 
     return decompressed;
+}
+
+int TimestampManager::getSizeOfLocalOffsetList(){
+    int size = 0;
+
+    // Offsets
+    for(auto i : localOffsetList){
+        size ++; // Scheme ID
+        size ++; // First timestamp
+        for(auto j : i.second){
+            size += 2; // Each element in localOffsetList consists of two numbers (a pair)
+        }
+    }
+
+    return size;
 }

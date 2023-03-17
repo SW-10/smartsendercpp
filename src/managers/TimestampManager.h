@@ -69,4 +69,5 @@ private:
     bool readyForOffset = false;
     std::vector<int> allTimestampsReconstructed;
     std::vector<TwoLatestTimestamps> latestTimestamps;
+    int getSizeOfLocalOffsetList();
 };
