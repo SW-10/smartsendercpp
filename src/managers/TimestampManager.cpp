@@ -363,7 +363,6 @@ TimestampManager::grid(std::vector<uint8_t> values) {
     std::map<int, std::vector<std::tuple<int, int>>> offsetsDecompressed;
     std::vector<int> temp;
     bool firstTimestamp = true;
-    int count = 0;
     std::vector<int> decompressed;
     BitReader bitReader = tryNewBitReader(values, values.size());
     int leadingZeros = 255;
@@ -372,7 +371,7 @@ TimestampManager::grid(std::vector<uint8_t> values) {
     decompressed.push_back(schemeID);
 
     for (int i = 0; i < values.size()+542; i++) {  // <==== values.size()+300 skal rettes til antallet af dekomprimerede værdier
-        int firstTimestamp = 0;
+        int currentValue = 0;
         if (readBit(&bitReader)) {
             if (readBit(&bitReader)) {
                 if (readBit(&bitReader)) {
@@ -381,79 +380,46 @@ TimestampManager::grid(std::vector<uint8_t> values) {
                             if (readBit(&bitReader)) {
                                 if (readBit(&bitReader)) {
                                     //1111111
-//                                    decompressed.push_back(readBits(&bitReader, 32));
-                                    std::cout << "1: i: " << i << std::endl;
-                                    if (!firstTimestamp) {
-                                        temp.push_back(readBits(&bitReader, 32));
-                                    } else { readBits(&bitReader, 32); }
+                                    currentValue = readBits(&bitReader, 32);
                                     goto done;
                                 }
                                 //1111110
-//                                decompressed.push_back(readBits(&bitReader, 13));
-                                std::cout << "2: i: " << i << std::endl;
-                                if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 13)); }
-                                else { readBits(&bitReader, 13); }
+                                currentValue = readBits(&bitReader, 13);
                                 goto done;
                             }
                             //111110
-//                            decompressed.push_back(readBits(&bitReader, 11));
-                            std::cout << "3: i: " << i << std::endl;
-                            if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 11)); }
-                            else { readBits(&bitReader, 11); }
+                            currentValue = readBits(&bitReader, 11);
                             goto done;
                         }
                         //11110
-//                        decompressed.push_back(readBits(&bitReader, 9));
-                        std::cout << "4: i: " << i << std::endl;
-                        if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 9)); }
-                        else { readBits(&bitReader, 9); }
-
+                        currentValue = readBits(&bitReader, 9);
                         goto done;
                     }
                     //1110
-//                    decompressed.push_back(readBits(&bitReader, 7));
-                    std::cout << "5: i: " << i << std::endl;
-                    if (!firstTimestamp) { temp.push_back(readBits(&bitReader, 7)); }
-                    else { readBits(&bitReader, 7); }
-
+                    currentValue = readBits(&bitReader, 7);
                     goto done;
                 }
                 //110
-//                decompressed.push_back(readBits(&bitReader, 5));
-                std::cout << "6: i: " << i << std::endl;
-                if (!firstTimestamp) {
-                    temp.push_back(readBits(&bitReader, 5));
-                } else {
-                    readBits(&bitReader, 5);
-                }
-
+                currentValue = readBits(&bitReader, 5);
                 goto done;
             }
             //10
-//            decompressed.push_back(readBits(&bitReader, 3));
-            std::cout << "7: i: " << i << std::endl;
-            if (!firstTimestamp) {
-                temp.push_back(readBits(&bitReader, 3));
-            } else {
-                readBits(&bitReader, 3);
-            }
-
+            currentValue = readBits(&bitReader, 3);
             goto done;
         } else {
-            std::cout << "NONO i: " << i << std::endl;
             uint8_t schemeID = readBits(&bitReader, 8);
             firstTimestamp = true;
             decompressed.push_back(schemeID);
             globID++;
-            count=0;
             continue;
         }
         done:
+        if (!firstTimestamp) {
+            temp.push_back(currentValue);
+        }
         firstTimestamp = false;
         if (temp.size() == 2) {
             offsetsDecompressed[globID].push_back(std::make_pair(temp.at(0), temp.at(1)));
-            std::cout << "GLOB-ID: " << globID << " count: " << count << std::endl;
-            count++;
             temp.clear();
         };
     }
