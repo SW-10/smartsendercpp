@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <functional>
 #include "ConfigManager.h"
+#include "../utils/Utils.h"
 
 struct TwoLatestTimestamps {
     int timestampCurrent;
@@ -62,7 +63,9 @@ public:
     std::vector<uint8_t>
     binaryCompressLocOffsets(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
 
-    std::vector<int> grid(std::vector<uint8_t> values);
+    std::vector<int> decompressLocalOffsetList(std::vector<uint8_t> values);
+
+    bool decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader, int* currentVal, std::vector<int> *decompressed);
 
 private:
     int timestampPrevious;

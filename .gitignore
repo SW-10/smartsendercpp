@@ -43,6 +43,8 @@
 /cmake-build-debug/
 /cmake-build-debug-coverage/
 /cmake-build-release
+/cmake-build-debug-mingw
+/cmake-build-debug-visual-studio
 /CMakeFiles
 /build/
 /.vscode
