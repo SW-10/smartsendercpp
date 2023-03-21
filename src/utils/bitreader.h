@@ -12,12 +12,11 @@ struct BitVecBuilder {
 };
 
 struct BitReader {
+    BitReader(std::vector<uint8_t> bytes, int byteCount);
     size_t nextBit;
     int bytesCount;
     std::vector<uint8_t> bytes;
 };
-
-BitReader tryNewBitReader(std::vector<uint8_t> bytes, int byteCount);
 
 uint32_t readBits(BitReader *bitReader, uint8_t numberOfBits);
 

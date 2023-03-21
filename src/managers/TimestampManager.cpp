@@ -453,7 +453,7 @@ TimestampManager::decompressLocalOffsetList(std::vector<uint8_t> values) {
     std::map<int, std::vector<std::tuple<int, int>>> offsetsDecompressed;
     std::vector<int> temp;
     std::vector<int> decompressed;
-    BitReader bitReader = tryNewBitReader(values, values.size());
+    BitReader bitReader(values, values.size());
 
     std::vector<std::vector<int>> schemes;
 
@@ -486,8 +486,7 @@ TimestampManager::decompressLocalOffsetList(std::vector<uint8_t> values) {
         // the end of each column.
         // When that happens, read the next eight bits to receive new schemeID
         if (!decompressNextValue(schemes.at(schemeID), &bitReader, &currentValue, &decompressed)) {
-            int schID = readBits(&bitReader, 8);
-            schemeID = schID;
+            schemeID= readBits(&bitReader, 8);
         };
     }
 

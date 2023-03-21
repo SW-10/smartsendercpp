@@ -5,6 +5,11 @@
 
 // This function is required by Doctest to make it possible to have asserts inside the code.
 // The function is passed to the Doctest context in our main function.
+// Source:
+// https://github.com/doctest/doctest/blob/master/doc/markdown/assertions.md - Example is found
+// under "Using asserts out of a testing context":
+// https://github.com/doctest/doctest/blob/master/examples/all_features/asserts_used_outside_of_tests.cpp
+
 static void handler(const doctest::AssertData& ad) {
     using namespace doctest;
 
