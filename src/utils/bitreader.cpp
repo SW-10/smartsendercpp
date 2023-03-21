@@ -2,12 +2,10 @@
 #include <cstdio>
 
 
-BitReader tryNewBitReader(std::vector<uint8_t> bytes, int byteCount) {
-    BitReader bitReader;
-    bitReader.bytes = bytes;
-    bitReader.bytesCount = byteCount;
-    bitReader.nextBit = 0;
-    return bitReader;
+BitReader::BitReader(std::vector<uint8_t> bytes, int byteCount) {
+    this->bytes = bytes;
+    this->bytesCount = byteCount;
+    this->nextBit = 0;
 }
 
 uint32_t readBits(BitReader *bitReader, uint8_t numberOfBits) {

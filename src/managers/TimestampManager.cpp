@@ -1,8 +1,10 @@
 #include "../utils/Utils.h"
-#include "TimestampManager.h"
-#include <iostream>
-#include <algorithm>
+#include "../constants.h"
 #include "../doctest.h"
+#include "TimestampManager.h"
+#include <algorithm>
+#include <iostream>
+#include <tuple>
 
 
 TimestampManager::TimestampManager(ConfigManager &confMan) {
@@ -177,24 +179,24 @@ TimestampManager::getTimestampsByGlobalId(int globID, int timestampA, int timest
 void TimestampManager::makeCompressionSchemes() {
     // ===== SCHEME 1 =====:
     compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
-                                        if (val >= -2 && val <= 3) {
+                                        if (val <= 3) {
                                             appendBits(builder, 0b10, 2);
-                                            appendBits(builder, val, 3);
-                                        } else if (val >= -14 && val <= 15) {
+                                            appendBits(builder, val, 2);
+                                        } else if (val <= 15) {
                                             appendBits(builder, 0b110, 3);
-                                            appendBits(builder, val, 5);
-                                        } else if (val >= -63 && val <= 64) {
+                                            appendBits(builder, val, 4);
+                                        } else if (val <= 63) {
                                             appendBits(builder, 0b1110, 4);
-                                            appendBits(builder, val, 7);
-                                        } else if (val >= -255 && val <= 256) {
+                                            appendBits(builder, val, 6);
+                                        } else if (val <= 255) {
                                             appendBits(builder, 0b11110, 5);
-                                            appendBits(builder, val, 9);
-                                        } else if (val >= -1023 && val <= 1024) {
+                                            appendBits(builder, val, 8);
+                                        } else if (val <= 1023) {
                                             appendBits(builder, 0b111110, 6);
-                                            appendBits(builder, val, 11);
-                                        } else if (val >= -4095 && val <= 4096) {
+                                            appendBits(builder, val, 10);
+                                        } else if (val <= 4095) {
                                             appendBits(builder, 0b1111110, 7);
-                                            appendBits(builder, val, 13);
+                                            appendBits(builder, val, 12);
                                         } else {
                                             appendBits(builder, 0b1111111, 7);
                                             appendBits(builder, val, 32);
@@ -204,13 +206,13 @@ void TimestampManager::makeCompressionSchemes() {
 
     // ===== SCHEME 2 =====:
     compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
-                                        if (val >= -63 && val <= 64) {
+                                        if (val <= 127) {
                                             appendBits(builder, 0b10, 2);
                                             appendBits(builder, val, 7);
-                                        } else if (val >= -255 && val <= 256) {
+                                        } else if (val <= 511) {
                                             appendBits(builder, 0b110, 3);
                                             appendBits(builder, val, 9);
-                                        } else if (val >= -2047 && val <= 2048) {
+                                        } else if (val <= 4095) {
                                             appendBits(builder, 0b1110, 4);
                                             appendBits(builder, val, 12);
                                         } else {
@@ -220,6 +222,35 @@ void TimestampManager::makeCompressionSchemes() {
                                     }
     );
 
+    // ===== SCHEME 3 =====:
+    compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
+                                        if (val <= 4095) {
+                                            appendBits(builder, 0b10, 2);
+                                            appendBits(builder, val, 12);
+                                        } else {
+                                            appendBits(builder, 0b11, 2);
+                                            appendBits(builder, val, 32);
+                                        }
+                                    }
+    );
+
+    // ===== SCHEME 4 =====:
+    compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
+                                        if (val <= 3) {
+                                            appendBits(builder, 0b10, 2);
+                                            appendBits(builder, val, 2);
+                                        } else if (val <= 7) {
+                                            appendBits(builder, 0b110, 3);
+                                            appendBits(builder, val, 3);
+                                        } else if (val <= 15) {
+                                            appendBits(builder, 0b1110, 4);
+                                            appendBits(builder, val, 4);
+                                        } else {
+                                            appendBits(builder, 0b1111, 4);
+                                            appendBits(builder, val, 32);
+                                        }
+                                    }
+    );
 
     // =====================================================
     // =============== ADD MORE SCHEMES HERE ===============
@@ -229,6 +260,7 @@ void TimestampManager::makeCompressionSchemes() {
 std::vector<uint8_t>
 TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int>> &offsets) {
     int size = 0;
+    int bestSize = 0;
     std::vector<unsigned char> bestCompression;
     for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
         BitVecBuilder builder;
@@ -254,8 +286,9 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
         }
 
         // Update the chosen compression if the current scheme is better
-        size = builder.bytes.size();
-        if (size < bestCompression.size() || bestCompression.empty()) {
+        size = (builder.bytes.size() * 8) - builder.remainingBits;
+        if (size < bestSize || bestCompression.empty()) {
+            bestSize = size;
             bestCompression = std::move(builder.bytes);
         }
     }
@@ -266,14 +299,71 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
         std::unordered_map<int, std::vector<std::pair<int, int>>> offsets) {
 
     int size = 0;
-    std::vector<unsigned char> bestCompression;
 
     //Sort unordered map
-    std::map<int, std::vector<std::pair<int, int>>> ordered(offsets.begin(), offsets.end());
+    std::map<int, std::vector<std::pair<int, int>>> ordered(offsets.begin(),
+                                                            offsets.end());
 
+    std::vector<unsigned char> allColumnsCompressed;
 
-    // Loop through all compression schemes and pick the one that
-    // gives the best compression
+    // Loop through all columns
+    int globID = 0;
+
+    std::vector<int> bestSchemes(ordered.size(), -1);
+    int bestSize = 0;
+    for (const auto &list: ordered) {
+
+        std::vector<unsigned char> bestCompression;
+
+        // Loop through all compression schemes and pick the one that
+        // gives the best compression
+        for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
+            BitVecBuilder builder;
+            builder.currentByte = 0;
+            builder.remainingBits = 8;
+            builder.bytesCounter = 0;
+            const auto scheme = compressionSchemes.at(schemeID);
+
+            // Compress scheme ID.
+            // Always spend 8 bits on this value, as, when decompressing, we
+            // don't have a compression scheme for the first value.
+            // This allows for up to 256 different schemes.
+            appendBits(&builder, schemeID, 8);
+
+            // Compress index of first timestamp
+            scheme(&builder, latestTimestamps.at(globID).timestampFirst);
+
+            // Loop through the offset list corresponding to current column
+            int count = 0;
+            for (const auto &elem: list.second) {
+                scheme(&builder, elem.first);
+                scheme(&builder, elem.second);
+                count++;
+            }
+
+            // Zero bit indicates end of column, i.e. the following compressed
+            // number is the global id of the next column
+            appendAZeroBit(&builder);
+
+            // Update the chosen compression if the current scheme is better
+            size = (builder.bytes.size() * 8) - builder.remainingBits;
+            if (size < bestSize || bestCompression.empty()) {
+                bestSchemes.at(globID) = schemeID;
+                bestSize = size;
+                bestCompression = builder.bytes;
+            }
+        }
+
+        globID++;
+    }
+
+    // The following code finds the best compression scheme for compressing the size of the local
+    // offset list
+
+    int lolSize = getSizeOfLocalOffsetList();
+    int bestSchemeForSize = 0;
+    bestSize = 0;
+    std::vector<unsigned char> bestCompressionForSize;
     for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
         BitVecBuilder builder;
         builder.currentByte = 0;
@@ -284,54 +374,173 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
         // Compress scheme ID.
         // Always spend 8 bits on this value, as, when decompressing, we
         // don't have a compression scheme for the first value.
-        // This allows for up to 256 different schemas.
+        // This allows for up to 256 different schemes.
         appendBits(&builder, schemeID, 8);
 
-        // Loop through all columns
-        int globID = 0;
-        for (const auto &list: ordered) {
-
-            // Compress global ID
-            scheme(&builder, globID);
-
-            // Compress index of first timestamp
-            scheme(&builder, latestTimestamps.at(globID).timestampFirst);
-
-            // Loop through the offset list corresponding to current column
-            for (const auto &elem: list.second) {
-                scheme(&builder, elem.first);
-                scheme(&builder, elem.second);
-            }
-
-            // Zero bit indicates end of column, i.e. the following compressed
-            // number is the global id of the next column
-            appendAZeroBit(&builder);
-
-            globID++;
-
-            // Stop trying if size becomes larger than what we have already stored
-            if (builder.bytes.size() >= bestCompression.size() && !bestCompression.empty()) {
-                break;
-            }
-        }
+        // Compress size of local offset list
+        scheme(&builder, lolSize);
+        builder.bytes.push_back(builder.currentByte);
 
         // Update the chosen compression if the current scheme is better
-        size = builder.bytes.size();
-        if (size < bestCompression.size() || bestCompression.empty()) {
-            bestCompression = std::move(builder.bytes);
+        size = (builder.bytes.size() * 8) - builder.remainingBits;
+
+        if (size < bestSize || bestCompressionForSize.empty()) {
+            bestSchemeForSize = schemeID;
+            bestSize = (builder.bytes.size() * 8) - builder.remainingBits;
+            bestCompressionForSize = builder.bytes;
         }
     }
 
-    return bestCompression;
+    // The following code runs through everything again, uses the best compression schemes found
+    // above and appends to the same builder.
+
+    // Used for comparison between original and decompressed
+    std::vector<int> originalFlat;
+
+    BitVecBuilder finalCompression;
+    finalCompression.currentByte = 0;
+    finalCompression.remainingBits = 8;
+    finalCompression.bytesCounter = 0;
+
+    auto schemeForSize = compressionSchemes.at(bestSchemeForSize);
+    appendBits(&finalCompression, bestSchemeForSize, 8);
+    schemeForSize(&finalCompression, lolSize);
+    originalFlat.emplace_back(lolSize);
+
+    for (int i = 0; i < ordered.size(); i++) {
+
+        auto scheme = compressionSchemes.at(bestSchemes.at(i));
+        appendBits(&finalCompression, bestSchemes.at(i), 8);
+        originalFlat.emplace_back(latestTimestamps.at(i).timestampFirst);
+        scheme(&finalCompression, latestTimestamps.at(i).timestampFirst);
+
+        for (auto j: ordered[i + 1]) {
+            scheme(&finalCompression, j.first);
+            originalFlat.emplace_back(j.first);
+
+            scheme(&finalCompression, j.second);
+            originalFlat.emplace_back(j.second);
+        }
+        appendAZeroBit(&finalCompression);
+    }
+    finalCompression.bytes.push_back(finalCompression.currentByte);
+
+    // TEST
+    // Check if all elements of the decompressed list are equivalent to the elements of the original
+    // offset list.
+    // Note: We compare to a flattened version of the original offset list to avoid formating the
+    // decompressed list.
+    {
+        auto decompressed = decompressLocalOffsetList(finalCompression.bytes);
+        bool origEqDecompressed = true;
+        for (int i = 0; i < originalFlat.size(); i++) {
+            if (decompressed.at(i) != originalFlat.at(i)) {
+                origEqDecompressed = false;
+            }
+        }
+        CHECK(origEqDecompressed == true);
+    }
+
+    return finalCompression.bytes;
 }
-bool TimestampManager::flushTimestamps(int lastUsedTimestamp){
+
+
+std::vector<int>
+TimestampManager::decompressLocalOffsetList(std::vector<uint8_t> values) {
+
+    std::map<int, std::vector<std::tuple<int, int>>> offsetsDecompressed;
+    std::vector<int> temp;
+    std::vector<int> decompressed;
+    BitReader bitReader(values, values.size());
+
+    std::vector<std::vector<int>> schemes;
+
+    // Scheme 1
+    schemes.push_back(std::vector<int>{2, 4, 6, 8, 10, 12, 32});
+
+    // Scheme 2
+    schemes.push_back(std::vector<int>{7, 9, 12, 32, 11, 13, 32});
+
+    // Scheme 3
+    schemes.push_back(std::vector<int>{12, 32});
+
+    // Scheme 4
+    schemes.push_back(std::vector<int>{2, 3, 4, 32});
+
+    // Scheme for size of local offset list
+    int sizeSchemeID = readBits(&bitReader, 8);
+
+    // Size of local offset list
+    int lolSize = 0;
+    decompressNextValue(schemes.at(sizeSchemeID), &bitReader, &lolSize, &decompressed);
+
+    // Scheme for first column
+    int currentValue = 0;
+    int schemeID = readBits(&bitReader, 8);
+
+    for (int i = 0; i < lolSize - 1; i++) {
+
+        // decompressNextValue returns 'false' if no control codes are found, i.e. the zero bit at
+        // the end of each column.
+        // When that happens, read the next eight bits to receive new schemeID
+        if (!decompressNextValue(schemes.at(schemeID), &bitReader, &currentValue, &decompressed)) {
+            schemeID = readBits(&bitReader, 8);
+        };
+    }
+
+    return decompressed;
+}
+
+bool
+TimestampManager::decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader,
+                                      int *currentVal, std::vector<int> *decompressed) {
+    int currentSchemeVal = 0;
+
+    // Read the control bits. The last control code of all schemes have the same length as the
+    // second to last code, but the last bit is '1' instead of '0'.
+    // Condition #1 ensures that we correctly read the last control code correctly.
+    //      This is the first condition, as it short-circuits if false (which is intentional)
+    // Condition #2 reads the bits and breaks out of the loop when a 0-bit is encountered in
+    //      the control bit. The 0-bit is also consumed.
+    int i = 0;
+    for (; i < schemeVals.size() && readBit(bitReader); i++) { /* Empty body is intentional */ }
+
+    if (i == 0) { // readBit returned 0, i.e. we didn't find any control codes. End of column!
+        return false;
+    } else { // Found control code
+        currentSchemeVal = schemeVals.at(i - 1);
+    }
+
+    // Read number of bits corresponding to the found control bit
+    *currentVal = readBits(bitReader, currentSchemeVal);
+    decompressed->emplace_back(*currentVal);
+
+    return true;
+}
+
+int TimestampManager::getSizeOfLocalOffsetList() {
+    int size = 0;
+
+    // Offsets
+    for (auto i: localOffsetList) {
+        size++; // Scheme ID
+        size++; // First timestamp
+        for (auto j: i.second) {
+            size += 2; // Each element in localOffsetList consists of two numbers (a pair)
+        }
+    }
+    return size;
+}
+
+bool TimestampManager::flushTimestamps(int lastUsedTimestamp) {
     int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
     // Flush timestamps when last used timestamp is not the first in vector
-    if (index != 0){
+    if (index != 0) {
         // Erase global timestamps
-        allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),allTimestampsReconstructed.begin()+index);
+        allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),
+                                         allTimestampsReconstructed.begin() + index);
         // Deletion of local offset lists
-        for (auto &lol : localOffsetList){
+        for (auto &lol: localOffsetList) {
             if (lol.second.empty()) continue;
             //Check whether the corresponding offset list contains deleted timestamps
             if(latestTimestamps[lol.first].timestampFirst < index){

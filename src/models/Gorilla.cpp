@@ -122,7 +122,7 @@ std::vector<float>
 Gorilla::gridGorilla(std::vector<uint8_t> values, int valuesCount,
                      int timestampCount) {
     std::vector<float> result;
-    BitReader bitReader = tryNewBitReader(values, valuesCount);
+    BitReader bitReader(values, valuesCount);
     int leadingZeros = 255;
     int trailingZeros = 0;
     uint32_t lastValue = readBits(&bitReader, VALUE_SIZE_IN_BITS);
