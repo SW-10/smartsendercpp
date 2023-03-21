@@ -105,6 +105,8 @@ void ReaderManager::runCompressor() {
     time.begin();
 
     int lineNumber = 0;
+    int timestampFlusherPenalty = 50;
+    int lastTimestampFlush = 0;
     while (!this->csvFileStream.eof()) {
         row.clear();
         std::getline(this->csvFileStream, line);
@@ -124,13 +126,24 @@ void ReaderManager::runCompressor() {
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
             count++;
+            // TODO: Adjust penalty dynamically
+            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
+                lastTimestampFlush = lineNumber;
+                bool didFlush = modelManager.calculateFlushTimestamp();
+                if (didFlush){
+                    timestampFlusherPenalty -= 5;
+                }
+                else {
+                    timestampFlusherPenalty +=5;
+                }
+            }
         }
         lineNumber++;
     }
     this->csvFileStream.close();
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-    timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
-    timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
+    //timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
+    //timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
 
 }

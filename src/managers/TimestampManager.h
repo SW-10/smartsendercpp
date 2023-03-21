@@ -67,6 +67,9 @@ public:
 
     bool decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader, int* currentVal, std::vector<int> *decompressed);
 
+    bool flushTimestamps(int lastUsedTimestamp);
+    TimestampManager();
+    static int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
 private:
     int timestampPrevious;
     bool readyForOffset = false;

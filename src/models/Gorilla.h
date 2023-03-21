@@ -19,7 +19,7 @@ public:
 
     Gorilla();
 
-    void fitValueGorilla(float value);
+    bool fitValueGorilla(float value);
 
     [[nodiscard]] float getBytesPerValue() const;
 

@@ -1,8 +1,13 @@
-#include <iostream>
-#include <tuple>
-#include "TimestampManager.h"
+#include "../utils/Utils.h"
 #include "../constants.h"
 #include "../doctest.h"
+#include "TimestampManager.h"
+#include <algorithm>
+#include <iostream>
+#include <tuple>
+
+
+
 
 TimestampManager::TimestampManager(ConfigManager &confMan) {
     for (int i = 0; i < confMan.totalNumberOfCols; i++) {
@@ -154,7 +159,7 @@ TimestampManager::getTimestampsByGlobalId(int globID, int timestampA, int timest
     int count = firstLocalTimestamp;
 
     for (auto &localOffset: localOffsets) {
-        int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
+        //int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
 
         for (int j = 0; j < localOffset.second; j++) {
             if (allTimestampsReconstructed.at(count) > timestampA) {
@@ -528,4 +533,88 @@ int TimestampManager::getSizeOfLocalOffsetList() {
         }
     }
     return size;
+}
+bool TimestampManager::flushTimestamps(int lastUsedTimestamp){
+    int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
+    // Flush timestamps when last used timestamp is not the first in vector
+    if (index != 0){
+        // Erase global timestamps
+        allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),allTimestampsReconstructed.begin()+index);
+        // Deletion of local offset lists
+        for (auto &lol : localOffsetList){
+            if (lol.second.empty()) continue;
+            //Check whether the corresponding offset list contains deleted timestamps
+            if(latestTimestamps[lol.first].timestampFirst < index){
+                latestTimestamps[lol.first].timestampFirst += flushLocalOffsetList(lol.second, index-latestTimestamps[lol.first].timestampFirst);
+            }
+            else{
+                latestTimestamps[lol.first].timestampFirst -= index;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "misc-no-recursion"
+int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices){
+    // Calculate max flushable delta count
+    int numFlushableTimestamps = numberOfFlushedIndices / localOffsetListRef.front().first;
+    // Calculate offset to next timestamp
+    // Minus 1 as rest of code treats 0 as current timestamp
+    int offset = std::max(localOffsetListRef.front().first % numberOfFlushedIndices-1, 0);
+    if (numFlushableTimestamps > localOffsetListRef.front().second){
+        int quantifier = localOffsetListRef.front().second;
+        int localOffset = localOffsetListRef.front().first;
+        localOffsetListRef.erase(localOffsetListRef.begin());
+        // How many timestamps that have not been flushed in current instance
+        int newNumberOfIndices = numberOfFlushedIndices - quantifier * localOffset - offset;
+        if (newNumberOfIndices > 0){
+            offset = flushLocalOffsetList(localOffsetListRef, numberOfFlushedIndices - quantifier * localOffset - offset);
+        }
+        else {
+            offset = 0;
+        }
+    }
+    else if(numFlushableTimestamps == localOffsetListRef.front().second){
+        localOffsetListRef.erase(localOffsetListRef.begin());
+    }
+    else{
+        localOffsetListRef.front().second = localOffsetListRef.front().second - numFlushableTimestamps;
+    }
+    return offset;
+}
+
+TimestampManager::TimestampManager() {
+
+}
+
+#pragma clang diagnostic pop
+
+TEST_CASE("CHECK offset size on single offset"){
+    TimestampManager m;
+
+    std::vector<std::pair<int, int>> localOffsetList;
+
+    localOffsetList.emplace_back(1, 200);
+    int offset = m.flushLocalOffsetList(localOffsetList, 100);
+    CHECK(offset == 0);
+    CHECK(localOffsetList.front().second == 100);
+}
+
+TEST_CASE("CHECK localoffset is remove"){
+    TimestampManager m;
+
+    std::vector<std::pair<int, int>> localOffsetList;
+    localOffsetList.emplace_back(2, 100);
+    localOffsetList.emplace_back(3,3);
+    localOffsetList.emplace_back(1,20);
+    int offset = m.flushLocalOffsetList(localOffsetList, 202);
+    CHECK(offset == 0);
+    CHECK(localOffsetList[0].second == 3);
+}
+
+TEST_CASE("CHECK localoffset other than zero"){
+
 }

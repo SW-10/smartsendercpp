@@ -1,8 +1,6 @@
 //
 // Created by power on 21-02-2023.
 //
-#define GORILLA_MAX 50
-
 #include "ModelManager.h"
 #include <iostream>
 #include <utility>
@@ -33,18 +31,8 @@ void ModelManager::fitTextModels(int id, const std::string &value) {
 #pragma ide diagnostic ignored "misc-no-recursion"
 void ModelManager::fitSegment(int id, float value, int timestamp) {
     TimeSeriesModelContainer &container = timeSeries[id];
-    bool cachedOnce = false;
-
-    if (container.gorilla.length > GORILLA_MAX) {
-        cachedOnce = true;
-        container.cachedValues.values.emplace_back(value);
-        if (container.cachedValues.startTimestamp == 0) {
-            container.cachedValues.startTimestamp = timestamp;
-        }
-    }
-    if (container.status.SwingReady) {
-        container.status.SwingReady = container.swing.fitValueSwing(timestamp,
-                                                                    value);
+    if(container.status.SwingReady) {
+        container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
         //Swing sets last constructed timestamp internally
     }
     if (container.status.pmcMeanReady) {
@@ -53,14 +41,16 @@ void ModelManager::fitSegment(int id, float value, int timestamp) {
             container.pmcMean.lastTimestamp = timestamp;
         }
     }
-    if (container.gorilla.length <= GORILLA_MAX) {
-        container.gorilla.fitValueGorilla(value);
-        container.gorilla.lastTimestamp = timestamp;
-        //TODO use timestamp index on model creation instead of check each time - Optimization
+    if (container.status.gorillaReady){
+        container.status.gorillaReady = container.gorilla.fitValueGorilla(value);
+        if(container.status.gorillaReady){
+            container.gorilla.lastTimestamp = timestamp;
+        }
     }
-    if (shouldCacheDataBasedOnPmcSwing(container) && !cachedOnce) {
+    if(shouldCacheData(container)) {
         container.cachedValues.values.emplace_back(value);
-        if (container.cachedValues.values.empty()) {
+        //TODO Check on empty vector, but bug now
+        if (container.cachedValues.startTimestamp == -1){
             container.cachedValues.startTimestamp = timestamp;
         }
     }
@@ -88,15 +78,14 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig,
     }
 }
 
-bool ModelManager::shouldCacheDataBasedOnPmcSwing(
-        TimeSeriesModelContainer &container) {
-    return !(container.status.SwingReady && container.status.pmcMeanReady);
+bool ModelManager::shouldCacheData(TimeSeriesModelContainer& container) {
+    return !(container.status.SwingReady && container.status.pmcMeanReady && container.status.gorillaReady);
 }
 
 bool ModelManager::shouldConstructModel(TimeSeriesModelContainer &container) {
     return !(container.status.pmcMeanReady ||
-             container.status.SwingReady ||
-             container.gorilla.length < GORILLA_MAX);
+    container.status.SwingReady ||
+    container.status.gorillaReady);
 }
 
 #pragma clang diagnostic push
@@ -153,6 +142,16 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
 }
 
 #pragma clang diagnostic pop
+
+bool ModelManager::calculateFlushTimestamp() {
+    int largestUsedTimestamp = INT32_MAX;
+    for (auto &container : timeSeries){
+        if (!container.cachedValues.values.empty()){
+            largestUsedTimestamp = std::min(container.cachedValues.startTimestamp, largestUsedTimestamp);
+        }
+    }
+    return timestampManager.flushTimestamps(largestUsedTimestamp);
+}
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {
     this->localId = localId;
