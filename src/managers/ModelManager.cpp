@@ -103,7 +103,6 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                            std::min<size_t>(
                                                    finishedSegment.gorilla.length,
                                                    finishedSegment.swing.length));
-
     if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize) {
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
         indexToStart = finishedSegment.pmcMean.length - indexToStart;

@@ -78,8 +78,10 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum,
-                                                 latCol->col); //c.col is the global ID
+            if (!in->empty()) {
+                timestampManager.makeLocalOffsetList(lineNum,
+                                                     latCol->col); //c.col is the global ID
+            }
             return CompressionType::POSITION;
         };
         std::get<0>(myMap[longCol->col]) = [this, longCol](
@@ -89,8 +91,10 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum,
-                                                 longCol->col); //c.col is the global ID
+            if (!in->empty()) {
+                timestampManager.makeLocalOffsetList(lineNum,
+                                                     longCol->col); //c.col is the global ID
+            }
             return CompressionType::POSITION;
         };
     }
