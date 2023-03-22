@@ -559,12 +559,12 @@ bool TimestampManager::flushTimestamps(int lastUsedTimestamp) {
 #pragma ide diagnostic ignored "misc-no-recursion"
 int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices){
     int offset = 0;
-    //Calculate number of timestamps in first offset
+    // Calculate number of timestamps in first offset
     int containedTimestamps = localOffsetListRef.front().first * localOffsetListRef.front().second;
     if (containedTimestamps > numberOfFlushedIndices){
-        //How many instances can be flushes
+        // How many instances can be flushed
         int instancesToFlush = numberOfFlushedIndices / localOffsetListRef.front().first;
-        //If flushables is not even, then add one to flush
+        // If flushables is not even, then add one to flush
         if(numberOfFlushedIndices % localOffsetListRef.front().first > 0){
             instancesToFlush += 1;
         }
