@@ -70,7 +70,7 @@ public:
     TimestampManager();
     static int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
 private:
-    const int bitsUsedForSchemeID =4 ;
+    const int bitsUsedForSchemeID = 4 ;
     int timestampPrevious;
     bool readyForOffset = false;
     std::vector<int> allTimestampsReconstructed;
