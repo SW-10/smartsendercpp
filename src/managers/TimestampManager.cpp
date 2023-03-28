@@ -607,7 +607,7 @@ bool TimestampManager::flushTimestamps(int lastUsedTimestamp) {
             if (lol.second.empty()) continue;
             //Check whether the corresponding offset list contains deleted timestamps
             if (latestTimestamps[lol.first].timestampFirst < index) {
-                latestTimestamps[lol.first].timestampFirst += flushLocalOffsetList(lol.second,
+                latestTimestamps[lol.first].timestampFirst = flushLocalOffsetList(lol.second,
                                                                                    index -
                                                                                    latestTimestamps[lol.first].timestampFirst);
             } else {
