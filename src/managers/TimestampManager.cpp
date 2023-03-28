@@ -269,9 +269,7 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
 
     for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
         BitVecBuilder builder;
-        builder.currentByte = 0;
-        builder.remainingBits = 8;
-        builder.bytesCounter = 0;
+
         const auto scheme = compressionSchemes.at(schemeID);
 
         // Compress scheme ID.
@@ -300,7 +298,7 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
     }
 
     // Get size and best scheme to represent size of the offset list
-    int globSize = getSizeOfGlobalOffsetList();
+    size_t globSize = getSizeOfGlobalOffsetList();
     int bestSchemeForSize = findBestSchemeForSize(globSize);
 
     // The following code runs through everything again, uses the best compression schemes found
@@ -310,9 +308,6 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
     std::vector<int> originalFlat;
 
     BitVecBuilder finalCompression;
-    finalCompression.currentByte = 0;
-    finalCompression.remainingBits = 8;
-    finalCompression.bytesCounter = 0;
 
     auto schemeForSize = compressionSchemes.at(bestSchemeForSize);
     appendBits(&finalCompression, bestSchemeForSize, bitsUsedForSchemeID);
@@ -338,7 +333,7 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
     // Note: We compare to a flattened version of the original offset list to avoid formating the
     // decompressed list.
     {
-        auto decompressed = decompressLocalOffsetList(finalCompression.bytes);
+        auto decompressed = decompressOffsetList(finalCompression.bytes);
         bool origEqDecompressed = true;
         for (int i = 0; i < originalFlat.size(); i++) {
             if (decompressed.at(i) != originalFlat.at(i)) {
@@ -375,9 +370,7 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
         // gives the best compression
         for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
             BitVecBuilder builder;
-            builder.currentByte = 0;
-            builder.remainingBits = 8;
-            builder.bytesCounter = 0;
+
             const auto scheme = compressionSchemes.at(schemeID);
 
             // Compress scheme ID.
@@ -414,7 +407,7 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     }
 
     // Get size and best scheme to represent size of the offset list
-    int lolSize = getSizeOfLocalOffsetList();
+    size_t lolSize = getSizeOfLocalOffsetList();
     int bestSchemeForSize = findBestSchemeForSize(lolSize);
 
     // The following code runs through everything again, uses the best compression schemes found
@@ -424,9 +417,6 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     std::vector<int> originalFlat;
 
     BitVecBuilder finalCompression;
-    finalCompression.currentByte = 0;
-    finalCompression.remainingBits = 8;
-    finalCompression.bytesCounter = 0;
 
     auto schemeForSize = compressionSchemes.at(bestSchemeForSize);
     appendBits(&finalCompression, bestSchemeForSize, bitsUsedForSchemeID);
@@ -457,7 +447,7 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     // Note: We compare to a flattened version of the original offset list to avoid formating the
     // decompressed list.
     {
-        auto decompressed = decompressLocalOffsetList(finalCompression.bytes);
+        auto decompressed = decompressOffsetList(finalCompression.bytes);
         bool origEqDecompressed = true;
         for (int i = 0; i < originalFlat.size(); i++) {
             if (decompressed.at(i) != originalFlat.at(i)) {
@@ -470,8 +460,9 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     return finalCompression.bytes;
 }
 
+// Decompression function works for both global and local offset lists
 std::vector<int>
-TimestampManager::decompressLocalOffsetList(std::vector<uint8_t> values) {
+TimestampManager::decompressOffsetList(const std::vector<uint8_t> &values) {
 
     std::map<int, std::vector<std::tuple<int, int>>> offsetsDecompressed;
     std::vector<int> temp;
@@ -511,7 +502,7 @@ TimestampManager::decompressLocalOffsetList(std::vector<uint8_t> values) {
         // When that happens, read the next eight bits to receive new schemeID
         if (!decompressNextValue(schemes.at(schemeID), &bitReader, &currentValue, &decompressed)) {
             schemeID = readBits(&bitReader, bitsUsedForSchemeID);
-        };
+        }
     }
 
     return decompressed;
@@ -544,33 +535,31 @@ TimestampManager::decompressNextValue(std::vector<int> schemeVals, BitReader *bi
     return true;
 }
 
-int TimestampManager::getSizeOfLocalOffsetList() {
+size_t TimestampManager::getSizeOfLocalOffsetList() const {
     int size = 0;
 
     // Offsets
-    for (auto i: localOffsetList) {
+    for (const auto &i: localOffsetList) {
         size++; // Scheme ID
         size++; // First timestamp
-        for (auto j: i.second) {
+        for (const auto &j: i.second) {
             size += 2; // Each element in localOffsetList consists of two numbers (a pair)
         }
     }
     return size;
 }
 
-int TimestampManager::getSizeOfGlobalOffsetList() {
+size_t TimestampManager::getSizeOfGlobalOffsetList() const {
     return offsetList.size()*2;
 }
 
 int TimestampManager::findBestSchemeForSize(int elements) {
     int bestSchemeForSize = 0;
-    int bestSize = 0;
+    size_t bestSize = 0;
     std::vector<unsigned char> bestCompressionForSize;
     for (int schemeID = 0; schemeID < compressionSchemes.size(); schemeID++) {
         BitVecBuilder builder;
-        builder.currentByte = 0;
-        builder.remainingBits = 8;
-        builder.bytesCounter = 0;
+
         const auto scheme = compressionSchemes.at(schemeID);
 
         // Compress scheme ID.
@@ -584,7 +573,7 @@ int TimestampManager::findBestSchemeForSize(int elements) {
         builder.bytes.push_back(builder.currentByte);
 
         // Update the chosen compression if the current scheme is better
-        int size = (builder.bytes.size() * 8) - builder.remainingBits;
+        size_t size = (builder.bytes.size() * 8) - builder.remainingBits;
 
         if (size < bestSize || bestCompressionForSize.empty()) {
             bestSchemeForSize = schemeID;
