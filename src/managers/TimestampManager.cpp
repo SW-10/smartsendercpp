@@ -540,8 +540,9 @@ size_t TimestampManager::getSizeOfLocalOffsetList() const {
 
     // Offsets
     for (const auto &i: localOffsetList) {
-        size++; // Scheme ID
-        size++; // First timestamp
+        size+=2;    // Each pair consists of two elements:
+                    //  1: Scheme ID
+                    //  2: First timestamp
         for (const auto &j: i.second) {
             size += 2; // Each element in localOffsetList consists of two numbers (a pair)
         }
