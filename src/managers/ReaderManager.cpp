@@ -78,8 +78,10 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum,
-                                                 latCol->col); //c.col is the global ID
+            if (!in->empty()) {
+                timestampManager.makeLocalOffsetList(lineNum,
+                                                     latCol->col); //c.col is the global ID
+            }
             return CompressionType::POSITION;
         };
         std::get<0>(myMap[longCol->col]) = [this, longCol](
@@ -89,8 +91,10 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum,
-                                                 longCol->col); //c.col is the global ID
+            if (!in->empty()) {
+                timestampManager.makeLocalOffsetList(lineNum,
+                                                     longCol->col); //c.col is the global ID
+            }
             return CompressionType::POSITION;
         };
     }
@@ -143,7 +147,7 @@ void ReaderManager::runCompressor() {
     this->csvFileStream.close();
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-    //timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
-    //timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
+    timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
+    timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
 
 }
