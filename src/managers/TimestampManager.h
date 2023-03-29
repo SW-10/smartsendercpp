@@ -74,8 +74,6 @@ private:
     const int bitsUsedForSchemeID = 4 ;
     int timestampPrevious;
     bool readyForOffset = false;
-    std::vector<int> allTimestampsReconstructed;
-    std::vector<TwoLatestTimestamps> latestTimestamps;
     size_t getSizeOfLocalOffsetList() const;
     size_t getSizeOfGlobalOffsetList() const;
     int findBestSchemeForSize(int elements);

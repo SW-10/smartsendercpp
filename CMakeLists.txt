@@ -15,4 +15,4 @@ add_subdirectory(src/models)
 add_subdirectory(src/utils)
 add_subdirectory(src/managers)
 
-target_link_libraries(smartsendercpp PUBLIC Arrow::arrow_shared ArrowFlight::arrow_flight_shared ArrowFlightSql::arrow_flight_sql_shared)
+target_link_libraries(smartsendercpp PUBLIC Arrow::arrow_shared ArrowFlight::arrow_flight_shared ArrowFlightSql::arrow_flight_sql_shared parquet)

@@ -147,6 +147,10 @@ arrow::Status ReaderManager::runCompressor() {
         lineNumber++;
     }
     this->csvFileStream.close();
+
+    timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
+    timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
+
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
 
@@ -155,17 +159,20 @@ arrow::Status ReaderManager::runCompressor() {
 
     auto recordBatch = MakeRecordBatch(table).ValueOrDie();
 
-    std::cout << recordBatch->ToString() << std::endl;
+    std::vector<std::shared_ptr<arrow::RecordBatch>> recordBatchVector;
 
-    ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
-    auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
-                        arrow::flight::FlightDescriptor{arrow::flight
-                                                        ::FlightDescriptor::Path(std::vector<std::string>{"table"})}, recordBatch->schema()).ValueOrDie();
+    recordBatchVector.push_back(recordBatch);
 
-    ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
+    ARROW_RETURN_NOT_OK(WriteRecordBatchVectorToParquet(table, "./arrow.parquet"));
+
+    //std::cout << recordBatch->ToString() << std::endl;
+
+    //ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
+    //auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
+    //                    arrow::flight::FlightDescriptor{arrow::flight
+    //                                                    ::FlightDescriptor::Path(std::vector<std::string>{"table"})}, recordBatch->schema()).ValueOrDie();
+
+    //ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
 
     return arrow::Status::OK();
-    timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
-    timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
-
 }
