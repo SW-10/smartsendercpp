@@ -8,12 +8,6 @@
 #include <cstdlib>
 #include <vector>
 
-struct BitVecBuilder {
-    uint8_t currentByte;
-    uint8_t remainingBits;
-    int bytesCounter;
-    std::vector<uint8_t> bytes;
-};
 
 class Gorilla {
 public:
@@ -25,7 +19,7 @@ public:
 
     Gorilla();
 
-    void fitValueGorilla(float value);
+    bool fitValueGorilla(float value);
 
     [[nodiscard]] float getBytesPerValue() const;
 
@@ -35,13 +29,6 @@ public:
 
 private:
     float lastValue;
-
-    static void
-    appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits);
-
-    static void appendAZeroBit(BitVecBuilder *data);
-
-    static void appendAOneBit(BitVecBuilder *data);
 
     static size_t len(const BitVecBuilder &data);
 

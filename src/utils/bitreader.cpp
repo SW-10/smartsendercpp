@@ -2,12 +2,10 @@
 #include <cstdio>
 
 
-BitReader tryNewBitReader(std::vector<uint8_t> bytes, int byteCount) {
-    BitReader bitReader;
-    bitReader.bytes = bytes;
-    bitReader.bytesCount = byteCount;
-    bitReader.nextBit = 0;
-    return bitReader;
+BitReader::BitReader(std::vector<uint8_t> bytes, int byteCount) {
+    this->bytes = bytes;
+    this->bytesCount = byteCount;
+    this->nextBit = 0;
 }
 
 uint32_t readBits(BitReader *bitReader, uint8_t numberOfBits) {
@@ -35,4 +33,40 @@ uint32_t readBit(BitReader *bitReader) {
 
 float intToFloat(uint32_t value) {
     return *(float *) (&value);
+}
+
+void appendAZeroBit(BitVecBuilder *data) {
+    appendBits(data, 0, 1);
+}
+
+void appendAOneBit(BitVecBuilder *data) {
+    appendBits(data, 1, 1);
+}
+
+void appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits) {
+
+    while (numberOfBits > 0) {
+        uint8_t bitsWritten;
+
+        if (numberOfBits > data->remainingBits) {
+            uint8_t shift = numberOfBits - data->remainingBits;
+            data->currentByte |= (uint8_t) ((bits >> shift) &
+                                            ((1 << data->remainingBits) - 1));
+            bitsWritten = data->remainingBits;
+        } else {
+            uint8_t shift = data->remainingBits - numberOfBits;
+            data->currentByte |= (uint8_t) (bits << shift);
+            bitsWritten = numberOfBits;
+        }
+        numberOfBits -= bitsWritten;
+        data->remainingBits -= bitsWritten;
+
+        if (data->remainingBits == 0) {
+            data->bytes.push_back(data->currentByte);
+            data->bytesCounter = data->bytesCounter + 1;
+            data->currentByte = 0;
+            data->remainingBits = 8;
+        }
+
+    }
 }

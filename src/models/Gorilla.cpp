@@ -2,6 +2,8 @@
 #include <cmath>
 #include "../doctest.h"
 
+#define GORILLA_MAX 50
+
 const uint8_t SIZE_OF_32INT = (uint8_t) sizeof(int32_t) * 8;
 
 uint8_t Gorilla::leadingZeros(const uint32_t &num) {
@@ -45,7 +47,10 @@ uint32_t Gorilla::floatToBit(float val) {
     return *(uint32_t *) &val;
 }
 
-void Gorilla::fitValueGorilla(float value) {
+bool Gorilla::fitValueGorilla(float value) {
+    if (length >= GORILLA_MAX){
+        return false;
+    }
     uint32_t valueAsInteger = floatToBit(
             value); // Read the binary representation of the float value as an integer, which can then be used for bitwise operations.
     uint32_t lastValueAsInteger = floatToBit(lastValue);
@@ -90,6 +95,7 @@ void Gorilla::fitValueGorilla(float value) {
 
     lastValue = value;
     length++;
+    return true;
 }
 
 float Gorilla::getBytesPerValue() const {
@@ -99,43 +105,6 @@ float Gorilla::getBytesPerValue() const {
 
 size_t Gorilla::len(const BitVecBuilder &data) {
     return data.bytesCounter + (size_t) (data.remainingBits != 8);
-}
-
-void Gorilla::appendAZeroBit(BitVecBuilder *data) {
-    appendBits(data, 0, 1);
-}
-
-void Gorilla::appendAOneBit(BitVecBuilder *data) {
-    appendBits(data, 1, 1);
-}
-
-void
-Gorilla::appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits) {
-
-    while (numberOfBits > 0) {
-        uint8_t bitsWritten;
-
-        if (numberOfBits > data->remainingBits) {
-            uint8_t shift = numberOfBits - data->remainingBits;
-            data->currentByte |= (uint8_t) ((bits >> shift) &
-                                            ((1 << data->remainingBits) - 1));
-            bitsWritten = data->remainingBits;
-        } else {
-            uint8_t shift = data->remainingBits - numberOfBits;
-            data->currentByte |= (uint8_t) (bits << shift);
-            bitsWritten = numberOfBits;
-        }
-        numberOfBits -= bitsWritten;
-        data->remainingBits -= bitsWritten;
-
-        if (data->remainingBits == 0) {
-            data->bytes.push_back(data->currentByte);
-            data->bytesCounter = data->bytesCounter + 1;
-            data->currentByte = 0;
-            data->remainingBits = 8;
-        }
-
-    }
 }
 
 Gorilla::Gorilla() {
@@ -153,7 +122,7 @@ std::vector<float>
 Gorilla::gridGorilla(std::vector<uint8_t> values, int valuesCount,
                      int timestampCount) {
     std::vector<float> result;
-    BitReader bitReader = tryNewBitReader(values, valuesCount);
+    BitReader bitReader(values, valuesCount);
     int leadingZeros = 255;
     int trailingZeros = 0;
     uint32_t lastValue = readBits(&bitReader, VALUE_SIZE_IN_BITS);

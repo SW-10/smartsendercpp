@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include "../utils/Timer.h"
+#include "../utils/Utils.h"
 #include <functional>
 
 ReaderManager::ReaderManager(std::string configFile)
@@ -77,8 +78,10 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum,
-                                                 latCol->col); //c.col is the global ID
+            if (!in->empty()) {
+                timestampManager.makeLocalOffsetList(lineNum,
+                                                     latCol->col); //c.col is the global ID
+            }
             return CompressionType::POSITION;
         };
         std::get<0>(myMap[longCol->col]) = [this, longCol](
@@ -88,8 +91,10 @@ ReaderManager::ReaderManager(std::string configFile)
             } else {
                 bothLatLongSeen = true;
             }
-            timestampManager.makeLocalOffsetList(lineNum,
-                                                 longCol->col); //c.col is the global ID
+            if (!in->empty()) {
+                timestampManager.makeLocalOffsetList(lineNum,
+                                                     longCol->col); //c.col is the global ID
+            }
             return CompressionType::POSITION;
         };
     }
@@ -106,6 +111,8 @@ arrow::Status ReaderManager::runCompressor() {
     time.begin();
 
     int lineNumber = 0;
+    int timestampFlusherPenalty = 50;
+    int lastTimestampFlush = 0;
     while (!this->csvFileStream.eof()) {
         row.clear();
         std::getline(this->csvFileStream, line);
@@ -125,6 +132,17 @@ arrow::Status ReaderManager::runCompressor() {
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
             count++;
+            // TODO: Adjust penalty dynamically
+            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
+                lastTimestampFlush = lineNumber;
+                bool didFlush = modelManager.calculateFlushTimestamp();
+                if (didFlush){
+                    timestampFlusherPenalty -= 5;
+                }
+                else {
+                    timestampFlusherPenalty +=5;
+                }
+            }
         }
         lineNumber++;
     }
@@ -147,4 +165,7 @@ arrow::Status ReaderManager::runCompressor() {
     ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
 
     return arrow::Status::OK();
+    timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
+    timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
+
 }

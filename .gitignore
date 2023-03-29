@@ -29,6 +29,9 @@
 # CSV
 *.csv
 
+# CFG
+*.cfg
+
 # Workspace files
 *.code-workspace
 
@@ -43,11 +46,11 @@
 /cmake-build-debug/
 /cmake-build-debug-coverage/
 /cmake-build-release
+/cmake-build-debug-mingw
+/cmake-build-debug-visual-studio
 /CMakeFiles
 /build/
 /.vscode
 /.vs/
 
-# Data sets
-Cobham_hour.csv
 smartsendercpp.code-workspace
