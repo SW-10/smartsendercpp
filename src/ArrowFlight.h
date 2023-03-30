@@ -23,7 +23,7 @@ arrow::Result<std::shared_ptr<arrow::RecordBatch>> MakeRecordBatch(const
                                                                    std::shared_ptr<arrow::Table>& table);
 
 arrow::Status WriteRecordBatchVectorToParquet(
-        std::shared_ptr<arrow::Table> &table,
+        const std::vector<std::shared_ptr<arrow::RecordBatch>> &table,
         std::string pathToFile);
 
 arrow::Result<std::unique_ptr<flight::FlightClient>>

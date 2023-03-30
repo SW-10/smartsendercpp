@@ -95,12 +95,12 @@ MakeRecordBatch(const std::shared_ptr<arrow::Table> &table) {
 }
 
 arrow::Status WriteRecordBatchVectorToParquet(
-        std::shared_ptr<arrow::Table> &table,
+        const std::vector<std::shared_ptr<arrow::RecordBatch>> &recordBatchVector,
         std::string pathToFile) {
 
-//    std::shared_ptr<arrow::RecordBatchReader> batch_stream;
-//    ARROW_ASSIGN_OR_RAISE(batch_stream, arrow::RecordBatchReader::Make(recordBatchVector,
-//                                                                       recordBatchVector[0]->schema()));
+    std::shared_ptr<arrow::RecordBatchReader> batch_stream;
+    ARROW_ASSIGN_OR_RAISE(batch_stream, arrow::RecordBatchReader::Make(recordBatchVector,
+                                                                       recordBatchVector[0]->schema()));
 
     std::shared_ptr<parquet::WriterProperties> properties =
             parquet::WriterProperties::Builder().compression(arrow::Compression::SNAPPY)->build();
@@ -111,21 +111,21 @@ arrow::Status WriteRecordBatchVectorToParquet(
     std::shared_ptr<arrow::io::FileOutputStream> outputFile;
     ARROW_ASSIGN_OR_RAISE(outputFile, arrow::io::FileOutputStream::Open(pathToFile));
 
-    ARROW_RETURN_NOT_OK(parquet::arrow::WriteTable(*table.get(), arrow::default_memory_pool(), outputFile));
-//    std::unique_ptr<parquet::arrow::FileWriter> writer;
-//    ARROW_ASSIGN_OR_RAISE(writer, parquet::arrow::FileWriter::Open(*batch_stream->schema().get(),
-//                                                                   arrow::default_memory_pool(),
-//                                                                   outputFile, properties,
-//                                                                   arrowProperties));
-//
-//    for (arrow::Result<std::shared_ptr<arrow::RecordBatch>> tryBatch : *batch_stream) {
-//        ARROW_ASSIGN_OR_RAISE(auto batch, tryBatch);
-//        ARROW_ASSIGN_OR_RAISE(auto table,
-//                              arrow::Table::FromRecordBatches(batch->schema(), {batch}));
-//        ARROW_RETURN_NOT_OK(writer->WriteTable(*table.get(), batch->num_rows()));
-//    }
-//
-//    ARROW_RETURN_NOT_OK(writer->Close());
+//    ARROW_RETURN_NOT_OK(parquet::arrow::WriteTable(*table.get(), arrow::system_memory_pool(), outputFile, 3, properties, arrowProperties));
+    std::unique_ptr<parquet::arrow::FileWriter> writer;
+    ARROW_ASSIGN_OR_RAISE(writer, parquet::arrow::FileWriter::Open(*batch_stream->schema().get(),
+                                                                   arrow::default_memory_pool(),
+                                                                   outputFile, properties,
+                                                                   arrowProperties));
+
+    for (arrow::Result<std::shared_ptr<arrow::RecordBatch>> tryBatch : *batch_stream) {
+        ARROW_ASSIGN_OR_RAISE(auto batch, tryBatch);
+        ARROW_ASSIGN_OR_RAISE(auto table,
+                              arrow::Table::FromRecordBatches(batch->schema(), {batch}));
+        ARROW_RETURN_NOT_OK(writer->WriteTable(*table.get(), batch->num_rows()));
+    }
+
+    ARROW_RETURN_NOT_OK(writer->Close());
 }
 
 
