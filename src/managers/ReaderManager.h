@@ -1,3 +1,5 @@
+#pragma once
+
 #include <fstream>
 #include "string"
 #include "ConfigManager.h"
@@ -10,9 +12,9 @@
 #include <any>
 #include <functional>
 
-class ReaderManager {
+class ReaderManager : public IObserver {
 public:
-    explicit ReaderManager(std::string configFile);
+    explicit ReaderManager(std::string configFile, Timekeeper &timekeeper);
 
     void runCompressor();
 
@@ -33,4 +35,8 @@ private:
                     int
             > // value (function, compressionType, count)
     > myMap;
+
+    void Update(const std::string &message_from_subject) override;
+    bool newInterval = true;
+
 };

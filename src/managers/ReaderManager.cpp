@@ -4,13 +4,16 @@
 #include <string>
 #include <iostream>
 #include "../utils/Timer.h"
-#include "../utils/Utils.h"
 #include <functional>
 
-ReaderManager::ReaderManager(std::string configFile)
-        : configManager(configFile), timestampManager(configManager),
+//int Observer::static_number_ = 0;
+//Timekeeper *timekeeper = new Timekeeper;
+
+ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
+        : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols, configManager.textCols,
                        timestampManager) {
+    timekeeper.Attach(this);
     this->csvFileStream.open(
             "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
             std::ios::in);
@@ -100,6 +103,14 @@ ReaderManager::ReaderManager(std::string configFile)
     }
 }
 
+// Overwritten function in the observer pattern
+// Used to receive a notification from the timekeeper about a new interval
+void ReaderManager::Update(const std::string &message_from_subject) {
+    if(message_from_subject == "New interval"){
+        newInterval = true;
+    }
+}
+
 void ReaderManager::runCompressor() {
     std::vector<std::string> row;
     std::string line, word;
@@ -111,13 +122,16 @@ void ReaderManager::runCompressor() {
     int lineNumber = 0;
     int timestampFlusherPenalty = 50;
     int lastTimestampFlush = 0;
+    int hej = 0;
     while (!this->csvFileStream.eof()) {
         row.clear();
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
 
         int count = 0;
+
         while (std::getline(s, word, ',')) {
+
             auto mapElement = myMap.find(count); //Get element in map
 
             // Get the lambda function from the map.
@@ -126,6 +140,15 @@ void ReaderManager::runCompressor() {
 
             // Call the compression function
             CompressionType ct = compressFunction(&word,lineNumber);
+
+            // Run code that handles new intervals directly after reading the timestamp
+            // newInterval is set to true when timekeeper sends a message which is received by the
+            // Update() function in ReaderManager.cpp
+            if(newInterval){
+                std::cout << "Hello from reader " << hej << std::endl;
+                newInterval = false;
+                hej++;
+            }
 
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;

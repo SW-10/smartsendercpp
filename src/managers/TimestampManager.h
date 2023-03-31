@@ -7,6 +7,8 @@
 #include <functional>
 #include "ConfigManager.h"
 #include "../utils/Utils.h"
+#include "../utils/Timekeeper.h"
+
 
 struct TwoLatestTimestamps {
     int timestampCurrent;
@@ -30,7 +32,7 @@ public:
 
     std::vector<std::function<void(BitVecBuilder *builder, int val)>> compressionSchemes;
 
-    TimestampManager(ConfigManager &confMan);
+    TimestampManager(ConfigManager &confMan, Timekeeper &timekeeper);
 
     void compressTimestamps(int timestamp);
 
@@ -68,6 +70,7 @@ public:
     TimestampManager();
     static int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
 private:
+    Timekeeper tk;
     const int bitsUsedForSchemeID = 4 ;
     int timestampPrevious;
     bool readyForOffset = false;
@@ -76,4 +79,6 @@ private:
     size_t getSizeOfLocalOffsetList() const;
     size_t getSizeOfGlobalOffsetList() const;
     int findBestSchemeForSize(int elements);
+
+    Timekeeper &timekeeper;
 };

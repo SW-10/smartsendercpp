@@ -52,10 +52,12 @@ int main(int argc, char *argv[]) {
     // without setting a handler we would get std::abort() called when an assert fails
     context.setAssertHandler(handler);
 
+    Timekeeper *timekeeper = new Timekeeper;
+
 	int res = context.run();
 	int client_stuff_return_code = 0;
     std::string path = "moby.cfg";
-    ReaderManager readerManager(path);
+    ReaderManager readerManager(path, *timekeeper);
     readerManager.runCompressor();
 	return res + client_stuff_return_code;
     

@@ -5,9 +5,11 @@
 #include <algorithm>
 #include <iostream>
 #include <tuple>
+#include "ReaderManager.h"
+//
+//extern Timekeeper *timekeeper;
 
-
-TimestampManager::TimestampManager(ConfigManager &confMan) {
+TimestampManager::TimestampManager(ConfigManager &confMan, Timekeeper &timekeeper) : timekeeper(timekeeper){
     for (int i = 0; i < confMan.totalNumberOfCols; i++) {
         TwoLatestTimestamps ts = {0, 0, false};
         latestTimestamps.push_back(ts);
@@ -17,6 +19,10 @@ TimestampManager::TimestampManager(ConfigManager &confMan) {
 
 void TimestampManager::compressTimestamps(int timestamp) {
 //    timestampCount++;
+
+
+    timekeeper.update(timestamp);
+
     allTimestampsReconstructed.push_back(timestamp);
 
     timestampCurrent = timestamp;
@@ -642,8 +648,4 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
 }
 
 #pragma clang diagnostic pop
-
-TimestampManager::TimestampManager() {
-
-}
 
