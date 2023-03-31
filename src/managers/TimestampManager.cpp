@@ -1,10 +1,14 @@
 #include "../utils/Utils.h"
 #include "../constants.h"
-#include "../doctest.h"
 #include "TimestampManager.h"
 #include <algorithm>
 #include <iostream>
 #include <tuple>
+#ifndef NDEBUG
+#include "../doctest.h"
+#endif
+
+
 #include "ReaderManager.h"
 //
 //extern Timekeeper *timekeeper;
@@ -332,7 +336,7 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
         originalFlat.emplace_back(j.second);
     }
     finalCompression.bytes.push_back(finalCompression.currentByte);
-
+#ifndef NDEBUG
     // TEST
     // Check if all elements of the decompressed list are equivalent to the elements of the original
     // offset list.
@@ -348,7 +352,7 @@ TimestampManager::binaryCompressGlobOffsets(const std::vector<std::pair<int, int
         }
         CHECK(origEqDecompressed == true);
     }
-
+#endif
     return finalCompression.bytes;
 }
 
@@ -447,6 +451,7 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
     }
     finalCompression.bytes.push_back(finalCompression.currentByte);
 
+#ifndef NDEBUG
     // TEST
     // Check if all elements of the decompressed list are equivalent to the elements of the original
     // offset list.
@@ -462,7 +467,7 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets(
         }
         CHECK(origEqDecompressed == true);
     }
-
+#endif
     return finalCompression.bytes;
 }
 

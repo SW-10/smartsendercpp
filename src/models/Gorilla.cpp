@@ -1,8 +1,9 @@
 #include "Gorilla.h"
 #include <cmath>
-#include "../doctest.h"
-
 #define GORILLA_MAX 50
+#ifndef NDEBUG
+#include "../doctest.h"
+#endif
 
 const uint8_t SIZE_OF_32INT = (uint8_t) sizeof(int32_t) * 8;
 
@@ -158,6 +159,7 @@ Gorilla::gridGorilla(std::vector<uint8_t> values, int valuesCount,
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
 
+#ifndef NDEBUG
 TEST_CASE("GORILLA TESTS") {
     std::vector<uint8_t> original{
             63, 128, 0, 0, 212, 172, 204, 204, 238, 55, 141, 107, 87, 111, 91,
@@ -214,6 +216,6 @@ TEST_CASE("Leading and trailing zeros") { //Taken from Rust
     CHECK(g.lastLeadingZeroBits == 8);
     CHECK(g.lastTrailingZeroBits == 17);
 }
-
+#endif
 #pragma clang diagnostic pop
 

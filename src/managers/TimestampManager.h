@@ -69,6 +69,8 @@ public:
     bool flushTimestamps(int lastUsedTimestamp);
     TimestampManager();
     static int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
+    size_t getSizeOfLocalOffsetList() const;
+    size_t getSizeOfGlobalOffsetList() const;
 private:
     Timekeeper tk;
     const int bitsUsedForSchemeID = 4 ;
@@ -76,8 +78,6 @@ private:
     bool readyForOffset = false;
     std::vector<int> allTimestampsReconstructed;
     std::vector<TwoLatestTimestamps> latestTimestamps;
-    size_t getSizeOfLocalOffsetList() const;
-    size_t getSizeOfGlobalOffsetList() const;
     int findBestSchemeForSize(int elements);
 
     Timekeeper &timekeeper;

@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#ifndef NDEBUG
 #include "../doctest.h"
-
+#endif
 #define ERROR 50
 #define R 6371
 #define TO_RAD (3.1415926536 / 180)
@@ -101,6 +102,8 @@ double VectorBased::haversineDistance(double lat1, double lon1, double lat2, dou
     return result * 1000;
 }
 
+#ifndef NDEBUG
+
 TEST_CASE("Vector Based"){
     VectorBased vb1;
 
@@ -133,3 +136,4 @@ TEST_CASE("Vector Based"){
     VectorBased vb4;
     CHECK(vb4.fitValue(76, 57.706159, 10.829362, 1000) == 1);
 }
+#endif
