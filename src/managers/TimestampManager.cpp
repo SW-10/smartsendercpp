@@ -790,6 +790,9 @@ std::tuple<int, int, int> TimestampManager::findNumberOfBits(const int &val){
         return(std::tuple(0b111111110, 8, 255));
     } else if (val <= 511){
         return(std::tuple(0b1111111110, 9, 511));
+
+        // TODO: Add more cases here
+
     } else {
         return(std::tuple(0b1111111111, 32, INT32_MAX));
     }
