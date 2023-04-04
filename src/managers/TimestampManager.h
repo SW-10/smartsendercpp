@@ -20,7 +20,8 @@ class TimestampManager {
 public:
     int firstTimestamp;
 
-    int timestampCurrent;
+    struct Node* timestampCurrent;
+    int totalFlushed;
 
     std::vector<std::pair<int, int>> offsetList;
 
@@ -49,8 +50,9 @@ public:
     std::vector<int>
     getTimestampRangeForColumns(int globID, int indexA, int indexB);
 
-    std::vector<int>
-    getTimestampsByGlobalId(int globID, int timestampA, int timestampB);
+    void
+    getTimestampsByGlobalId(int globID, Node *timestampA,
+                            Node *timestampB, std::vector<Node *> &res);
 
     int getTimestampsFromIndexForColumns(int globID, int index);
 
@@ -67,13 +69,14 @@ public:
 
     bool decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader, int* currentVal, std::vector<int> *decompressed);
 
-    bool flushTimestamps(int lastUsedTimestamp);
+    bool flushTimestamps(Node *lastUsedTimestamp);
     TimestampManager();
     static int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
 private:
     int timestampPrevious;
     bool readyForOffset = false;
-    std::vector<int> allTimestampsReconstructed;
+    Node *allTimestampsReconstructed;
     std::vector<TwoLatestTimestamps> latestTimestamps;
     int getSizeOfLocalOffsetList();
+
 };

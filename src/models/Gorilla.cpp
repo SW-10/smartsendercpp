@@ -115,7 +115,6 @@ Gorilla::Gorilla() {
     compressedValues.remainingBits = 8;
     compressedValues.bytesCounter = 0;
     length = 0;
-    lastTimestamp = 0;
 }
 
 std::vector<float>
@@ -134,7 +133,7 @@ Gorilla::gridGorilla(std::vector<uint8_t> values, int valuesCount,
                 uint8_t meaningfulBits = readBits(&bitReader, 6);
                 if (meaningfulBits == 63) {
                     for (int j = 0; j < valuesCount; j++) {
-                        printf("ERROR %d,", values[j]);
+                        printf("ERROR %d,", values.at(j));
                     }
                 }
                 trailingZeros =

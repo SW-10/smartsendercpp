@@ -5,6 +5,7 @@
 #include "../models/Swing.h"
 #include "ConfigManager.h"
 #include "TimestampManager.h"
+#include "../utils/Utils.h"
 
 struct Status {
     bool pmcMeanReady = true;
@@ -13,7 +14,7 @@ struct Status {
 };
 
 struct CachedValues {
-    int startTimestamp = -1;
+    Node* startTimestamp;
     std::vector<float> values;
 };
 
@@ -45,14 +46,14 @@ struct TextModelContainer {
 
 class ModelManager {
 public:
-    void fitSegment(int id, float value, int timestamp);
+    void fitSegment(int id, float value, Node *timestamp);
 
     ModelManager(std::vector<columns> &timeSeriesConfig,
                  std::vector<int> &textCols,
                  TimestampManager &timestampManager);
 
     void constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
-                                 int lastTimestamp);
+                                 Node *lastTimestamp);
 
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
