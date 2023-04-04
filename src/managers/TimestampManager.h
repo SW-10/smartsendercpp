@@ -63,6 +63,9 @@ public:
     std::vector<uint8_t>
     binaryCompressLocOffsets(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
 
+    std::vector<uint8_t>
+    binaryCompressLocOffsets2(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
+
     std::vector<int> decompressOffsetList(const std::vector<uint8_t> &values);
     bool decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader, int* currentVal, std::vector<int> *decompressed);
 
@@ -81,4 +84,18 @@ private:
     int findBestSchemeForSize(int elements);
 
     Timekeeper &timekeeper;
+
+
+
+    bool valueCanBeRepresented(const int &currentLimit, const int &val, BitVecBuilder &builder);
+
+    bool valueCanBeRepresented(const int &currentLimit, int currentControlCode, const int &val,
+                               BitVecBuilder &builder);
+
+    bool valueCanBeRepresented(const int &currentLimit, int currentControlCode, int bitsForVal,
+                               const int &val, BitVecBuilder &builder);
+
+    bool valueCanBeRepresented(const int &currentLimit, const int &val);
+
+    std::tuple<int, int, int> findNumberOfBits(const int &val);
 };

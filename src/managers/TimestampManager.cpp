@@ -652,5 +652,148 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
     return offset;
 }
 
+
+std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets2(
+        std::unordered_map<int, std::vector<std::pair<int, int>>> offsets) {
+
+    bool first = true;
+    BitVecBuilder builder;
+
+    std::vector<int> flatList;
+    std::map<int, std::vector<int>> firsts;
+    std::map<int, std::vector<int>> seconds;
+
+    //Sort unordered map
+    std::map<int, std::vector<std::pair<int, int>>> ordered(offsets.begin(),
+                                                            offsets.end());
+
+
+    int globID = 0;
+    for(const auto i : ordered){
+        flatList.emplace_back(i.first);
+//        appendBits(&builder, i.first ,numberOfBits);
+        for(auto j : i.second) {
+            flatList.emplace_back(j.first);
+            firsts[globID].emplace_back(j.first);
+            flatList.emplace_back(j.second);
+            seconds[globID].emplace_back(j.second);
+
+//            appendBits(&builder, j.first ,numberOfBits);
+//            appendBits(&builder, j.second ,numberOfBits);
+        }
+        globID++;
+    }
+
+    std::vector<int>::iterator it = flatList.begin();
+    int ctrlCode = 0;
+    int numberOfBits = 0;
+    int upperLimit;
+    if(first){
+        auto bits = findNumberOfBits(*it);
+        it++;
+        ctrlCode        = std::get<0>(bits);
+        numberOfBits    = std::get<1>(bits);
+        upperLimit      = std::get<2>(bits);
+    }
+
+    std::cout << "FIRST: ctrl: " << ctrlCode << ", numberOfBits: " << numberOfBits << ", upperLimit: " << upperLimit << ", val: " << *it << std::endl;
+    std::map<int, std::vector<BitVecBuilder>> firstCompressed;
+    std::map<int, std::vector<BitVecBuilder>> secondsCompressed;
+
+    unsigned bits, var = ctrlCode;
+    for(bits = 0; var != 0; ++bits) var >>= 1;
+
+    bool first2 = true;
+    for(int i = 0; i < firsts.size(); i++){
+        BitVecBuilder bvb;
+        firstCompressed[i].emplace_back(bvb);
+        for(const auto j : firsts.at(i)){
+            if(first2){
+                auto bits = findNumberOfBits(j);
+                ctrlCode        = std::get<0>(bits);
+                numberOfBits    = std::get<1>(bits);
+                upperLimit      = std::get<2>(bits);
+                first2 = false;
+            }
+            if(valueCanBeRepresented(upperLimit, j)){
+                std::cout << "APPENDING BITS!\n" << j << std::endl;
+
+                appendBits(&firstCompressed[i].back() , j, numberOfBits);
+            } else {
+                BitVecBuilder bvb;
+                firstCompressed[i].emplace_back(bvb);
+                auto bits = findNumberOfBits(j);
+                std::cout << j <<  " CANT BE REPRESENTED WITH CONTROL CODE " << ctrlCode << ", LIMIT: " << upperLimit << std::endl;
+                std::cout << "ADJUSTING UPPER LIMIT ..." << std::endl;
+                ctrlCode        = std::get<0>(bits);
+                numberOfBits    = std::get<1>(bits);
+                upperLimit      = std::get<2>(bits);
+                std::cout << "UPPER LIMIT ADJUSTED TO " << upperLimit << "\n" << std::endl;
+
+                appendBits(&firstCompressed[i].back() , j, numberOfBits);
+            }
+
+        }
+    }
+
+    //Length of control bit
+    // Src: https://stackoverflow.com/questions/29388711/how-to-get-the-bit-length-of-an-integer-in-c
+//    unsigned bits, var = ctrlCode;
+//    for(bits = 0; var != 0; ++bits) var >>= 1;
+//
+//    appendBits(&builder, ctrlCode, bits);
+//
+//    for(; it != flatList.end(); ++it){
+//        if(valueCanBeRepresented(upperLimit, *it)) {
+//            std::cout << "APPENDING BIT :D" << std::endl;
+//            appendBits(&builder, *it, numberOfBits);
+//        }
+//        else {
+//            std::cout << *it <<  " CANT BE REPRESENTED WITH CONTROL CODE " << ctrlCode << ", LIMIT: " << upperLimit << std::endl;
+//            std::cout << "ADJUSTING UPPER LIMIT ..." << std::endl;
+//            auto bits = findNumberOfBits(*it);
+//            ctrlCode        = std::get<0>(bits);
+//            numberOfBits    = std::get<1>(bits);
+//            upperLimit      = std::get<2>(bits);
+//            std::cout << "UPPER LIMIT ADJUSTED TO " << upperLimit << "\n" << std::endl;
+//            appendBits(&builder, *it, numberOfBits);
+//        }
+//    }
+
+    std::vector<uint8_t> res;
+    return res;
+}
+
+bool TimestampManager::valueCanBeRepresented(const int &currentLimit,  const int &val){
+    // Extract the optimal upper limit for the value
+    auto hej = findNumberOfBits(val);
+    int bestLimit = std::get<2>(hej);
+    return val <= currentLimit && currentLimit == bestLimit;
+}
+
+std::tuple<int, int, int> TimestampManager::findNumberOfBits(const int &val){
+    if (val <= 1) {
+        return(std::tuple(0b10, 1, 1));
+    } else if (val <= 3) {
+        return(std::tuple(0b110, 2, 3));
+    } else if (val <= 7) {
+        return(std::tuple(0b1110, 3, 7));
+    } else if (val <= 15) {
+        return(std::tuple(0b11110, 4, 15));
+    } else if (val <= 31){
+        return(std::tuple(0b111110, 5, 31));
+    } else if (val <= 63){
+        return(std::tuple(0b1111110, 6, 63));
+    } else if (val <= 127){
+        return(std::tuple(0b11111110, 7, 127));
+    } else if (val <= 255){
+        return(std::tuple(0b111111110, 8, 255));
+    } else if (val <= 511){
+        return(std::tuple(0b1111111110, 9, 511));
+    } else {
+        return(std::tuple(0b1111111111, 32, INT32_MAX));
+    }
+}
+
 #pragma clang diagnostic pop
 

@@ -176,5 +176,8 @@ void ReaderManager::runCompressor() {
     std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
     std::cout << "size of int: " << sizeof(int) << std::endl;
 
+
+    std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
+
 }
 
