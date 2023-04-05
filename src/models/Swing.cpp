@@ -201,7 +201,7 @@ Swing &Swing::operator=(const Swing &instance) {
     upperBoundIntercept = instance.upperBoundIntercept;
     lowerBoundSlope = instance.upperBoundIntercept;
     lowerBoundIntercept = instance.lowerBoundIntercept;
-    length = instance.upperBoundIntercept;
+    length = instance.length;
     return *this;
 }
 
