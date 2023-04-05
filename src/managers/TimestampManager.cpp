@@ -13,30 +13,33 @@ TimestampManager::TimestampManager(ConfigManager &confMan) {
         latestTimestamps.push_back(ts);
     }
     makeCompressionSchemes();
+    allTimestampsReconstructed = NULL;
+    totalFlushed = 0;
 }
 
 void TimestampManager::compressTimestamps(int timestamp) {
-//    timestampCount++;
-    allTimestampsReconstructed.push_back(timestamp);
 
-    timestampCurrent = timestamp;
-    if (!readyForOffset) firstTimestamp = timestamp;
+    if (!readyForOffset){
+        allTimestampsReconstructed = Utils::insert_end(&allTimestampsReconstructed, timestamp);
+        timestampCurrent = allTimestampsReconstructed;
+        firstTimestamp = timestamp;
+    }
     if (readyForOffset) {
-
+        timestampCurrent = Utils::insert_end(&timestampCurrent, timestamp);
         // Offset = Difference between current and previous timestamp
-        currentOffset = timestampCurrent - timestampPrevious;
+        currentOffset = timestamp - timestampPrevious;
 
         // Insert new offset if first element or if current offset is not equal to previous offset
         // Else, increase counter for current offset
         if (offsetList.empty() ||
-            currentOffset != offsetList[offsetList.size() - 1].first) {
+            currentOffset != offsetList.at(offsetList.size() - 1).first) {
             offsetList.emplace_back(currentOffset, 1);
         } else {
-            offsetList[offsetList.size() - 1].second++;
+            offsetList.at(offsetList.size() - 1).second++;
         }
     }
 
-    timestampPrevious = timestampCurrent;
+    timestampPrevious = timestamp;
     readyForOffset = true;
 }
 
@@ -148,31 +151,50 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
     elem->readyForOffset = true;
 }
 
-std::vector<int>
-TimestampManager::getTimestampsByGlobalId(int globID, int timestampA, int timestampB) {
-    auto localOffsets = localOffsetList[globID];
-    auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
-    std::vector<int> res;
+void
+TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
+                                          Node *timestampB, std::vector<Node *> &res) {
 
-    int count = firstLocalTimestamp;
-
-    for (auto &localOffset: localOffsets) {
-        //int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
-
-        for (int j = 0; j < localOffset.second; j++) {
-            if (allTimestampsReconstructed.at(count) > timestampA) {
-                if (allTimestampsReconstructed.at(count) > timestampB) {
+    auto &localOffsets = localOffsetList.at(globID);
+    bool found = false;
+    //Create iterator for double linked list
+    Node* iterator = timestampA;
+    int count = 0;
+    for (auto & localOffset : localOffsets){
+        count += localOffset.first*localOffset.second;
+        if(res.empty() && count+totalFlushed > timestampA->index){
+            //Define local offset start by current timestamp
+            int start = (timestampA->index-(count+totalFlushed-localOffset.first*localOffset.second))/localOffset.first;
+            for (int j = start; j < localOffset.second; j++){
+                //Forward offset size in iterator
+                iterator = Utils::forwardNode(iterator, localOffset.first);
+                res.emplace_back(iterator);
+                //Break when timestampB is found
+                if(iterator == timestampB) {
+                    found = true;
                     break;
                 }
-
-                res.push_back(allTimestampsReconstructed.at(count));
             }
-            count += localOffset.first;
+        }
+        else if(!res.empty()){
+            for (int j = 0; j < localOffset.second; j++){
+                iterator = Utils::forwardNode(iterator, localOffset.first);
+                res.emplace_back(iterator);
+                if(iterator == timestampB) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if(found){
+            break;
         }
     }
-    res.push_back(allTimestampsReconstructed.at(count)); // Add last time stamp
-
-    return res;
+    // TODO: RUN IF DEBUG / make runtime test
+    if(!found){
+        std::cout << "getTimestampsByGlobalId failed" << std::endl;
+    }
 }
 
 
@@ -585,23 +607,37 @@ int TimestampManager::findBestSchemeForSize(int elements) {
     return bestSchemeForSize;
 }
 
-bool TimestampManager::flushTimestamps(int lastUsedTimestamp) {
-    int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
+bool TimestampManager::flushTimestamps(
+        Node *lastUsedTimestamp) {
+    int index;
+    allTimestampsReconstructed = lastUsedTimestamp;
+    Node* iterator = lastUsedTimestamp->prev;
+    if(iterator == NULL){
+        return false;
+    }
+    for(index = 0; iterator->prev != NULL; index++){
+        Node* temp = iterator->prev;
+        delete iterator;
+        iterator = temp;
+    }
+    delete iterator;
+    index++;
+    totalFlushed += index;
+    allTimestampsReconstructed->prev = NULL;
+
     // Flush timestamps when last used timestamp is not the first in vector
     if (index != 0) {
         // Erase global timestamps
-        allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),
-                                         allTimestampsReconstructed.begin() + index);
+
         // Deletion of local offset lists
         for (auto &lol: localOffsetList) {
             if (lol.second.empty()) continue;
             //Check whether the corresponding offset list contains deleted timestamps
-            if (latestTimestamps[lol.first].timestampFirst < index) {
-                latestTimestamps[lol.first].timestampFirst = flushLocalOffsetList(lol.second,
-                                                                                   index -
-                                                                                   latestTimestamps[lol.first].timestampFirst);
-            } else {
-                latestTimestamps[lol.first].timestampFirst -= index;
+            if(latestTimestamps.at(lol.first).timestampFirst < index){
+                latestTimestamps.at(lol.first).timestampFirst = flushLocalOffsetList(lol.second, index-latestTimestamps.at(lol.first).timestampFirst);
+            }
+            else{
+                latestTimestamps.at(lol.first).timestampFirst -= index;
             }
         }
         return true;
@@ -643,7 +679,5 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
 
 #pragma clang diagnostic pop
 
-TimestampManager::TimestampManager() {
-
-}
+TimestampManager::TimestampManager() = default;
 

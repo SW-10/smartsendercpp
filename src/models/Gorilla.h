@@ -7,11 +7,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+#include "../utils/Utils.h"
 
 
 class Gorilla {
 public:
-    int lastTimestamp;
+    Node* lastTimestamp;
     uint8_t lastLeadingZeroBits;
     uint8_t lastTrailingZeroBits;
     BitVecBuilder compressedValues;

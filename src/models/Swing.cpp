@@ -4,11 +4,11 @@
 #include <cstdint>
 #include <iostream>
 #include "../doctest.h"
+#include "../utils/Utils.h"
 
 Swing::Swing(double &errorBound, bool isErrorAbsolute)
         : errorBound(errorBound) {
     firstTimestamp = 0;
-    lastTimestamp = 0;
     firstValue = 0;
     upperBoundSlope = 0;
     upperBoundIntercept = 0;
@@ -18,7 +18,7 @@ Swing::Swing(double &errorBound, bool isErrorAbsolute)
     errorAbsolute = isErrorAbsolute;
 }
 
-bool Swing::fitValueSwing(long timestamp, double value) {
+bool Swing::fitValueSwing(Node *timestamp, double value) {
     double maximumDeviation;
     if (errorAbsolute)  // check if using relative or absolute error bounds
     {
@@ -28,7 +28,7 @@ bool Swing::fitValueSwing(long timestamp, double value) {
     }
     if (length == 0) {
         // Line 1 - 2 of Algorithm 1 in the Swing and Slide paper.
-        firstTimestamp = timestamp;
+        firstTimestamp = timestamp->data;
         lastTimestamp = timestamp;
         firstValue = value;
         length += 1;
@@ -52,7 +52,7 @@ bool Swing::fitValueSwing(long timestamp, double value) {
         struct slopeAndIntercept slopes = computeSlopeAndIntercept(
                 firstTimestamp,
                 firstValue,
-                timestamp,
+                timestamp->data,
                 value + maximumDeviation
         );
 
@@ -62,7 +62,7 @@ bool Swing::fitValueSwing(long timestamp, double value) {
         slopes = computeSlopeAndIntercept(
                 firstTimestamp,
                 firstValue,
-                timestamp,
+                timestamp->data,
                 value - maximumDeviation
         );
 
@@ -73,9 +73,9 @@ bool Swing::fitValueSwing(long timestamp, double value) {
     } else {
         // Line 6 of Algorithm 1 in the Swing and Slide paper.
         double upperBoundApproximateValue =
-                upperBoundSlope * timestamp + upperBoundIntercept;
+                upperBoundSlope * timestamp->data + upperBoundIntercept;
         double lowerBoundApproximateValue =
-                lowerBoundSlope * timestamp + lowerBoundIntercept;
+                lowerBoundSlope * timestamp->data + lowerBoundIntercept;
 
         if (upperBoundApproximateValue + maximumDeviation < value
             || lowerBoundApproximateValue - maximumDeviation > value) {
@@ -89,7 +89,7 @@ bool Swing::fitValueSwing(long timestamp, double value) {
                         computeSlopeAndIntercept(
                                 firstTimestamp,
                                 firstValue,
-                                timestamp,
+                                timestamp->data,
                                 value + maximumDeviation
                         );
                 upperBoundSlope = slopes.slope;
@@ -102,7 +102,7 @@ bool Swing::fitValueSwing(long timestamp, double value) {
                         computeSlopeAndIntercept(
                                 firstTimestamp,
                                 firstValue,
-                                timestamp,
+                                timestamp->data,
                                 value - maximumDeviation
                         );
                 lowerBoundSlope = slopes.slope;
@@ -148,7 +148,7 @@ double Swing::getModelFirst() {
 }
 
 double Swing::getModelLast() {
-    return upperBoundSlope * lastTimestamp + upperBoundIntercept;
+    return upperBoundSlope * lastTimestamp->data + upperBoundIntercept;
 }
 
 int Swing::isNan(double val) {
@@ -201,7 +201,7 @@ Swing &Swing::operator=(const Swing &instance) {
     upperBoundIntercept = instance.upperBoundIntercept;
     lowerBoundSlope = instance.upperBoundIntercept;
     lowerBoundIntercept = instance.lowerBoundIntercept;
-    length = instance.upperBoundIntercept;
+    length = instance.length;
     return *this;
 }
 
@@ -213,15 +213,25 @@ TEST_CASE("Swing") {
     double error_bound = 0.3;
     Swing p(error_bound, true);
     // p = p.getSwing(errorBound);
-    CHECK(p.fitValueSwing(1, 1.0) == 1);
-    CHECK(p.fitValueSwing(2, 1.3) == 1);
-    CHECK(p.fitValueSwing(3, 1.24) == 1);
-    CHECK(p.fitValueSwing(4, 1.045) == 1);
-    CHECK(p.fitValueSwing(5, 1.23) == 1);
-    CHECK(p.fitValueSwing(6, 1.54) == 1);
-    CHECK(p.fitValueSwing(7, 1.45) == 1);
-    CHECK(p.fitValueSwing(8, 1.12) == 1);
-    CHECK(p.fitValueSwing(9, 1.12) == 1);
+    struct Node* newNode = new Node;
+    newNode->data = 1;
+    CHECK(p.fitValueSwing(newNode, 1.0) == 1);
+    newNode->data = 2;
+    CHECK(p.fitValueSwing(newNode, 1.3) == 1);
+    newNode->data = 3;
+    CHECK(p.fitValueSwing(newNode, 1.24) == 1);
+    newNode->data = 4;
+    CHECK(p.fitValueSwing(newNode, 1.045) == 1);
+    newNode->data = 5;
+    CHECK(p.fitValueSwing(newNode, 1.23) == 1);
+    newNode->data = 6;
+    CHECK(p.fitValueSwing(newNode, 1.54) == 1);
+    newNode->data = 7;
+    CHECK(p.fitValueSwing(newNode, 1.45) == 1);
+    newNode->data = 8;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 1);
+    newNode->data = 9;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 1)      ;
 
     SUBCASE("Results") {
         CHECK(float_equal(p.errorBound, 0.3f));
@@ -264,15 +274,25 @@ TEST_CASE("Not all values fit") {
     Swing p(error_bound, true);
     // p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
 
-    CHECK(p.fitValueSwing(1, 1.0) == 1);
-    CHECK(p.fitValueSwing(2, 1.3) == 1);
-    CHECK(p.fitValueSwing(3, 1.24) == 1);
-    CHECK(p.fitValueSwing(4, 1.045) == 0);
-    CHECK(p.fitValueSwing(5, 1.23) == 1);
-    CHECK(p.fitValueSwing(6, 1.54) == 1);
-    CHECK(p.fitValueSwing(7, 1.45) == 1);
-    CHECK(p.fitValueSwing(8, 1.12) == 0);
-    CHECK(p.fitValueSwing(9, 1.12) == 0);
+    struct Node* newNode = new Node;
+    newNode->data = 1;
+    CHECK(p.fitValueSwing(newNode, 1.0) == 1);
+    newNode->data = 2;
+    CHECK(p.fitValueSwing(newNode, 1.3) == 1);
+    newNode->data = 3;
+    CHECK(p.fitValueSwing(newNode, 1.24) == 1);
+    newNode->data = 4;
+    CHECK(p.fitValueSwing(newNode, 1.045) == 0);
+    newNode->data = 5;
+    CHECK(p.fitValueSwing(newNode, 1.23) == 1);
+    newNode->data = 6;
+    CHECK(p.fitValueSwing(newNode, 1.54) == 1);
+    newNode->data = 7;
+    CHECK(p.fitValueSwing(newNode, 1.45) == 1);
+    newNode->data = 8;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 0);
+    newNode->data = 9;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 0);
 }
 
 

@@ -17,7 +17,7 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound,
 }
 
 void ModelManager::fitTextModels(int id, const std::string &value) {
-    TextModelContainer &container = textModels[id];
+    TextModelContainer &container = textModels.at(id);
     if (container.reCheck) {
         container.text = value;
         container.reCheck = false;
@@ -29,8 +29,8 @@ void ModelManager::fitTextModels(int id, const std::string &value) {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
-void ModelManager::fitSegment(int id, float value, int timestamp) {
-    TimeSeriesModelContainer &container = timeSeries[id];
+void ModelManager::fitSegment(int id, float value, Node *timestamp) {
+    TimeSeriesModelContainer &container = timeSeries.at(id);
     if(container.status.SwingReady) {
         container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
         //Swing sets last constructed timestamp internally
@@ -48,11 +48,10 @@ void ModelManager::fitSegment(int id, float value, int timestamp) {
         }
     }
     if(shouldCacheData(container)) {
-        container.cachedValues.values.emplace_back(value);
-        //TODO Check on empty vector, but bug now
-        if (container.cachedValues.startTimestamp == -1){
+        if (container.cachedValues.values.empty()){
             container.cachedValues.startTimestamp = timestamp;
         }
+        container.cachedValues.values.emplace_back(value);
     }
     if (shouldConstructModel(container)) {
         constructFinishedModels(container, timestamp);
@@ -94,19 +93,19 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer &container) {
 //Recursive call chain OK
 void
 ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
-                                      int lastTimestamp) {
+                                      Node *lastTimestamp) {
     float pmcMeanSize = finishedSegment.pmcMean.getBytesPerValue();
     float swingSize = finishedSegment.swing.getBytesPerValue();
     float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
-    int lastModelledTimestamp;
+    Node* lastModelledTimestamp;
     size_t indexToStart = std::min<size_t>(finishedSegment.pmcMean.length,
                                            std::min<size_t>(
                                                    finishedSegment.gorilla.length,
                                                    finishedSegment.swing.length));
-    if (pmcMeanSize < swingSize && pmcMeanSize < gorillaSize) {
+    if (pmcMeanSize <= swingSize && pmcMeanSize <= gorillaSize) {
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
         indexToStart = finishedSegment.pmcMean.length - indexToStart;
-    } else if (swingSize < pmcMeanSize && swingSize < gorillaSize) {
+    } else if (swingSize <= pmcMeanSize && swingSize <= gorillaSize) {
         lastModelledTimestamp = finishedSegment.swing.lastTimestamp;
         indexToStart = finishedSegment.swing.length - indexToStart;
     } else {
@@ -122,14 +121,13 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                                    finishedSegment.globalId);
 
         // TODO: get last constructed TS, and parse rest TS to fitSegment
-        std::vector<int> timestamps = timestampManager.getTimestampsByGlobalId(
+        std::vector<Node*> timestampOffsets;
+        timestampManager.getTimestampsByGlobalId(
                 finishedSegment.globalId,
-                lastModelledTimestamp, lastTimestamp);
+                lastModelledTimestamp, lastTimestamp, timestampOffsets);
         int count = 0;
-        for (size_t i = indexToStart; i <
-                                      currentCache.values.size(); i++) { // Added +1 to indexToStart. Don't know if this is the right way?
-            fitSegment(finishedSegment.localId, currentCache.values[i],
-                       timestamps[count]);
+        for (size_t i = indexToStart; i < currentCache.values.size(); i++) {
+            fitSegment(finishedSegment.localId, currentCache.values.at(i), timestampOffsets.at(count));
             count++;
         }
     } else {
@@ -143,13 +141,15 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
 #pragma clang diagnostic pop
 
 bool ModelManager::calculateFlushTimestamp() {
-    int largestUsedTimestamp = INT32_MAX;
+    Node* earliestUsedTimestamp = nullptr;
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
-            largestUsedTimestamp = std::min(container.cachedValues.startTimestamp, largestUsedTimestamp);
+            if(earliestUsedTimestamp == nullptr || (*container.cachedValues.startTimestamp).data < (*earliestUsedTimestamp).data) {
+                earliestUsedTimestamp = container.cachedValues.startTimestamp;
+            }
         }
     }
-    return timestampManager.flushTimestamps(largestUsedTimestamp);
+    return earliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
 }
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {

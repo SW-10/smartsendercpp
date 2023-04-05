@@ -3,10 +3,11 @@
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
+#include "../utils/Utils.h"
 
 class PmcMean {
 public:
-    int lastTimestamp;
+    Node* lastTimestamp;
     float minValue;
     float maxValue;
     float sumOfValues;
