@@ -9,6 +9,12 @@ struct BitVecBuilder {
     uint8_t remainingBits;
     int bytesCounter;
     std::vector<uint8_t> bytes;
+
+    BitVecBuilder(){
+        currentByte = 0;
+        remainingBits = 8;
+        bytesCounter = 0;
+    }
 };
 
 struct BitReader {
