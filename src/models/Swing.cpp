@@ -28,7 +28,7 @@ bool Swing::fitValueSwing(Node *timestamp, double value) {
     }
     if (length == 0) {
         // Line 1 - 2 of Algorithm 1 in the Swing and Slide paper.
-        firstTimestamp = (*timestamp).data;
+        firstTimestamp = timestamp->data;
         lastTimestamp = timestamp;
         firstValue = value;
         length += 1;
@@ -52,7 +52,7 @@ bool Swing::fitValueSwing(Node *timestamp, double value) {
         struct slopeAndIntercept slopes = computeSlopeAndIntercept(
                 firstTimestamp,
                 firstValue,
-                (*timestamp).data,
+                timestamp->data,
                 value + maximumDeviation
         );
 
@@ -62,7 +62,7 @@ bool Swing::fitValueSwing(Node *timestamp, double value) {
         slopes = computeSlopeAndIntercept(
                 firstTimestamp,
                 firstValue,
-                (*timestamp).data,
+                timestamp->data,
                 value - maximumDeviation
         );
 
@@ -73,9 +73,9 @@ bool Swing::fitValueSwing(Node *timestamp, double value) {
     } else {
         // Line 6 of Algorithm 1 in the Swing and Slide paper.
         double upperBoundApproximateValue =
-                upperBoundSlope * (*timestamp).data + upperBoundIntercept;
+                upperBoundSlope * timestamp->data + upperBoundIntercept;
         double lowerBoundApproximateValue =
-                lowerBoundSlope * (*timestamp).data + lowerBoundIntercept;
+                lowerBoundSlope * timestamp->data + lowerBoundIntercept;
 
         if (upperBoundApproximateValue + maximumDeviation < value
             || lowerBoundApproximateValue - maximumDeviation > value) {
@@ -89,7 +89,7 @@ bool Swing::fitValueSwing(Node *timestamp, double value) {
                         computeSlopeAndIntercept(
                                 firstTimestamp,
                                 firstValue,
-                                (*timestamp).data,
+                                timestamp->data,
                                 value + maximumDeviation
                         );
                 upperBoundSlope = slopes.slope;
@@ -102,7 +102,7 @@ bool Swing::fitValueSwing(Node *timestamp, double value) {
                         computeSlopeAndIntercept(
                                 firstTimestamp,
                                 firstValue,
-                                (*timestamp).data,
+                                timestamp->data,
                                 value - maximumDeviation
                         );
                 lowerBoundSlope = slopes.slope;
@@ -148,7 +148,7 @@ double Swing::getModelFirst() {
 }
 
 double Swing::getModelLast() {
-    return upperBoundSlope * (*lastTimestamp).data + upperBoundIntercept;
+    return upperBoundSlope * lastTimestamp->data + upperBoundIntercept;
 }
 
 int Swing::isNan(double val) {

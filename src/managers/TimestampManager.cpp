@@ -154,19 +154,22 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
 void
 TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
                                           Node *timestampB, std::vector<Node *> &res) {
-    //std::list<int>::iterator res;
-    auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
+
     auto &localOffsets = localOffsetList.at(globID);
     bool found = false;
+    //Create iterator for double linked list
     Node* iterator = timestampA;
-    int count = 0;//firstLocalTimestamp;
-    for (int i = 0; i < localOffsets.size(); i++){
-        count += localOffsets.at(i).first*localOffsets.at(i).second;
+    int count = 0;
+    for (auto & localOffset : localOffsets){
+        count += localOffset.first*localOffset.second;
         if(res.empty() && count+totalFlushed > timestampA->index){
-            int start = (timestampA->index-(count+totalFlushed-localOffsets.at(i).first*localOffsets.at(i).second))/localOffsets.at(i).first;
-            for (int j = start; j < localOffsets.at(i).second; j++){
-                iterator = Utils::forwardNode(iterator, localOffsets.at(i).first);
+            //Define local offset start by current timestamp
+            int start = (timestampA->index-(count+totalFlushed-localOffset.first*localOffset.second))/localOffset.first;
+            for (int j = start; j < localOffset.second; j++){
+                //Forward offset size in iterator
+                iterator = Utils::forwardNode(iterator, localOffset.first);
                 res.emplace_back(iterator);
+                //Break when timestampB is found
                 if(iterator == timestampB) {
                     found = true;
                     break;
@@ -174,8 +177,8 @@ TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
             }
         }
         else if(!res.empty()){
-            for (int j = 0; j < localOffsets.at(i).second; j++){
-                iterator = Utils::forwardNode(iterator, localOffsets.at(i).first);
+            for (int j = 0; j < localOffset.second; j++){
+                iterator = Utils::forwardNode(iterator, localOffset.first);
                 res.emplace_back(iterator);
                 if(iterator == timestampB) {
                     found = true;
@@ -190,7 +193,7 @@ TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
     }
     // TODO: RUN IF DEBUG / make runtime test
     if(!found){
-        std::cout << "nonon" << std::endl;
+        std::cout << "getTimestampsByGlobalId failed" << std::endl;
     }
 }
 

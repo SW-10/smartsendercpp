@@ -141,15 +141,15 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
 #pragma clang diagnostic pop
 
 bool ModelManager::calculateFlushTimestamp() {
-    Node* EarliestUsedTimestamp = nullptr;
+    Node* earliestUsedTimestamp = nullptr;
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
-            if(EarliestUsedTimestamp == nullptr || (*container.cachedValues.startTimestamp).data < (*EarliestUsedTimestamp).data) {
-                EarliestUsedTimestamp = container.cachedValues.startTimestamp;
+            if(earliestUsedTimestamp == nullptr || (*container.cachedValues.startTimestamp).data < (*earliestUsedTimestamp).data) {
+                earliestUsedTimestamp = container.cachedValues.startTimestamp;
             }
         }
     }
-    return EarliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(EarliestUsedTimestamp);
+    return earliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
 }
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {
