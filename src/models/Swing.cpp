@@ -208,30 +208,30 @@ Swing &Swing::operator=(const Swing &instance) {
 bool float_equal(float a, float b) {
     return (std::fabs(a - b) < 0.00001);
 }
-//TODO fix test case to new
-/*TEST_CASE("Swing") {
+
+TEST_CASE("Swing") {
     double error_bound = 0.3;
     Swing p(error_bound, true);
     // p = p.getSwing(errorBound);
-    int testVal = 1;
-    int* testptr = &testVal;
-    CHECK(p.fitValueSwing(testptr, 1.0) == 1);
-    testVal = 2;
-    CHECK(p.fitValueSwing(testptr, 1.3) == 1);
-    testVal = 3;
-    CHECK(p.fitValueSwing(testptr, 1.24) == 1);
-    testVal = 4;
-    CHECK(p.fitValueSwing(testptr, 1.045) == 1);
-    testVal = 5;
-    CHECK(p.fitValueSwing(testptr, 1.23) == 1);
-    testVal = 6;
-    CHECK(p.fitValueSwing(testptr, 1.54) == 1);
-    testVal = 7;
-    CHECK(p.fitValueSwing(testptr, 1.45) == 1);
-    testVal = 8;
-    CHECK(p.fitValueSwing(testptr, 1.12) == 1);
-    testVal = 9;
-    CHECK(p.fitValueSwing(testptr, 1.12) == 1)      ;
+    struct Node* newNode = new Node;
+    newNode->data = 1;
+    CHECK(p.fitValueSwing(newNode, 1.0) == 1);
+    newNode->data = 2;
+    CHECK(p.fitValueSwing(newNode, 1.3) == 1);
+    newNode->data = 3;
+    CHECK(p.fitValueSwing(newNode, 1.24) == 1);
+    newNode->data = 4;
+    CHECK(p.fitValueSwing(newNode, 1.045) == 1);
+    newNode->data = 5;
+    CHECK(p.fitValueSwing(newNode, 1.23) == 1);
+    newNode->data = 6;
+    CHECK(p.fitValueSwing(newNode, 1.54) == 1);
+    newNode->data = 7;
+    CHECK(p.fitValueSwing(newNode, 1.45) == 1);
+    newNode->data = 8;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 1);
+    newNode->data = 9;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 1)      ;
 
     SUBCASE("Results") {
         CHECK(float_equal(p.errorBound, 0.3f));
@@ -274,26 +274,25 @@ TEST_CASE("Not all values fit") {
     Swing p(error_bound, true);
     // p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
 
-    int testVal = 1;
-
-    int* testptr = &testVal;
-    CHECK(p.fitValueSwing(testptr, 1.0) == 1);
-    testVal = 2;
-    CHECK(p.fitValueSwing(testptr, 1.3) == 1);
-    testVal = 3;
-    CHECK(p.fitValueSwing(testptr, 1.24) == 1);
-    testVal = 4;
-    CHECK(p.fitValueSwing(testptr, 1.045) == 0);
-    testVal = 5;
-    CHECK(p.fitValueSwing(testptr, 1.23) == 1);
-    testVal = 6;
-    CHECK(p.fitValueSwing(testptr, 1.54) == 1);
-    testVal = 7;
-    CHECK(p.fitValueSwing(testptr, 1.45) == 1);
-    testVal = 8;
-    CHECK(p.fitValueSwing(testptr, 1.12) == 0);
-    testVal = 9;
-    CHECK(p.fitValueSwing(testptr, 1.12) == 0);
-}*/
+    struct Node* newNode = new Node;
+    newNode->data = 1;
+    CHECK(p.fitValueSwing(newNode, 1.0) == 1);
+    newNode->data = 2;
+    CHECK(p.fitValueSwing(newNode, 1.3) == 1);
+    newNode->data = 3;
+    CHECK(p.fitValueSwing(newNode, 1.24) == 1);
+    newNode->data = 4;
+    CHECK(p.fitValueSwing(newNode, 1.045) == 0);
+    newNode->data = 5;
+    CHECK(p.fitValueSwing(newNode, 1.23) == 1);
+    newNode->data = 6;
+    CHECK(p.fitValueSwing(newNode, 1.54) == 1);
+    newNode->data = 7;
+    CHECK(p.fitValueSwing(newNode, 1.45) == 1);
+    newNode->data = 8;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 0);
+    newNode->data = 9;
+    CHECK(p.fitValueSwing(newNode, 1.12) == 0);
+}
 
 
