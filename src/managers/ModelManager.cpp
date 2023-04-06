@@ -14,7 +14,7 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound,
     this->errorAbsolute = errorAbsolute;
     this->localId = localId;
     this->globalId = globalId;
-    this->startTimestamp = nullptr;
+    this->startTimestamp = 0;
 }
 
 void ModelManager::fitTextModels(int id, const std::string &value) {
@@ -32,8 +32,8 @@ void ModelManager::fitTextModels(int id, const std::string &value) {
 #pragma ide diagnostic ignored "misc-no-recursion"
 void ModelManager::fitSegment(int id, float value, Node *timestamp) {
     TimeSeriesModelContainer &container = timeSeries.at(id);
-    if (container.startTimestamp == nullptr) {
-        container.startTimestamp = timestamp;
+    if (container.startTimestamp == 0) {
+        container.startTimestamp = timestamp->data;
     }
     if(container.status.SwingReady) {
         container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
@@ -72,6 +72,7 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig,
     for (auto &column: timeSeriesConfig) {
         timeSeries.emplace_back(column.error, column.isAbsolute, count,
                                 column.col);
+        selectedModels.emplace_back();
         count++;
     }
     count = 0;
@@ -95,7 +96,7 @@ SelectedModel ModelManager::selectPmcMean(TimeSeriesModelContainer &modelContain
     SelectedModel model = SelectedModel();
     model.mid = PMC_MEAN;
     model.cid = modelContainer.globalId;
-    model.startTime = modelContainer.startTimestamp->data;
+    model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.pmcMean.lastTimestamp->data;
     model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
     model.error = modelContainer.errorBound;
@@ -121,7 +122,7 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
 
     model.mid = SWING;
     model.cid = modelContainer.globalId;
-model.startTime = modelContainer.startTimestamp->data;
+model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.swing.lastTimestamp->data;
     model.values.emplace_back((int) (start_value < end_value));
     model.error = modelContainer.errorBound;
@@ -133,7 +134,7 @@ SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContain
 
     model.mid = GORILLA;
     model.cid = modelContainer.globalId;
-    model.startTime = modelContainer.startTimestamp->data;
+    model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.gorilla.lastTimestamp->data;
     for (auto x: modelContainer.gorilla.compressedValues.bytes) {
         model.values.emplace_back(x);
@@ -159,15 +160,15 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                                    finishedSegment.swing.length));
 
     if (pmcMeanSize <= swingSize && pmcMeanSize <= gorillaSize) {
-        selectedModels.emplace_back(selectPmcMean(finishedSegment));
+        selectedModels.at(finishedSegment.localId).emplace_back(selectPmcMean(finishedSegment));
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
         indexToStart = finishedSegment.pmcMean.length - indexToStart;
     } else if (swingSize <= pmcMeanSize && swingSize <= gorillaSize) {
-        selectedModels.emplace_back(selectSwing(finishedSegment));
+        selectedModels.at(finishedSegment.localId).emplace_back(selectSwing(finishedSegment));
         lastModelledTimestamp = finishedSegment.swing.lastTimestamp;
         indexToStart = finishedSegment.swing.length - indexToStart;
     } else {
-        selectedModels.emplace_back(selectGorilla(finishedSegment));
+        selectedModels.at(finishedSegment.localId).emplace_back(selectGorilla(finishedSegment));
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.length - indexToStart;
     }
@@ -178,7 +179,7 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                                    finishedSegment.errorAbsolute,
                                                    finishedSegment.localId,
                                                    finishedSegment.globalId);
-        finishedSegment.startTimestamp = lastTimestamp;
+        //finishedSegment.startTimestamp = lastTimestamp;
 
         // TODO: get last constructed TS, and parse rest TS to fitSegment
         std::vector<Node*> timestampOffsets;

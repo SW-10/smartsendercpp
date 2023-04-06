@@ -5,6 +5,7 @@
 #include "ConfigManager.h"
 #include "ModelManager.h"
 #include "TimestampManager.h"
+#include "BudgetManager.h"
 #ifdef linux
 #include "../ArrowFlight.h"
 #endif
@@ -19,6 +20,7 @@ class ReaderManager : public IObserver {
 private:
     ConfigManager configManager;
     TimestampManager timestampManager;
+
 public:
     ModelManager modelManager;
     explicit ReaderManager(std::string configFile, Timekeeper &timekeeper);
@@ -26,6 +28,7 @@ public:
     void runCompressor();
 
 private:
+    BudgetManager budgetManager;
     enum class CompressionType : int {
         TEXT, VALUES, TIMESTAMP, POSITION, NONE
     };

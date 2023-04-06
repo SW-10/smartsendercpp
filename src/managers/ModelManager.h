@@ -34,7 +34,7 @@ struct TimeSeriesModelContainer {
     int globalId;
     double errorBound;
     bool errorAbsolute;
-    Node * startTimestamp;
+    int startTimestamp;
     Gorilla gorilla;
     PmcMean pmcMean;
     Swing swing;
@@ -57,7 +57,8 @@ struct TextModelContainer {
 
 class ModelManager {
 public:
-    std::vector<SelectedModel> selectedModels;
+    //std::vector<SelectedModel> selectedModels;
+    std::vector<std::vector<SelectedModel>> selectedModels;
     void fitSegment(int id, float value, Node *timestamp);
 
     ModelManager(std::vector<columns> &timeSeriesConfig,
@@ -83,9 +84,6 @@ private:
     static SelectedModel selectPmcMean(TimeSeriesModelContainer &modelContainer);
     static SelectedModel selectSwing(TimeSeriesModelContainer &modelContainer);
     static SelectedModel selectGorilla(TimeSeriesModelContainer &modelContainer);
-
-    static bool
-    shouldCacheDataBasedOnPmcSwing(TimeSeriesModelContainer &container);
 
     static bool shouldCacheData(TimeSeriesModelContainer &container);
 };

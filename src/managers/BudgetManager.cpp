@@ -10,6 +10,24 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
 
 void BudgetManager::endOfChunkCalculations() {
     //DO STUFF
+    for(auto &selected : modelManager.selectedModels){
+        bool flushAll = true;
+        int i;
+        for(i = 0; i < selected.size(); i++){
+            if (bytesLeft < 22 + selected.at(i).values.size()*4){
+                flushAll = false;
+                break;
+            }
+            bytesLeft -= 22 + selected.at(i).values.size()*4;
+        }
+        if (flushAll){
+            selected.clear();
+        }
+        else if(i > 0){
+            selected.erase(selected.begin(), selected.begin()+i);
+        }
+
+    }
 
     bytesLeft += budget;
 }

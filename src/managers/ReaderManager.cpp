@@ -13,7 +13,7 @@
 ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols, configManager.textCols,
-                       timestampManager) {
+                       timestampManager), budgetManager(modelManager, configManager, timestampManager, 10000) {
     timekeeper.Attach(this);
     this->csvFileStream.open(
             "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
@@ -119,7 +119,7 @@ void ReaderManager::Update(const std::string &message_from_subject) {
 
 void ReaderManager::runCompressor() {
     #ifdef linux
-    ConnectionAddress address("0.0.0.0", 9999);
+    //ConnectionAddress address("0.0.0.0", 9999);
     #endif
 
     std::vector<std::string> row;
@@ -153,6 +153,7 @@ void ReaderManager::runCompressor() {
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
             if(newInterval){
+                budgetManager.endOfChunkCalculations();
                 //std::cout << "Hello from reader " << hej << std::endl;
                 newInterval = false;
                 hej++;
@@ -189,7 +190,7 @@ void ReaderManager::runCompressor() {
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
 
     #ifdef linux
-    auto table = VectorToColumnarTable(
+    /*auto table = VectorToColumnarTable(
             this->modelManager.selectedModels).ValueOrDie();
 
     auto recordBatch = MakeRecordBatch(table).ValueOrDie();
@@ -204,7 +205,7 @@ void ReaderManager::runCompressor() {
     if (!st.ok()) {
         std::cerr << st << std::endl;
         exit(1);
-    }
+    }*/
 
     #endif
 }
