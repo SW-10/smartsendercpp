@@ -14,4 +14,5 @@ private:
     TimestampManager &timestampManager;
     int budget;
     int bytesLeft;
+    int maxAge = 720000;
 };

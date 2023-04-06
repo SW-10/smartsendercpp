@@ -10,6 +10,11 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
 
 void BudgetManager::endOfChunkCalculations() {
     //DO STUFF
+    for(auto &container : modelManager.timeSeries){
+        if(timestampManager.timestampCurrent->data - container.startTimestamp > maxAge){
+            modelManager.forceModelFlush(container.localId);
+        }
+    }
     for(auto &selected : modelManager.selectedModels){
         bool flushAll = true;
         int i;

@@ -213,8 +213,8 @@ bool ModelManager::calculateFlushTimestamp() {
     return earliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
 }
 
-void ModelManager::forceModelFlush(int globalId) {
-    constructFinishedModels(timeSeries.at(globalId), nullptr);
+void ModelManager::forceModelFlush(int localId) {
+    constructFinishedModels(timeSeries.at(localId), nullptr);
 }
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {

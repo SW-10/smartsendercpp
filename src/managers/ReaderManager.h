@@ -44,6 +44,6 @@ private:
     > myMap;
 
     void Update(const std::string &message_from_subject) override;
-    bool newInterval = true;
+    bool newInterval = false;
 
 };
