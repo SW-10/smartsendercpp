@@ -39,7 +39,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
 
-                timestampManager.deltaDeltaCompress(lineNum, c.col);
+                //timestampManager.deltaDeltaCompress(lineNum, c.col);
                 modelManager.fitSegment(i, std::stof(*in),
                                         timestampManager.timestampCurrent);
             }
@@ -87,7 +87,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      latCol->col); //c.col is the global ID
-                timestampManager.deltaDeltaCompress(lineNum, latCol->col);
+                //timestampManager.deltaDeltaCompress(lineNum, latCol->col);
 
             }
             return CompressionType::POSITION;
@@ -102,7 +102,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      longCol->col); //c.col is the global ID
-                timestampManager.deltaDeltaCompress(lineNum, longCol->col);
+                //timestampManager.deltaDeltaCompress(lineNum, longCol->col);
             }
             return CompressionType::POSITION;
         };
@@ -139,9 +139,7 @@ void ReaderManager::runCompressor() {
         std::stringstream s(line);
 
         int count = 0;
-
         while (std::getline(s, word, ',')) {
-
             auto mapElement = myMap.find(count); //Get element in map
 
             // Get the lambda function from the map.
@@ -155,7 +153,7 @@ void ReaderManager::runCompressor() {
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
             if(newInterval){
-                std::cout << "Hello from reader " << hej << std::endl;
+                //std::cout << "Hello from reader " << hej << std::endl;
                 newInterval = false;
                 hej++;
             }
@@ -175,7 +173,6 @@ void ReaderManager::runCompressor() {
                 }
             }
         }
-        std::cout << "Line number " << lineNumber << std::endl;
 
         lineNumber++;
     }
@@ -189,7 +186,7 @@ void ReaderManager::runCompressor() {
     std::cout << "size of int: " << sizeof(int) << std::endl;
 
 
-    std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
+    //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
 
     #ifdef linux
     auto table = VectorToColumnarTable(

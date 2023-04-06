@@ -14,7 +14,7 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound,
     this->errorAbsolute = errorAbsolute;
     this->localId = localId;
     this->globalId = globalId;
-    this->startTimestamp = 0;
+    this->startTimestamp = nullptr;
 }
 
 void ModelManager::fitTextModels(int id, const std::string &value) {
@@ -32,6 +32,9 @@ void ModelManager::fitTextModels(int id, const std::string &value) {
 #pragma ide diagnostic ignored "misc-no-recursion"
 void ModelManager::fitSegment(int id, float value, Node *timestamp) {
     TimeSeriesModelContainer &container = timeSeries.at(id);
+    if (container.startTimestamp == nullptr) {
+        container.startTimestamp = timestamp;
+    }
     if(container.status.SwingReady) {
         container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
         //Swing sets last constructed timestamp internally
@@ -92,8 +95,8 @@ SelectedModel ModelManager::selectPmcMean(TimeSeriesModelContainer &modelContain
     SelectedModel model = SelectedModel();
     model.mid = PMC_MEAN;
     model.cid = modelContainer.globalId;
-    model.startTime = modelContainer.startTimestamp;
-    model.endTime = modelContainer.pmcMean.lastTimestamp;
+    model.startTime = modelContainer.startTimestamp->data;
+    model.endTime = modelContainer.pmcMean.lastTimestamp->data;
     model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
     model.error = modelContainer.errorBound;
     return model;
@@ -104,7 +107,7 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
     float start_value = modelContainer.swing.upperBoundSlope * modelContainer.swing.firstTimestamp +
                         modelContainer.swing
                                 .upperBoundIntercept;
-    float end_value = modelContainer.swing.lowerBoundSlope * modelContainer.swing.lastTimestamp +
+    float end_value = modelContainer.swing.lowerBoundSlope * modelContainer.swing.lastTimestamp->data +
                       modelContainer.swing
                               .lowerBoundIntercept;
 
@@ -118,8 +121,8 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
 
     model.mid = SWING;
     model.cid = modelContainer.globalId;
-    model.startTime = modelContainer.startTimestamp;
-    model.endTime = modelContainer.swing.lastTimestamp;
+model.startTime = modelContainer.startTimestamp->data;
+    model.endTime = modelContainer.swing.lastTimestamp->data;
     model.values.emplace_back((int) (start_value < end_value));
     model.error = modelContainer.errorBound;
     return model;
@@ -130,8 +133,8 @@ SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContain
 
     model.mid = GORILLA;
     model.cid = modelContainer.globalId;
-    model.startTime = modelContainer.startTimestamp;
-    model.endTime = modelContainer.gorilla.lastTimestamp;
+    model.startTime = modelContainer.startTimestamp->data;
+    model.endTime = modelContainer.gorilla.lastTimestamp->data;
     for (auto x: modelContainer.gorilla.compressedValues.bytes) {
         model.values.emplace_back(x);
     }
@@ -155,9 +158,6 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                                    finishedSegment.gorilla.length,
                                                    finishedSegment.swing.length));
 
-    if (finishedSegment.startTimestamp == 0) {
-        finishedSegment.startTimestamp = timestampManager.allTimestampsReconstructed[timestampManager.latestTimestamps[finishedSegment.globalId].timestampFirst];
-    }
     if (pmcMeanSize <= swingSize && pmcMeanSize <= gorillaSize) {
         selectedModels.emplace_back(selectPmcMean(finishedSegment));
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
@@ -195,7 +195,6 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                                    finishedSegment.errorAbsolute,
                                                    finishedSegment.localId,
                                                    finishedSegment.globalId);
-        finishedSegment.startTimestamp = lastTimestamp;
     }
 }
 

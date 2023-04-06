@@ -13,7 +13,7 @@ void Timekeeper::update(const int &timestamp) {
     int counter = current % intervalSeconds;
 
     if(counter < prev){
-        std::cout << current << std::endl;
+        //std::cout << current << std::endl;
         this->message_ = "New interval";
         this->Notify();
     }
