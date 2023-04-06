@@ -37,6 +37,8 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
+
+                timestampManager.deltaDeltaCompress(lineNum, c.col);
                 modelManager.fitSegment(i, std::stof(*in),
                                         timestampManager.timestampCurrent);
             }
@@ -84,6 +86,8 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      latCol->col); //c.col is the global ID
+                timestampManager.deltaDeltaCompress(lineNum, latCol->col);
+
             }
             return CompressionType::POSITION;
         };
@@ -97,6 +101,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      longCol->col); //c.col is the global ID
+                timestampManager.deltaDeltaCompress(lineNum, longCol->col);
             }
             return CompressionType::POSITION;
         };
@@ -165,6 +170,8 @@ void ReaderManager::runCompressor() {
                 }
             }
         }
+        std::cout << "Line number " << lineNumber << std::endl;
+
         lineNumber++;
     }
     this->csvFileStream.close();

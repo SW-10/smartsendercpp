@@ -35,3 +35,5 @@ void appendAZeroBit(BitVecBuilder *data);
 void appendAOneBit(BitVecBuilder *data);
 
 void appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits);
+
+uint8_t getLengthOfBinaryRepresentation(int val);

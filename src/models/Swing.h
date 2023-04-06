@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <vector>
+#include "../utils/Utils.h"
 
 struct slopeAndIntercept {
     double slope;
@@ -13,7 +14,7 @@ class Swing {
 public:
     double &errorBound;
     int firstTimestamp;
-    int lastTimestamp;
+    Node * lastTimestamp;
     double firstValue; // f64 instead of Value to remove casts in fit_value()
     double upperBoundSlope;
     double upperBoundIntercept;
@@ -24,7 +25,7 @@ public:
 
     Swing(double &errorBound, bool isErrorAbsolute);
 
-    bool fitValueSwing(long timestamp, double value);
+    bool fitValueSwing(Node *timestamp, double value);
 
     std::vector<float>
     gridSwing(float min, float max, uint8_t values,

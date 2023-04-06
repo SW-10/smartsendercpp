@@ -17,36 +17,40 @@ TimestampManager::TimestampManager(ConfigManager &confMan, Timekeeper &timekeepe
     for (int i = 0; i < confMan.totalNumberOfCols; i++) {
         TwoLatestTimestamps ts = {0, 0, false};
         latestTimestamps.push_back(ts);
+
+        DeltaDeltaCompression ddc = {0, 0, 0, 0, false, false};
+        latestTimestampsForDeltaDelta.push_back(ddc);
     }
     makeCompressionSchemes();
+    allTimestampsReconstructed = NULL;
+    totalFlushed = 0;
 }
 
 void TimestampManager::compressTimestamps(int timestamp) {
 //    timestampCount++;
-
-
     timekeeper.update(timestamp);
 
-    allTimestampsReconstructed.push_back(timestamp);
-
-    timestampCurrent = timestamp;
-    if (!readyForOffset) firstTimestamp = timestamp;
+    if (!readyForOffset){
+        allTimestampsReconstructed = Utils::insert_end(&allTimestampsReconstructed, timestamp);
+        timestampCurrent = allTimestampsReconstructed;
+        firstTimestamp = timestamp;
+    }
     if (readyForOffset) {
-
+        timestampCurrent = Utils::insert_end(&timestampCurrent, timestamp);
         // Offset = Difference between current and previous timestamp
-        currentOffset = timestampCurrent - timestampPrevious;
+        currentOffset = timestamp - timestampPrevious;
 
         // Insert new offset if first element or if current offset is not equal to previous offset
         // Else, increase counter for current offset
         if (offsetList.empty() ||
-            currentOffset != offsetList[offsetList.size() - 1].first) {
+            currentOffset != offsetList.at(offsetList.size() - 1).first) {
             offsetList.emplace_back(currentOffset, 1);
         } else {
-            offsetList[offsetList.size() - 1].second++;
+            offsetList.at(offsetList.size() - 1).second++;
         }
     }
 
-    timestampPrevious = timestampCurrent;
+    timestampPrevious = timestamp;
     readyForOffset = true;
 }
 
@@ -158,31 +162,121 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
     elem->readyForOffset = true;
 }
 
-std::vector<int>
-TimestampManager::getTimestampsByGlobalId(int globID, int timestampA, int timestampB) {
-    auto localOffsets = localOffsetList[globID];
-    auto firstLocalTimestamp = latestTimestamps[globID].timestampFirst;
-    std::vector<int> res;
+void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
+    auto elem = &latestTimestampsForDeltaDelta.at(globalID);
+//    elem->timestampCurrent = lineNumber;
 
-    int count = firstLocalTimestamp;
+    if (!elem->readyForDelta){
+        elem->timestampPrevious = lineNumber;
+        std::cout << "ready delta" << elem->timestampPrevious << std::endl;
+        elem->readyForDelta = true;
 
-    for (auto &localOffset: localOffsets) {
-        //int firstTimeOffset = static_cast<int>(count == firstLocalTimestamp);
+        deltaDeltas[globalID].push_back(lineNumber);
 
-        for (int j = 0; j < localOffset.second; j++) {
-            if (allTimestampsReconstructed.at(count) > timestampA) {
-                if (allTimestampsReconstructed.at(count) > timestampB) {
+        auto a = deltaDeltaLimits(lineNumber);
+        int ctrCode = std::get<0>(a);
+        int numberOfBits = std::get<1>(a);
+        uint8_t ctrCodeLength = getLengthOfBinaryRepresentation(ctrCode);
+
+        appendBits(&deltaDeltasBuilders[globalID], ctrCode, ctrCodeLength);
+        appendBits(&deltaDeltasBuilders[globalID], lineNumber, numberOfBits);
+
+
+    } else if (elem->readyForDelta && !elem->readyForDeltaDelta) {
+
+        elem->timestampCurrent = lineNumber;
+        elem->currentDelta = lineNumber - elem->timestampPrevious/* something */;
+        elem->readyForDeltaDelta = true;
+
+        deltaDeltas[globalID].push_back(elem->currentDelta);
+
+        auto a = deltaDeltaLimits(elem->currentDelta);
+        int ctrCode = std::get<0>(a);
+        int numberOfBits = std::get<1>(a);
+        uint8_t ctrCodeLength = getLengthOfBinaryRepresentation(ctrCode);
+
+        appendBits(&deltaDeltasBuilders[globalID], ctrCode, ctrCodeLength);
+        appendBits(&deltaDeltasBuilders[globalID], elem->currentDelta, numberOfBits);
+
+    } else if (elem->readyForDeltaDelta) {
+        elem->timestampPrevious = elem->timestampCurrent;
+        elem->timestampCurrent = lineNumber;
+        elem->previousDelta = elem->currentDelta;
+        elem->currentDelta = lineNumber - elem->timestampPrevious;
+        elem->currentDeltaDelta = elem->previousDelta - elem->currentDelta;
+
+        deltaDeltas[globalID].push_back(elem->currentDeltaDelta);
+
+        auto a = deltaDeltaLimits(elem->currentDeltaDelta);
+        int ctrCode = std::get<0>(a);
+        int numberOfBits = std::get<1>(a);
+        uint8_t ctrCodeLength = getLengthOfBinaryRepresentation(ctrCode);
+
+        appendBits(&deltaDeltasBuilders[globalID], ctrCode, ctrCodeLength);
+        appendBits(&deltaDeltasBuilders[globalID], elem->currentDeltaDelta, numberOfBits);
+
+    }
+}
+
+std::tuple<int, int> TimestampManager::deltaDeltaLimits(const int &val){
+    if (val == 0) {
+        return(std::tuple(0b0, 0));
+    } else if (val >= -64 && val <= 63){
+        return(std::tuple(0b10, 7));
+    } else if (val >= -256 && val <= 255) {
+        return (std::tuple(0b110, 9));
+    } else if (val >= -2048 && val <= 2047) {
+        return (std::tuple(0b1110, 12));
+    } else {
+        return(std::tuple(0b11111, 32));
+    }
+}
+
+
+void
+TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
+                                          Node *timestampB, std::vector<Node *> &res) {
+
+    auto &localOffsets = localOffsetList.at(globID);
+    bool found = false;
+    //Create iterator for double linked list
+    Node* iterator = timestampA;
+    int count = 0;
+    for (auto & localOffset : localOffsets){
+        count += localOffset.first*localOffset.second;
+        if(res.empty() && count+totalFlushed > timestampA->index){
+            //Define local offset start by current timestamp
+            int start = (timestampA->index-(count+totalFlushed-localOffset.first*localOffset.second))/localOffset.first;
+            for (int j = start; j < localOffset.second; j++){
+                //Forward offset size in iterator
+                iterator = Utils::forwardNode(iterator, localOffset.first);
+                res.emplace_back(iterator);
+                //Break when timestampB is found
+                if(iterator == timestampB) {
+                    found = true;
                     break;
                 }
-
-                res.push_back(allTimestampsReconstructed.at(count));
             }
-            count += localOffset.first;
+        }
+        else if(!res.empty()){
+            for (int j = 0; j < localOffset.second; j++){
+                iterator = Utils::forwardNode(iterator, localOffset.first);
+                res.emplace_back(iterator);
+                if(iterator == timestampB) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        if(found){
+            break;
         }
     }
-    res.push_back(allTimestampsReconstructed.at(count)); // Add last time stamp
-
-    return res;
+    // TODO: RUN IF DEBUG / make runtime test
+    if(!found){
+        std::cout << "getTimestampsByGlobalId failed" << std::endl;
+    }
 }
 
 
@@ -596,23 +690,37 @@ int TimestampManager::findBestSchemeForSize(int elements) {
     return bestSchemeForSize;
 }
 
-bool TimestampManager::flushTimestamps(int lastUsedTimestamp) {
-    int index = Utils::BinarySearch(allTimestampsReconstructed, lastUsedTimestamp);
+bool TimestampManager::flushTimestamps(
+        Node *lastUsedTimestamp) {
+    int index;
+    allTimestampsReconstructed = lastUsedTimestamp;
+    Node* iterator = lastUsedTimestamp->prev;
+    if(iterator == NULL){
+        return false;
+    }
+    for(index = 0; iterator->prev != NULL; index++){
+        Node* temp = iterator->prev;
+        delete iterator;
+        iterator = temp;
+    }
+    delete iterator;
+    index++;
+    totalFlushed += index;
+    allTimestampsReconstructed->prev = NULL;
+
     // Flush timestamps when last used timestamp is not the first in vector
     if (index != 0) {
         // Erase global timestamps
-        allTimestampsReconstructed.erase(allTimestampsReconstructed.begin(),
-                                         allTimestampsReconstructed.begin() + index);
+
         // Deletion of local offset lists
         for (auto &lol: localOffsetList) {
             if (lol.second.empty()) continue;
             //Check whether the corresponding offset list contains deleted timestamps
-            if (latestTimestamps[lol.first].timestampFirst < index) {
-                latestTimestamps[lol.first].timestampFirst = flushLocalOffsetList(lol.second,
-                                                                                   index -
-                                                                                   latestTimestamps[lol.first].timestampFirst);
-            } else {
-                latestTimestamps[lol.first].timestampFirst -= index;
+            if(latestTimestamps.at(lol.first).timestampFirst < index){
+                latestTimestamps.at(lol.first).timestampFirst = flushLocalOffsetList(lol.second, index-latestTimestamps.at(lol.first).timestampFirst);
+            }
+            else{
+                latestTimestamps.at(lol.first).timestampFirst -= index;
             }
         }
         return true;

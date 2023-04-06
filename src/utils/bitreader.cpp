@@ -70,3 +70,13 @@ void appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits) {
 
     }
 }
+
+uint8_t getLengthOfBinaryRepresentation(int val){
+    uint8_t result;
+    for(result = 0; val != 0; ++result) val  >>= 1;
+    if(!result){
+        return 1;
+    } else {
+        return result;
+    }
+}

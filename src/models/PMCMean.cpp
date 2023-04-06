@@ -14,7 +14,6 @@ PmcMean::PmcMean(double &errorBound, bool errorAbsolute)
     sumOfValues = 0;
     length = 0;
     isErrorAbsolute = errorAbsolute;
-    lastTimestamp = 0;
 }
 
 int PmcMean::fitValuePmc(float value) {
