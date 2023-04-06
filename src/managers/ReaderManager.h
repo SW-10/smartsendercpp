@@ -5,6 +5,9 @@
 #include "ConfigManager.h"
 #include "ModelManager.h"
 #include "TimestampManager.h"
+#ifdef linux
+#include "../ArrowFlight.h"
+#endif
 #include <iostream>
 #include <unordered_map>
 #include <map>
@@ -13,7 +16,11 @@
 #include <functional>
 
 class ReaderManager : public IObserver {
+private:
+    ConfigManager configManager;
+    TimestampManager timestampManager;
 public:
+    ModelManager modelManager;
     explicit ReaderManager(std::string configFile, Timekeeper &timekeeper);
 
     void runCompressor();
@@ -23,9 +30,6 @@ private:
         TEXT, VALUES, TIMESTAMP, POSITION, NONE
     };
     std::fstream csvFileStream;
-    ConfigManager configManager;
-    ModelManager modelManager;
-    TimestampManager timestampManager;
     bool bothLatLongSeen;
     std::unordered_map<
             int, // key

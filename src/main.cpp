@@ -1,3 +1,4 @@
+#include <iostream>
 #include "models/Gorilla.h"
 #include "managers/ConfigManager.h"
 #include "managers/ReaderManager.h"
