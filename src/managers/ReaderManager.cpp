@@ -100,8 +100,10 @@ ReaderManager::ReaderManager(std::string configFile)
     }
 }
 
-arrow::Status ReaderManager::runCompressor() {
+void ReaderManager::runCompressor() {
+    #ifdef linux
     ConnectionAddress address("0.0.0.0", 9999);
+    #endif
 
     std::vector<std::string> row;
     std::string line, word;
@@ -153,7 +155,7 @@ arrow::Status ReaderManager::runCompressor() {
 
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-
+    #ifdef linux
     auto table = VectorToColumnarTable(
             this->modelManager.selectedModels).ValueOrDie();
 
@@ -165,6 +167,11 @@ arrow::Status ReaderManager::runCompressor() {
                                                         ::FlightDescriptor::Path(std::vector<std::string>{"table.parquet"})}, recordBatch->schema()).ValueOrDie();
 
     ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
+    arrow::Status st = arrow::Status::OK();
+    if (!st.ok()) {
+        std::cerr << st << std::endl;
+        exit(1);
+    }
 
-    return arrow::Status::OK();
+    #endif
 }

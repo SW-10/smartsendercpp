@@ -5,7 +5,9 @@
 #include "ConfigManager.h"
 #include "ModelManager.h"
 #include "TimestampManager.h"
+#ifdef linux
 #include "../ArrowFlight.h"
+#endif
 #include <iostream>
 #include <unordered_map>
 #include <map>
@@ -22,7 +24,7 @@ public:
 
     explicit ReaderManager(std::string configFile);
 
-    arrow::Status runCompressor();
+    void runCompressor();
 
 private:
     enum class CompressionType : int {

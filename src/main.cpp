@@ -2,7 +2,6 @@
 #include "models/Gorilla.h"
 #include "doctest.h"
 #include "managers/ReaderManager.h"
-#include "arrow/api.h"
 
 // This function is required by Doctest to make it possible to have asserts inside the code.
 // The function is passed to the Doctest context in our main function.
@@ -57,11 +56,7 @@ int main(int argc, char *argv[]) {
 	int client_stuff_return_code = 0;
     std::string path = "moby.cfg";
     ReaderManager readerManager(path);
-    arrow::Status st = readerManager.runCompressor();
-    if (!st.ok()) {
-        std::cerr << st << std::endl;
-        return 1;
-    }
+    readerManager.runCompressor();
 
     return res + client_stuff_return_code;
 }
