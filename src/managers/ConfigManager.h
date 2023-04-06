@@ -31,4 +31,6 @@ private:
     char *output;
 
     void columnOrText(int *count, char *token);
+
+    void adjustErrorBound(int globId, double errorBound);
 };

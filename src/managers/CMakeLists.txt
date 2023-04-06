@@ -10,4 +10,7 @@ target_sources(smartsendercpp PRIVATE ModelManager.cpp)
 target_sources(smartsendercpp PRIVATE TimestampManager.h)
 target_sources(smartsendercpp PRIVATE TimestampManager.cpp)
 
+target_sources(smartsendercpp PRIVATE BudgetManager.h)
+target_sources(smartsendercpp PRIVATE BudgetManager.cpp)
+
 

@@ -61,6 +61,8 @@ public:
 
     bool calculateFlushTimestamp();
 
+    void forceModelFlush(int globalId);
+
 private:
     std::vector<TimeSeriesModelContainer> timeSeries;
     std::vector<TextModelContainer> textModels;

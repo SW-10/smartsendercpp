@@ -218,3 +218,7 @@ void ConfigManager::columnOrText(int *count, char *token) {
         }
     }
 }
+
+void ConfigManager::adjustErrorBound(int globId, double errorBound){
+    timeseriesCols.at(globId).error = errorBound;
+}

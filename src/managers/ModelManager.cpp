@@ -112,7 +112,7 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.length - indexToStart;
     }
-    if (!finishedSegment.cachedValues.values.empty()) {
+    if (!finishedSegment.cachedValues.values.empty() && lastTimestamp != nullptr) {
         CachedValues currentCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
@@ -150,6 +150,10 @@ bool ModelManager::calculateFlushTimestamp() {
         }
     }
     return earliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
+}
+
+void ModelManager::forceModelFlush(int globalId) {
+    constructFinishedModels(timeSeries.at(globalId), nullptr);
 }
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {

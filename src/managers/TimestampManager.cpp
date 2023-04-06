@@ -241,7 +241,7 @@ TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
     bool found = false;
     //Create iterator for double linked list
     Node* iterator = timestampA;
-    int count = 0;
+    int count = latestTimestamps[globID].timestampFirst;
     for (auto & localOffset : localOffsets){
         count += localOffset.first*localOffset.second;
         if(res.empty() && count+totalFlushed > timestampA->index){
