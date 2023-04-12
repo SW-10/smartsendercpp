@@ -9,13 +9,13 @@ class Timekeeper : public ISubject {
 private:
     int firstTimestamp = -1;
     int prev = -1;
-    int intervalSeconds = 3600 * 24;
+
     std::list<IObserver *> list_observer_;
     std::string message_;
 public:
 
     void update(const int &timestamp);
-
+    int *intervalSeconds;
     virtual ~Timekeeper() {
         std::cout << "bye " << std::endl;
     }

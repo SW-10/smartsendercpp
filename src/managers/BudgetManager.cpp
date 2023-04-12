@@ -2,9 +2,11 @@
 
 
 BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configManager,
-                             TimestampManager &timestampManager, int budget) : modelManager(modelManager),
-                             configManager(configManager), timestampManager(timestampManager) {
-    this->budget = budget;
+                             TimestampManager &timestampManager, int &budget, int &maxAge) : modelManager(modelManager),
+                             configManager(configManager), timestampManager(timestampManager),
+                             budget(budget), maxAge(maxAge)
+                             {
+    //this->budget = budget;
     this->bytesLeft = budget;
 }
 

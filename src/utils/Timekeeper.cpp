@@ -10,7 +10,7 @@ void Timekeeper::update(const int &timestamp) {
 
     // Emit message if we go into a new interval
     int current = timestamp - firstTimestamp;
-    int counter = current % intervalSeconds;
+    int counter = current % *intervalSeconds;
 
     if(counter < prev){
         //std::cout << current << std::endl;

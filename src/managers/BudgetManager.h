@@ -5,14 +5,16 @@
 
 class BudgetManager {
 public:
-    BudgetManager(ModelManager &modelManager, ConfigManager &configManager, TimestampManager &timestampManager, int budget);
+    BudgetManager(ModelManager &modelManager, ConfigManager &configManager, TimestampManager &timestampManager,
+                  int &budget, int &maxAge);
+
     void endOfChunkCalculations();
 
 private:
     ModelManager &modelManager;
     ConfigManager &configManager;
     TimestampManager &timestampManager;
-    int budget;
+    int &budget;
     int bytesLeft;
-    int maxAge = 180000;
+    int &maxAge;
 };

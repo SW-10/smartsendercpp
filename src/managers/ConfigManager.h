@@ -20,6 +20,9 @@ public:
     std::vector<columns> timeseriesCols;
     std::vector<int> textCols;
     std::string inputFile;
+    int maxAge = 0;
+    int chunkSize = 0;
+    int budget = 0;
 
     explicit ConfigManager(std::string &path);
 

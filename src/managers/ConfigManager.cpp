@@ -48,6 +48,9 @@ ConfigManager::ConfigManager(std::string &path) {
                 {"output",     required_argument, 0, 'o'},
                 {"text",       required_argument, 0, 'x'},
                 {"inputFile",  required_argument, 0, 'i'},
+                {"maxAge",     required_argument, 0, 'm'},
+                {"chunkSize",  required_argument, 0, 's'},
+                {"budget",     required_argument, 0, 'b'},
                 {0,            0                , 0,  0 }
         };
 
@@ -55,6 +58,44 @@ ConfigManager::ConfigManager(std::string &path) {
                         long_options, &option_index);
         if (c == -1) break;
         switch (c) {
+            case 'b':
+                if(optarg[strlen(optarg)-1] == '\r'){
+                    optarg[strlen(optarg)-1] = '\0';
+                }
+                if(optarg[0] == '\'' || optarg[0] == '\"'){
+                    optarg = &optarg[1];
+                }
+                if (optarg[strlen(optarg) - 1] == '\'' ||
+                    optarg[strlen(optarg) - 1] == '\"') {
+                    optarg[strlen(optarg) - 1] = '\0';
+                }
+                this->budget = atoi(optarg);
+            case 'm':
+                if(optarg[strlen(optarg)-1] == '\r'){
+                    optarg[strlen(optarg)-1] = '\0';
+                }
+                if(optarg[0] == '\'' || optarg[0] == '\"'){
+                    optarg = &optarg[1];
+                }
+                if (optarg[strlen(optarg) - 1] == '\'' ||
+                    optarg[strlen(optarg) - 1] == '\"') {
+                    optarg[strlen(optarg) - 1] = '\0';
+                }
+                this->maxAge = atoi(optarg);
+                break;
+            case 's':
+                if(optarg[strlen(optarg)-1] == '\r'){
+                    optarg[strlen(optarg)-1] = '\0';
+                }
+                if(optarg[0] == '\'' || optarg[0] == '\"'){
+                    optarg = &optarg[1];
+                }
+                if (optarg[strlen(optarg) - 1] == '\'' ||
+                    optarg[strlen(optarg) - 1] == '\"') {
+                    optarg[strlen(optarg) - 1] = '\0';
+                }
+                this->chunkSize = atoi(optarg);
+                break;
             case 'p':
                 // Debug mode seems to add single quotation marks around the arguments.
                 // The following two if's remove those
