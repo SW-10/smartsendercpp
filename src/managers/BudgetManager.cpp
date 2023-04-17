@@ -1,12 +1,15 @@
+#include <numeric>
+#include <cmath>
 #include "BudgetManager.h"
 
 
 BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configManager,
-                             TimestampManager &timestampManager, int &budget, int &maxAge) : modelManager(modelManager),
+                             TimestampManager &timestampManager, int &budget, int &maxAge, int *firstTimestampChunk) : modelManager(modelManager),
                              configManager(configManager), timestampManager(timestampManager),
                              budget(budget), maxAge(maxAge)
                              {
     //this->budget = budget;
+    this->firstTimestampChunk = firstTimestampChunk;
     this->bytesLeft = budget;
 }
 
@@ -37,6 +40,43 @@ void BudgetManager::endOfChunkCalculations() {
     }
 
     bytesLeft += budget;
+    lastBudget.emplace_back(bytesLeft);
+    if(lastBudget.size()-1 == configManager.budgetLeftRegressionLength){
+        lastBudget.erase(lastBudget.begin());
+        const double avgX = 0.5 + (configManager.budgetLeftRegressionLength * 0.5); //= 5.5;
+        const double avgY = std::reduce(lastBudget.begin(), lastBudget.end(), 0.0) / lastBudget.size();
+        double ba = 0;
+        double bb = 0;
+        for (int i = 0; i < lastBudget.size(); i++){
+            ba += (i+1-avgX)*(lastBudget.at(i)-avgY);
+            bb += std::pow((i+1-avgX),2);
+        }
+        double slope = ba / bb;
+        double intercept = avgY - (slope * avgX);
+
+        // Intercept of regression function and buffer goal
+        double xp = (intercept - configManager.bufferGoal) / (slope*-1);
+        if (xp < 0){
+            //TODO: adjust error bounds
+        }
+        //if ()
+
+
+
+        //double xpAngle = atan((intercept)/(1+intercept*0))*180/M_PI;
+        int i = 2;
+
+        //if(bytesLeft > configManager.bufferGoal){
+
+            /*double estimatedUsage = slope * (configManager.chunksToGoal + configManager.budgetLeftRegressionLength) + intercept;
+            if (estimatedUsage < configManager.bufferGoal){
+                //TODO: Adjust error bounds
+            }*/
+        //}
+    }
+
+
+
 }
 
 

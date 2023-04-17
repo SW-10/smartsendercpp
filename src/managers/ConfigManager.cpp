@@ -51,6 +51,10 @@ ConfigManager::ConfigManager(std::string &path) {
                 {"maxAge",     required_argument, 0, 'm'},
                 {"chunkSize",  required_argument, 0, 's'},
                 {"budget",     required_argument, 0, 'b'},
+                {"bufferGoal", required_argument, 0, 'g'},
+                {"budgetLeftRegressionLength", required_argument, 0, 'r'},
+                {"chunksToGoal", required_argument, 0, 'l'},
+                {"goalErrorMargin", required_argument, 0, 'e'},
                 {0,            0                , 0,  0 }
         };
 
@@ -58,29 +62,28 @@ ConfigManager::ConfigManager(std::string &path) {
                         long_options, &option_index);
         if (c == -1) break;
         switch (c) {
+            case 'e':
+                fixQuotation();
+                this->goalErrorMargin = atoi(optarg);
+                break;
+            case 'l':
+                fixQuotation();
+                this->chunksToGoal = atoi(optarg);
+                break;
+            case 'r':
+                fixQuotation();
+                this->budgetLeftRegressionLength = atoi(optarg);
+                break;
+            case 'g':
+                fixQuotation();
+                this->bufferGoal = atoi(optarg);
+                break;
             case 'b':
-                if(optarg[strlen(optarg)-1] == '\r'){
-                    optarg[strlen(optarg)-1] = '\0';
-                }
-                if(optarg[0] == '\'' || optarg[0] == '\"'){
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
+                fixQuotation();
                 this->budget = atoi(optarg);
+                break;
             case 'm':
-                if(optarg[strlen(optarg)-1] == '\r'){
-                    optarg[strlen(optarg)-1] = '\0';
-                }
-                if(optarg[0] == '\'' || optarg[0] == '\"'){
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
+                fixQuotation();
                 this->maxAge = atoi(optarg);
                 break;
             case 's':
@@ -262,4 +265,17 @@ void ConfigManager::columnOrText(int *count, char *token) {
 
 void ConfigManager::adjustErrorBound(int globId, double errorBound){
     timeseriesCols.at(globId).error = errorBound;
+}
+
+void ConfigManager::fixQuotation(){
+    if(optarg[strlen(optarg)-1] == '\r'){
+        optarg[strlen(optarg)-1] = '\0';
+    }
+    if(optarg[0] == '\'' || optarg[0] == '\"'){
+        optarg = &optarg[1];
+    }
+    if (optarg[strlen(optarg) - 1] == '\'' ||
+        optarg[strlen(optarg) - 1] == '\"') {
+        optarg[strlen(optarg) - 1] = '\0';
+    }
 }

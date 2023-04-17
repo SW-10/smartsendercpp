@@ -14,7 +14,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols, configManager.textCols,
                        timestampManager),
-                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge) {
+                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp) {
     timekeeper.Attach(this);
     timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(

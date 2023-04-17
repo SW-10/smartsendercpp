@@ -6,7 +6,7 @@
 class BudgetManager {
 public:
     BudgetManager(ModelManager &modelManager, ConfigManager &configManager, TimestampManager &timestampManager,
-                  int &budget, int &maxAge);
+                  int &budget, int &maxAge, int *firstTimestampChunk);
 
     void endOfChunkCalculations();
 
@@ -17,4 +17,6 @@ private:
     int &budget;
     int bytesLeft;
     int &maxAge;
+    int *firstTimestampChunk;
+    std::vector<int> lastBudget;
 };

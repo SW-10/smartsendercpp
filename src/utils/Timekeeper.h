@@ -7,7 +7,7 @@
 
 class Timekeeper : public ISubject {
 private:
-    int firstTimestamp = -1;
+
     int prev = -1;
 
     std::list<IObserver *> list_observer_;
@@ -16,6 +16,7 @@ public:
 
     void update(const int &timestamp);
     int *intervalSeconds;
+    int firstTimestamp = -1;
     virtual ~Timekeeper() {
         std::cout << "bye " << std::endl;
     }

@@ -23,6 +23,10 @@ public:
     int maxAge = 0;
     int chunkSize = 0;
     int budget = 0;
+    int bufferGoal = 0;
+    int budgetLeftRegressionLength = 0;
+    int chunksToGoal = 0;
+    int goalErrorMargin = 0;
 
     explicit ConfigManager(std::string &path);
 
@@ -36,4 +40,8 @@ private:
     void columnOrText(int *count, char *token);
 
     void adjustErrorBound(int globId, double errorBound);
+
+    void fixQuotation(char *optargcp);
+
+    void fixQuotation();
 };
