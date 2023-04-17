@@ -150,7 +150,6 @@ void ReaderManager::runCompressor() {
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
             if(newInterval){
-                std::cout << "Hello from reader " << hej << std::endl;
                 newInterval = false;
                 hej++;
             }
@@ -170,21 +169,23 @@ void ReaderManager::runCompressor() {
                 }
             }
         }
-        std::cout << "Line number " << lineNumber << std::endl;
+//        std::cout << "Line number " << lineNumber << std::endl;
 
         lineNumber++;
     }
     this->csvFileStream.close();
-    std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
+    timestampManager.finishDeltaDelta();
+    std::cout << "Size of local offset list: " << timestampManager.getSizeOfLocalOffsetList() * sizeof(int) << " bytes" << std::endl;
+    std::cout << "Size of global offset list: " << timestampManager.getSizeOfGlobalOffsetList() * sizeof(int) << " bytes" << std::endl;
+
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-//    std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() << std::endl;
-//    std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList).size() << std::endl;
-    std::cout << "size glob: " << timestampManager.getSizeOfGlobalOffsetList() << std::endl;
-    std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
-    std::cout << "size of int: " << sizeof(int) << std::endl;
+    std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() * sizeof(int8_t) << std::endl;
+    std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList).size() * sizeof(int8_t) << std::endl;
 
+    timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList);
 
-    std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
+    timestampManager.reconstructDeltaDelta();
+
 
 }
 

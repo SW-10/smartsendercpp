@@ -63,6 +63,10 @@ public:
 
     void deltaDeltaCompress(int lineNumber, int globalID);
 
+    void finishDeltaDelta();
+
+    void reconstructDeltaDelta();
+
     std::vector<int>
     getTimestampRangeForColumns(int globID, int indexA, int indexB);
 
@@ -81,7 +85,7 @@ public:
     std::vector<uint8_t>
     binaryCompressLocOffsets(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
 
-    std::vector<uint8_t>
+    void
     binaryCompressLocOffsets2(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
 
     std::vector<int> decompressOffsetList(const std::vector<uint8_t> &values);
@@ -117,4 +121,6 @@ private:
     bool valueCanBeRepresented(const int &currentLimit, const int &val);
 
     std::tuple<int, int, int> findNumberOfBits(const int &val);
+
+    std::unordered_map<int, int> deltaDeltaSizes;
 };

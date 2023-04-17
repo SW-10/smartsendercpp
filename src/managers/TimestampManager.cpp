@@ -18,7 +18,7 @@ TimestampManager::TimestampManager(ConfigManager &confMan, Timekeeper &timekeepe
         TwoLatestTimestamps ts = {0, 0, false};
         latestTimestamps.push_back(ts);
 
-        DeltaDeltaCompression ddc = {0, 0, 0, 0, false, false};
+        DeltaDeltaCompression ddc = {0, 0, 0, 0, 0, false, false};
         latestTimestampsForDeltaDelta.push_back(ddc);
     }
     makeCompressionSchemes();
@@ -146,7 +146,6 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
         // Offset = Difference between current and previous timestamp
         elem->currentOffset = elem->timestampCurrent - elem->timestampPrevious;
 
-
         // Insert new offset if first element or if current offset is not equal to previous offset
         // Else, increase counter for current offset
         if (localOffsetList[globalID].empty() || elem->currentOffset != localOffsetList[globalID][
@@ -164,20 +163,23 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
 
 void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
     auto elem = &latestTimestampsForDeltaDelta.at(globalID);
-//    elem->timestampCurrent = lineNumber;
+    if(!deltaDeltaSizes.contains(globalID)){
+        deltaDeltaSizes[globalID] = 0;
+    }
 
     if (!elem->readyForDelta){
         elem->timestampPrevious = lineNumber;
-        std::cout << "ready delta" << elem->timestampPrevious << std::endl;
         elem->readyForDelta = true;
 
         deltaDeltas[globalID].push_back(lineNumber);
+
 
         auto a = deltaDeltaLimits(lineNumber);
         int ctrCode = std::get<0>(a);
         int numberOfBits = std::get<1>(a);
         uint8_t ctrCodeLength = getLengthOfBinaryRepresentation(ctrCode);
 
+        deltaDeltaSizes[globalID]++;
         appendBits(&deltaDeltasBuilders[globalID], ctrCode, ctrCodeLength);
         appendBits(&deltaDeltasBuilders[globalID], lineNumber, numberOfBits);
 
@@ -185,7 +187,7 @@ void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
     } else if (elem->readyForDelta && !elem->readyForDeltaDelta) {
 
         elem->timestampCurrent = lineNumber;
-        elem->currentDelta = lineNumber - elem->timestampPrevious/* something */;
+        elem->currentDelta = lineNumber - elem->timestampPrevious;
         elem->readyForDeltaDelta = true;
 
         deltaDeltas[globalID].push_back(elem->currentDelta);
@@ -195,6 +197,7 @@ void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
         int numberOfBits = std::get<1>(a);
         uint8_t ctrCodeLength = getLengthOfBinaryRepresentation(ctrCode);
 
+        deltaDeltaSizes[globalID]++;
         appendBits(&deltaDeltasBuilders[globalID], ctrCode, ctrCodeLength);
         appendBits(&deltaDeltasBuilders[globalID], elem->currentDelta, numberOfBits);
 
@@ -212,11 +215,41 @@ void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
         int numberOfBits = std::get<1>(a);
         uint8_t ctrCodeLength = getLengthOfBinaryRepresentation(ctrCode);
 
+        deltaDeltaSizes[globalID]++;
         appendBits(&deltaDeltasBuilders[globalID], ctrCode, ctrCodeLength);
         appendBits(&deltaDeltasBuilders[globalID], elem->currentDeltaDelta, numberOfBits);
 
     }
 }
+
+void TimestampManager::finishDeltaDelta(){
+    int bytes = 0;
+    for(auto &elem : deltaDeltasBuilders){
+        elem.second.bytes.emplace_back(elem.second.currentByte);
+        bytes += elem.second.bytes.size();
+    }
+    std::cout << "Delta delta size: " << bytes << " bytes!" << std::endl;
+}
+
+void TimestampManager::reconstructDeltaDelta(){
+    std::map<int, std::vector<int>> reconstructed;
+    std::vector<int> schemeVals = {7, 9, 12, 32};
+    for(int globID = 1; globID <= deltaDeltasBuilders.size(); globID++){
+        BitReader br(deltaDeltasBuilders[globID].bytes, deltaDeltasBuilders[globID].bytes.size());
+        std::vector<int> decompressed;
+
+        for(int i = 0; i < deltaDeltaSizes[globID]; i++){
+            int currentVal = 0;
+
+            if(!decompressNextValue(schemeVals, &br, &currentVal, &reconstructed[globID])){
+                currentVal = 0;
+                reconstructed[globID].emplace_back(currentVal);
+            }
+        }
+    }
+}
+
+
 
 std::tuple<int, int> TimestampManager::deltaDeltaLimits(const int &val){
     if (val == 0) {
@@ -228,9 +261,10 @@ std::tuple<int, int> TimestampManager::deltaDeltaLimits(const int &val){
     } else if (val >= -2048 && val <= 2047) {
         return (std::tuple(0b1110, 12));
     } else {
-        return(std::tuple(0b11111, 32));
+        return(std::tuple(0b1111, 32));
     }
 }
+
 
 
 void
@@ -634,7 +668,8 @@ TimestampManager::decompressNextValue(std::vector<int> schemeVals, BitReader *bi
     }
 
     // Read number of bits corresponding to the found control bit
-    *currentVal = readBits(bitReader, currentSchemeVal);
+    *currentVal = readBitsSigned(bitReader, currentSchemeVal);
+    std::cout << "CURRENT VAL: " << *currentVal << " bits to read: " << currentSchemeVal << std::endl;
     decompressed->emplace_back(*currentVal);
 
     return true;
@@ -697,6 +732,11 @@ bool TimestampManager::flushTimestamps(
     Node* iterator = lastUsedTimestamp->prev;
     if(iterator == NULL){
         return false;
+    } else{
+        iterator = iterator -> prev;
+        if(iterator == NULL){
+            return false;
+        }
     }
     for(index = 0; iterator->prev != NULL; index++){
         Node* temp = iterator->prev;
@@ -760,8 +800,16 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
     return offset;
 }
 
-
-std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets2(
+/**
+ * This is a compression method that, instead of prepending every value with a control code,
+ * puts a control code for all following values, given that the optimal number of bits used to describe
+ * all these values is the same. When a value can be described with fewer bits, or if it requires
+ * more bits, a new control code will be appended.
+ * The current problem with this method is that the values in the offset list fluctuates too much,
+ * so that nealy all values will update the optimal number of buts, resulting in a control code
+ * before nearly all values in the list.
+ */
+void TimestampManager::binaryCompressLocOffsets2(
         std::unordered_map<int, std::vector<std::pair<int, int>>> offsets) {
 
     bool first = true;
@@ -785,9 +833,6 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets2(
             firsts[globID].emplace_back(j.first);
             flatList.emplace_back(j.second);
             seconds[globID].emplace_back(j.second);
-
-//            appendBits(&builder, j.first ,numberOfBits);
-//            appendBits(&builder, j.second ,numberOfBits);
         }
         globID++;
     }
@@ -804,10 +849,11 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets2(
         upperLimit      = std::get<2>(bits);
     }
 
-    std::cout << "FIRST: ctrl: " << ctrlCode << ", numberOfBits: " << numberOfBits << ", upperLimit: " << upperLimit << ", val: " << *it << std::endl;
     std::map<int, std::vector<BitVecBuilder>> firstCompressed;
     std::map<int, std::vector<BitVecBuilder>> secondsCompressed;
 
+    //Length of control bit
+    // Src: https://stackoverflow.com/questions/29388711/how-to-get-the-bit-length-of-an-integer-in-c
     unsigned bits, var = ctrlCode;
     for(bits = 0; var != 0; ++bits) var >>= 1;
 
@@ -824,58 +870,31 @@ std::vector<uint8_t> TimestampManager::binaryCompressLocOffsets2(
                 first2 = false;
             }
             if(valueCanBeRepresented(upperLimit, j)){
-                std::cout << "APPENDING BITS!\n" << j << std::endl;
+//                std::cout << "APPENDING BITS!\n" << j << std::endl;
 
                 appendBits(&firstCompressed[i].back() , j, numberOfBits);
             } else {
                 BitVecBuilder bvb;
                 firstCompressed[i].emplace_back(bvb);
                 auto bits = findNumberOfBits(j);
-                std::cout << j <<  " CANT BE REPRESENTED WITH CONTROL CODE " << ctrlCode << ", LIMIT: " << upperLimit << std::endl;
-                std::cout << "ADJUSTING UPPER LIMIT ..." << std::endl;
+//                std::cout << j <<  " CANT BE REPRESENTED WITH CONTROL CODE " << ctrlCode << ", LIMIT: " << upperLimit << std::endl;
+//                std::cout << "ADJUSTING UPPER LIMIT ..." << std::endl;
                 ctrlCode        = std::get<0>(bits);
                 numberOfBits    = std::get<1>(bits);
                 upperLimit      = std::get<2>(bits);
-                std::cout << "UPPER LIMIT ADJUSTED TO " << upperLimit << "\n" << std::endl;
+//                std::cout << "UPPER LIMIT ADJUSTED TO " << upperLimit << "\n" << std::endl;
 
                 appendBits(&firstCompressed[i].back() , j, numberOfBits);
             }
 
         }
     }
-
-    //Length of control bit
-    // Src: https://stackoverflow.com/questions/29388711/how-to-get-the-bit-length-of-an-integer-in-c
-//    unsigned bits, var = ctrlCode;
-//    for(bits = 0; var != 0; ++bits) var >>= 1;
-//
-//    appendBits(&builder, ctrlCode, bits);
-//
-//    for(; it != flatList.end(); ++it){
-//        if(valueCanBeRepresented(upperLimit, *it)) {
-//            std::cout << "APPENDING BIT :D" << std::endl;
-//            appendBits(&builder, *it, numberOfBits);
-//        }
-//        else {
-//            std::cout << *it <<  " CANT BE REPRESENTED WITH CONTROL CODE " << ctrlCode << ", LIMIT: " << upperLimit << std::endl;
-//            std::cout << "ADJUSTING UPPER LIMIT ..." << std::endl;
-//            auto bits = findNumberOfBits(*it);
-//            ctrlCode        = std::get<0>(bits);
-//            numberOfBits    = std::get<1>(bits);
-//            upperLimit      = std::get<2>(bits);
-//            std::cout << "UPPER LIMIT ADJUSTED TO " << upperLimit << "\n" << std::endl;
-//            appendBits(&builder, *it, numberOfBits);
-//        }
-//    }
-
-    std::vector<uint8_t> res;
-    return res;
 }
 
 bool TimestampManager::valueCanBeRepresented(const int &currentLimit,  const int &val){
     // Extract the optimal upper limit for the value
-    auto hej = findNumberOfBits(val);
-    int bestLimit = std::get<2>(hej);
+    auto numberOfBits = findNumberOfBits(val);
+    int bestLimit = std::get<2>(numberOfBits);
     return val <= currentLimit && currentLimit == bestLimit;
 }
 
