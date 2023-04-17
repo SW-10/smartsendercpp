@@ -4,6 +4,7 @@
 #include <string>
 #include <iostream>
 #include "../utils/Timer.h"
+#include "../utils/Utils.h"
 #include <functional>
 
 //int Observer::static_number_ = 0;
@@ -12,8 +13,10 @@
 ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols, configManager.textCols,
-                       timestampManager) {
+                       timestampManager),
+                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp) {
     timekeeper.Attach(this);
+    timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
             "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
             std::ios::in);
@@ -117,6 +120,10 @@ void ReaderManager::Update(const std::string &message_from_subject) {
 }
 
 void ReaderManager::runCompressor() {
+    #ifdef linux
+    //ConnectionAddress address("0.0.0.0", 9999);
+    #endif
+
     std::vector<std::string> row;
     std::string line, word;
 
@@ -134,9 +141,7 @@ void ReaderManager::runCompressor() {
         std::stringstream s(line);
 
         int count = 0;
-
         while (std::getline(s, word, ',')) {
-
             auto mapElement = myMap.find(count); //Get element in map
 
             // Get the lambda function from the map.
@@ -149,25 +154,27 @@ void ReaderManager::runCompressor() {
             // Run code that handles new intervals directly after reading the timestamp
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
-            if(newInterval){
-                newInterval = false;
-                hej++;
-            }
+//            if(newInterval){
+////                budgetManager.endOfChunkCalculations();
+//                std::cout << "Hello from reader " << hej << std::endl;
+//                newInterval = false;
+//                hej++;
+//            }
 
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
             count++;
             // TODO: Adjust penalty dynamically
-            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
-                lastTimestampFlush = lineNumber;
-                bool didFlush = modelManager.calculateFlushTimestamp();
-                if (didFlush){
-                    timestampFlusherPenalty -= 5;
-                }
-                else {
-                    timestampFlusherPenalty +=5;
-                }
-            }
+//            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
+//                lastTimestampFlush = lineNumber;
+//                bool didFlush = modelManager.calculateFlushTimestamp();
+//                if (didFlush){
+//                    timestampFlusherPenalty -= 5;
+//                }
+//                else {
+//                    timestampFlusherPenalty +=5;
+//                }
+//            }
         }
 //        std::cout << "Line number " << lineNumber << std::endl;
 
@@ -184,8 +191,27 @@ void ReaderManager::runCompressor() {
 
     timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList);
 
+    //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
     timestampManager.reconstructDeltaDelta();
 
 
-}
+    #ifdef linux
+    /*auto table = VectorToColumnarTable(
+            this->modelManager.selectedModels).ValueOrDie();
 
+    auto recordBatch = MakeRecordBatch(table).ValueOrDie();
+
+    ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
+    auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
+                        arrow::flight::FlightDescriptor{arrow::flight
+                                                        ::FlightDescriptor::Path(std::vector<std::string>{"table.parquet"})}, recordBatch->schema()).ValueOrDie();
+
+    ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
+    arrow::Status st = arrow::Status::OK();
+    if (!st.ok()) {
+        std::cerr << st << std::endl;
+        exit(1);
+    }*/
+
+    #endif
+}

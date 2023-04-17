@@ -241,7 +241,7 @@ void TimestampManager::reconstructDeltaDelta(){
         for(int i = 0; i < deltaDeltaSizes[globID]; i++){
             int currentVal = 0;
 
-            if(!decompressNextValue(schemeVals, &br, &currentVal, &reconstructed[globID])){
+            if(!decompressNextValue(schemeVals, &br, &currentVal, &reconstructed[globID], true)){
                 currentVal = 0;
                 reconstructed[globID].emplace_back(currentVal);
             }
@@ -275,7 +275,7 @@ TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
     bool found = false;
     //Create iterator for double linked list
     Node* iterator = timestampA;
-    int count = 0;
+    int count = latestTimestamps[globID].timestampFirst;
     for (auto & localOffset : localOffsets){
         count += localOffset.first*localOffset.second;
         if(res.empty() && count+totalFlushed > timestampA->index){
@@ -627,7 +627,7 @@ TimestampManager::decompressOffsetList(const std::vector<uint8_t> &values) {
 
     // Size of local offset list
     int lolSize = 0;
-    decompressNextValue(schemes.at(sizeSchemeID), &bitReader, &lolSize, &decompressed);
+    decompressNextValue(schemes.at(sizeSchemeID), &bitReader, &lolSize, &decompressed, false);
 
     // Scheme for first column
     int currentValue = 0;
@@ -639,7 +639,7 @@ TimestampManager::decompressOffsetList(const std::vector<uint8_t> &values) {
         // decompressNextValue returns 'false' if no control codes are found, i.e. the zero bit at
         // the end of each column.
         // When that happens, read the next eight bits to receive new schemeID
-        if (!decompressNextValue(schemes.at(schemeID), &bitReader, &currentValue, &decompressed)) {
+        if (!decompressNextValue(schemes.at(schemeID), &bitReader, &currentValue, &decompressed, false)) {
             schemeID = readBits(&bitReader, bitsUsedForSchemeID);
         }
     }
@@ -649,7 +649,8 @@ TimestampManager::decompressOffsetList(const std::vector<uint8_t> &values) {
 
 bool
 TimestampManager::decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader,
-                                      int *currentVal, std::vector<int> *decompressed) {
+                                      int *currentVal, std::vector<int> *decompressed,
+                                      bool valueIsSigned) {
     int currentSchemeVal = 0;
 
     // Read the control bits. The last control code of all schemes have the same length as the
@@ -668,8 +669,12 @@ TimestampManager::decompressNextValue(std::vector<int> schemeVals, BitReader *bi
     }
 
     // Read number of bits corresponding to the found control bit
-    *currentVal = readBitsSigned(bitReader, currentSchemeVal);
-    std::cout << "CURRENT VAL: " << *currentVal << " bits to read: " << currentSchemeVal << std::endl;
+    if(valueIsSigned){
+        *currentVal = readBitsSigned(bitReader, currentSchemeVal);
+    } else {
+        *currentVal = readBits(bitReader, currentSchemeVal);
+    }
+//    std::cout << "CURRENT VAL: " << *currentVal << " bits to read: " << currentSchemeVal << std::endl;
     decompressed->emplace_back(*currentVal);
 
     return true;
@@ -738,6 +743,7 @@ bool TimestampManager::flushTimestamps(
             return false;
         }
     }
+
     for(index = 0; iterator->prev != NULL; index++){
         Node* temp = iterator->prev;
         delete iterator;

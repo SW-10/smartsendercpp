@@ -14,6 +14,7 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound,
     this->errorAbsolute = errorAbsolute;
     this->localId = localId;
     this->globalId = globalId;
+    this->startTimestamp = 0;
 }
 
 void ModelManager::fitTextModels(int id, const std::string &value) {
@@ -31,6 +32,9 @@ void ModelManager::fitTextModels(int id, const std::string &value) {
 #pragma ide diagnostic ignored "misc-no-recursion"
 void ModelManager::fitSegment(int id, float value, Node *timestamp) {
     TimeSeriesModelContainer &container = timeSeries.at(id);
+    if (container.startTimestamp == 0) {
+        container.startTimestamp = timestamp->data;
+    }
     if(container.status.SwingReady) {
         container.status.SwingReady = container.swing.fitValueSwing(timestamp, value);
         //Swing sets last constructed timestamp internally
@@ -68,6 +72,7 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig,
     for (auto &column: timeSeriesConfig) {
         timeSeries.emplace_back(column.error, column.isAbsolute, count,
                                 column.col);
+        selectedModels.emplace_back();
         count++;
     }
     count = 0;
@@ -87,10 +92,61 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer &container) {
     container.status.gorillaReady);
 }
 
+SelectedModel ModelManager::selectPmcMean(TimeSeriesModelContainer &modelContainer) {
+    SelectedModel model = SelectedModel();
+    model.mid = PMC_MEAN;
+    model.cid = modelContainer.globalId;
+    model.startTime = modelContainer.startTimestamp;
+    model.endTime = modelContainer.pmcMean.lastTimestamp->data;
+    model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
+    model.error = modelContainer.errorBound;
+    return model;
+};
+
+SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer) {
+    SelectedModel model = SelectedModel();
+    float start_value = modelContainer.swing.upperBoundSlope * modelContainer.swing.firstTimestamp +
+                        modelContainer.swing
+                                .upperBoundIntercept;
+    float end_value = modelContainer.swing.lowerBoundSlope * modelContainer.swing.lastTimestamp->data +
+                      modelContainer.swing
+                              .lowerBoundIntercept;
+
+    if (start_value < end_value) {
+        model.values.emplace_back(start_value);
+        model.values.emplace_back(end_value);
+    } else {
+        model.values.emplace_back(end_value);
+        model.values.emplace_back(start_value);
+    }
+
+    model.mid = SWING;
+    model.cid = modelContainer.globalId;
+model.startTime = modelContainer.startTimestamp;
+    model.endTime = modelContainer.swing.lastTimestamp->data;
+    model.values.emplace_back((int) (start_value < end_value));
+    model.error = modelContainer.errorBound;
+    return model;
+}
+
+SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContainer) {
+    SelectedModel model = SelectedModel();
+
+    model.mid = GORILLA;
+    model.cid = modelContainer.globalId;
+    model.startTime = modelContainer.startTimestamp;
+    model.endTime = modelContainer.gorilla.lastTimestamp->data;
+    for (auto x: modelContainer.gorilla.compressedValues.bytes) {
+        model.values.emplace_back(x);
+    }
+    model.error = modelContainer.errorBound;
+
+    return model;
+}
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
 
-//Recursive call chain OK
 void
 ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                       Node *lastTimestamp) {
@@ -102,23 +158,28 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                            std::min<size_t>(
                                                    finishedSegment.gorilla.length,
                                                    finishedSegment.swing.length));
+
     if (pmcMeanSize <= swingSize && pmcMeanSize <= gorillaSize) {
+        selectedModels.at(finishedSegment.localId).emplace_back(selectPmcMean(finishedSegment));
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
         indexToStart = finishedSegment.pmcMean.length - indexToStart;
     } else if (swingSize <= pmcMeanSize && swingSize <= gorillaSize) {
+        selectedModels.at(finishedSegment.localId).emplace_back(selectSwing(finishedSegment));
         lastModelledTimestamp = finishedSegment.swing.lastTimestamp;
         indexToStart = finishedSegment.swing.length - indexToStart;
     } else {
+        selectedModels.at(finishedSegment.localId).emplace_back(selectGorilla(finishedSegment));
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.length - indexToStart;
     }
-    if (!finishedSegment.cachedValues.values.empty()) {
+    if (!finishedSegment.cachedValues.values.empty() && lastTimestamp != nullptr) {
         CachedValues currentCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
                                                    finishedSegment.errorAbsolute,
                                                    finishedSegment.localId,
                                                    finishedSegment.globalId);
+        //finishedSegment.startTimestamp = lastTimestamp;
 
         // TODO: get last constructed TS, and parse rest TS to fitSegment
         std::vector<Node*> timestampOffsets;
@@ -150,6 +211,10 @@ bool ModelManager::calculateFlushTimestamp() {
         }
     }
     return earliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
+}
+
+void ModelManager::forceModelFlush(int localId) {
+    constructFinishedModels(timeSeries.at(localId), nullptr);
 }
 
 TextModelContainer::TextModelContainer(int localId, int globalId) {

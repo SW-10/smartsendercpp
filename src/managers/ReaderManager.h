@@ -5,6 +5,10 @@
 #include "ConfigManager.h"
 #include "ModelManager.h"
 #include "TimestampManager.h"
+#include "BudgetManager.h"
+#ifdef linux
+#include "../ArrowFlight.h"
+#endif
 #include <iostream>
 #include <unordered_map>
 #include <map>
@@ -13,19 +17,22 @@
 #include <functional>
 
 class ReaderManager : public IObserver {
+private:
+    ConfigManager configManager;
+    TimestampManager timestampManager;
+
 public:
+    ModelManager modelManager;
     explicit ReaderManager(std::string configFile, Timekeeper &timekeeper);
 
     void runCompressor();
 
 private:
+    BudgetManager budgetManager;
     enum class CompressionType : int {
         TEXT, VALUES, TIMESTAMP, POSITION, NONE
     };
     std::fstream csvFileStream;
-    ConfigManager configManager;
-    ModelManager modelManager;
-    TimestampManager timestampManager;
     bool bothLatLongSeen;
     std::unordered_map<
             int, // key
@@ -37,6 +44,6 @@ private:
     > myMap;
 
     void Update(const std::string &message_from_subject) override;
-    bool newInterval = true;
+    bool newInterval = false;
 
 };
