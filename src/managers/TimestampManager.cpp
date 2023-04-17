@@ -698,6 +698,13 @@ bool TimestampManager::flushTimestamps(
     if(iterator == NULL){
         return false;
     }
+    else{
+        iterator = iterator -> prev;
+        if(iterator == NULL){
+            return false;
+        }
+    }
+
     for(index = 0; iterator->prev != NULL; index++){
         Node* temp = iterator->prev;
         delete iterator;
