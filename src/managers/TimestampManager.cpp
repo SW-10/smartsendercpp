@@ -390,6 +390,42 @@ void TimestampManager::makeCompressionSchemes() {
                                     }
     );
 
+    // ===== SCHEME 5 =====:
+    compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
+                                        if (val <= 3) {
+                                            appendBits(builder, 0b10, 2);
+                                            appendBits(builder, val, 2);
+                                        } else {
+                                            appendBits(builder, 0b11, 2);
+                                            appendBits(builder, val, 32);
+                                        }
+                                    }
+    );
+
+    // ===== SCHEME 6 =====:
+    compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
+                                        if (val <= 7) {
+                                            appendBits(builder, 0b10, 2);
+                                            appendBits(builder, val, 3);
+                                        } else {
+                                            appendBits(builder, 0b11, 2);
+                                            appendBits(builder, val, 32);
+                                        }
+                                    }
+    );
+
+    // ===== SCHEME 7 =====:
+    compressionSchemes.emplace_back([](BitVecBuilder *builder, int val) {
+                                        if (val <= 15) {
+                                            appendBits(builder, 0b10, 2);
+                                            appendBits(builder, val, 4);
+                                        } else {
+                                            appendBits(builder, 0b11, 2);
+                                            appendBits(builder, val, 32);
+                                        }
+                                    }
+    );
+
     // =====================================================
     // =============== ADD MORE SCHEMES HERE ===============
     // =====================================================
@@ -621,6 +657,15 @@ TimestampManager::decompressOffsetList(const std::vector<uint8_t> &values) {
 
     // Scheme 4
     schemes.push_back(std::vector<int>{2, 3, 4, 32});
+
+    // Scheme 5
+    schemes.push_back(std::vector<int>{2, 32});
+
+    // Scheme 6
+    schemes.push_back(std::vector<int>{3, 32});
+
+    // Scheme 7
+    schemes.push_back(std::vector<int>{4, 32});
 
     // Scheme for size of local offset list
     int sizeSchemeID = readBits(&bitReader, bitsUsedForSchemeID);
