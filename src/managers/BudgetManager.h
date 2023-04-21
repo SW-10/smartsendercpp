@@ -10,6 +10,7 @@ public:
 
     void endOfChunkCalculations();
 
+
 private:
     ModelManager &modelManager;
     ConfigManager &configManager;
@@ -19,4 +20,8 @@ private:
     int &maxAge;
     int *firstTimestampChunk;
     std::vector<int> lastBudget;
+    void errorBoundAdjuster();
+    std::vector<std::vector<int>> storageImpact;
+
+    void spaceKeeperEmplace(int size, int index);
 };

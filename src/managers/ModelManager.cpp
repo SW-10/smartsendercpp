@@ -95,7 +95,7 @@ bool ModelManager::shouldConstructModel(TimeSeriesModelContainer &container) {
 SelectedModel ModelManager::selectPmcMean(TimeSeriesModelContainer &modelContainer) {
     SelectedModel model = SelectedModel();
     model.mid = PMC_MEAN;
-    model.cid = modelContainer.globalId;
+    model.cid = modelContainer.localId;
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.pmcMean.lastTimestamp->data;
     model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
