@@ -15,7 +15,8 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols, configManager.textCols,
                        timestampManager),
-                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp) {
+                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp),
+          outlierDetector(4.0, configManager.timeseriesCols.size()) {
     timekeeper.Attach(this);
     timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
@@ -32,21 +33,21 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 
     }
 
+
     // TODO: Change all test-functions
     // Handle time series columns
     int i = 0;
-    OutlierDetector detector(2.0, configManager.timeseriesCols.size());
     for (const auto &c: configManager.timeseriesCols) {
-        detector.count.push_back(0);
-        detector.mean.push_back(0.0);
-        detector.m2.push_back(0.0);
-        std::get<0>(myMap[c.col]) = [this, i, &c, &detector](std::string *in,
+        outlierDetector.count.push_back(0);
+        outlierDetector.mean.push_back(0.0);
+        outlierDetector.m2.push_back(0.0);
+        std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
                                                   int &lineNum) {
             if (!in->empty()) {
                 float value = std::stof(*in);
-                if(detector.addValueAndDetectOutlier(c.col, value)){
-                  std::cout << "Outlier detected on line " << lineNum << " in column " << c.col << std::endl;
-                };
+                if(outlierDetector.addValueAndDetectOutlier(i, value)){
+                  std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
+                }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
 
@@ -144,7 +145,6 @@ void ReaderManager::runCompressor() {
     int timestampFlusherPenalty = 50;
     int lastTimestampFlush = 0;
     int hej = 0;
-    OutlierDetector detector(2.0);
 
     while (!this->csvFileStream.eof()) {
         row.clear();
@@ -166,7 +166,7 @@ void ReaderManager::runCompressor() {
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
             if(newInterval){
-                budgetManager.endOfChunkCalculations();
+                //budgetManager.endOfChunkCalculations();
                 //std::cout << "Hello from reader " << hej << std::endl;
                 newInterval = false;
                 hej++;
@@ -176,28 +176,21 @@ void ReaderManager::runCompressor() {
             std::get<1>(mapElement->second) = ct;
             count++;
             // TODO: Adjust penalty dynamically
-            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
-                lastTimestampFlush = lineNumber;
-                bool didFlush = modelManager.calculateFlushTimestamp();
-                if (didFlush){
-                    timestampFlusherPenalty -= 5;
-                }
-                else {
-                    timestampFlusherPenalty +=5;
-                }
-            }
+//            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
+//                lastTimestampFlush = lineNumber;
+//                bool didFlush = modelManager.calculateFlushTimestamp();
+//                if (didFlush){
+//                    timestampFlusherPenalty -= 5;
+//                }
+//                else {
+//                    timestampFlusherPenalty +=5;
+//                }
+//            }
         }
 
         lineNumber++;
     }
     this->csvFileStream.close();
-
-    std::vector<double> data = {1.0, 2.0, 3.0, 4.0, 100.0, 6.0, 7.0, 8.0, 9.0, 10.0};
-
-    for (const auto& value : data) {
-        detector.add_data_point(value);
-    }
-    const std::vector<double>& outliers = detector.outliers();
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
 //    std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() << std::endl;
