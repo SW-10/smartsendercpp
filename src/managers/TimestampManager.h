@@ -67,6 +67,10 @@ public:
 
     void reconstructDeltaDelta();
 
+    std::vector<int> flattenLOL();
+
+    std::vector<int> flattenGOL();
+
     std::vector<int>
     getTimestampRangeForColumns(int globID, int indexA, int indexB);
 

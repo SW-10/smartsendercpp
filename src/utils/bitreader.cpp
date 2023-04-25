@@ -60,9 +60,6 @@ uint32_t readBitsSigned(BitReader *bitReader, uint8_t numberOfBits) {
     }
     bitReader->nextBit = endBit;
 
-
-
-
     return value;
 }
 

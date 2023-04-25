@@ -173,7 +173,6 @@ void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
 
         deltaDeltas[globalID].push_back(lineNumber);
 
-
         auto a = deltaDeltaLimits(lineNumber);
         int ctrCode = std::get<0>(a);
         int numberOfBits = std::get<1>(a);
@@ -206,7 +205,8 @@ void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
         elem->timestampCurrent = lineNumber;
         elem->previousDelta = elem->currentDelta;
         elem->currentDelta = lineNumber - elem->timestampPrevious;
-        elem->currentDeltaDelta = elem->previousDelta - elem->currentDelta;
+//        elem->currentDeltaDelta = elem->previousDelta - elem->currentDelta;
+        elem->currentDeltaDelta = elem->currentDelta - elem->previousDelta ;
 
         deltaDeltas[globalID].push_back(elem->currentDeltaDelta);
 
@@ -265,6 +265,36 @@ std::tuple<int, int> TimestampManager::deltaDeltaLimits(const int &val){
     }
 }
 
+std::vector<int> TimestampManager::flattenLOL(){
+    std::vector<int> flat;
+    //Sort unordered map
+    std::map<int, std::vector<std::pair<int, int>>> ordered(localOffsetList.begin(),
+                                                            localOffsetList.end());
+    int count = 1;
+    for(const auto &column : ordered){
+        for(const auto &row : column.second){
+            flat.emplace_back(row.first);
+            flat.emplace_back(row.second);
+        }
+        count++;
+        // -2 is a value representing end of column
+        flat.emplace_back(-2);
+    }
+    // -3 is a value representing end of list
+    flat.emplace_back(-3);
+    return flat;
+}
+
+std::vector<int> TimestampManager::flattenGOL(){
+    std::vector<int> flat;
+    for(const auto &row : offsetList){
+        flat.emplace_back(row.first);
+        flat.emplace_back(row.second);
+    }
+    // -3 is a value representing end of list
+    flat.emplace_back(-3);
+    return flat;
+}
 
 
 void

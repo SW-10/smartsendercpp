@@ -5,7 +5,9 @@
 #include <iostream>
 #include "../utils/Timer.h"
 #include "../utils/Utils.h"
+#include "../utils/Huffman.h"
 #include <functional>
+#include <forward_list>
 
 //int Observer::static_number_ = 0;
 //Timekeeper *timekeeper = new Timekeeper;
@@ -194,6 +196,26 @@ void ReaderManager::runCompressor() {
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
     timestampManager.reconstructDeltaDelta();
 
+
+    // Huffman-encode Local offset list
+    Huffman huffmanLOL;
+    auto vecLOL = timestampManager.flattenLOL();
+    std::forward_list<int> listLOL(vecLOL.begin(), vecLOL.end());
+    huffmanLOL.runHuffmanEncoding(listLOL, false);
+    huffmanLOL.encodeTree();
+    MinHeapNode* LOLtreeRoot  = huffmanLOL.decodeTree();
+    auto LOL = huffmanLOL.decodeLOL(LOLtreeRoot, huffmanLOL.huffmanBuilder.bytes);
+    std::cout << "HUFFMAN SIZE (LOL): " << huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size() << std::endl;
+
+    // Huffman-encode Global offset list
+    Huffman huffmanGOL;
+    auto vecGOL = timestampManager.flattenGOL();
+    std::forward_list<int> listGOL(vecGOL.begin(), vecGOL.end());
+    huffmanGOL.runHuffmanEncoding(listGOL, true);
+    huffmanGOL.encodeTree();
+    MinHeapNode* GOLtreeRoot  = huffmanGOL.decodeTree();
+    auto GOL = huffmanGOL.decodeGOL(GOLtreeRoot, huffmanGOL.huffmanBuilder.bytes);
+    std::cout << "HUFFMAN SIZE (GOL): " << huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size() << std::endl;
 
     #ifdef linux
     /*auto table = VectorToColumnarTable(
