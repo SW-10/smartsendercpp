@@ -156,12 +156,12 @@ void ReaderManager::runCompressor() {
             // Run code that handles new intervals directly after reading the timestamp
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
-//            if(newInterval){
-////                budgetManager.endOfChunkCalculations();
-//                std::cout << "Hello from reader " << hej << std::endl;
-//                newInterval = false;
-//                hej++;
-//            }
+            if(newInterval){
+                budgetManager.endOfChunkCalculations();
+                //std::cout << "Hello from reader " << hej << std::endl;
+                newInterval = false;
+                hej++;
+            }
 
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
