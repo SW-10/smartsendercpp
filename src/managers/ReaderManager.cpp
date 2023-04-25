@@ -5,6 +5,7 @@
 #include <iostream>
 #include "../utils/Timer.h"
 #include "../utils/Utils.h"
+#include "../utils/OutlierDetector.h"
 #include <functional>
 
 //int Observer::static_number_ = 0;
@@ -34,15 +35,23 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
     // TODO: Change all test-functions
     // Handle time series columns
     int i = 0;
+    OutlierDetector detector(2.0, configManager.timeseriesCols.size());
     for (const auto &c: configManager.timeseriesCols) {
-        std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
+        detector.count.push_back(0);
+        detector.mean.push_back(0.0);
+        detector.m2.push_back(0.0);
+        std::get<0>(myMap[c.col]) = [this, i, &c, &detector](std::string *in,
                                                   int &lineNum) {
             if (!in->empty()) {
+                float value = std::stof(*in);
+                if(detector.addValueAndDetectOutlier(c.col, value)){
+                  std::cout << "Outlier detected on line " << lineNum << " in column " << c.col << std::endl;
+                };
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
 
                 //timestampManager.deltaDeltaCompress(lineNum, c.col);
-                modelManager.fitSegment(i, std::stof(*in),
+                modelManager.fitSegment(i, value,
                                         timestampManager.timestampCurrent);
             }
             return CompressionType::VALUES;
@@ -135,6 +144,8 @@ void ReaderManager::runCompressor() {
     int timestampFlusherPenalty = 50;
     int lastTimestampFlush = 0;
     int hej = 0;
+    OutlierDetector detector(2.0);
+
     while (!this->csvFileStream.eof()) {
         row.clear();
         std::getline(this->csvFileStream, line);
@@ -180,6 +191,13 @@ void ReaderManager::runCompressor() {
         lineNumber++;
     }
     this->csvFileStream.close();
+
+    std::vector<double> data = {1.0, 2.0, 3.0, 4.0, 100.0, 6.0, 7.0, 8.0, 9.0, 10.0};
+
+    for (const auto& value : data) {
+        detector.add_data_point(value);
+    }
+    const std::vector<double>& outliers = detector.outliers();
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
 //    std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() << std::endl;
@@ -192,7 +210,7 @@ void ReaderManager::runCompressor() {
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
 
     #ifdef linux
-    /*auto table = VectorToColumnarTable(
+    auto table = VectorToColumnarTable(
             this->modelManager.selectedModels).ValueOrDie();
 
     auto recordBatch = MakeRecordBatch(table).ValueOrDie();
@@ -207,7 +225,6 @@ void ReaderManager::runCompressor() {
     if (!st.ok()) {
         std::cerr << st << std::endl;
         exit(1);
-    }*/
-
+    }
     #endif
 }
