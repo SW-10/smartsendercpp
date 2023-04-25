@@ -48,7 +48,7 @@ struct compare
 
 class Huffman {
 public:
-    void runHuffmanEncoding(const std::forward_list<int> &uncompressed, bool print);
+    void runHuffmanEncoding(const std::vector<int> &uncompressed, bool print);
     std::map<int, std::vector<std::pair<int, int>>> decodeLOL(struct MinHeapNode* root, std::vector<uint8_t> s);
     std::vector<std::pair<int, int>> decodeGOL(struct MinHeapNode* root, std::vector<uint8_t> s);
     void encodeTree();
@@ -61,10 +61,10 @@ public:
     }
 
 private:
-    std::map<int, int> countFrequencies(const std::forward_list<int> &uncompressed);
+    std::map<int, int> countFrequencies(const std::vector<int> &uncompressed);
     void constructTree(const std::map<int, int> &frequencies);
     void storeCodes(struct MinHeapNode *root, std::string str, bool print);
-    void compress(BitVecBuilder &builder, const std::forward_list<int> &uncompressed);
+    void compress(BitVecBuilder &builder, const std::vector<int> &uncompressed);
     MinHeapNode* decodeTreeRec(BitReader &reader);
     void encodeTreeRec(MinHeapNode* node);
 
