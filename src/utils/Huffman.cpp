@@ -1,7 +1,7 @@
 #include "Huffman.h"
 #include <queue>
 
-void Huffman::runHuffmanEncoding(const std::forward_list<int> &uncompressed, bool print) {
+void Huffman::runHuffmanEncoding(const std::vector<int> &uncompressed, bool print) {
 
     // Count frequencies of the elements in the uncompressed list
     std::map<int, int> frequencies = countFrequencies(uncompressed);
@@ -17,7 +17,7 @@ void Huffman::runHuffmanEncoding(const std::forward_list<int> &uncompressed, boo
     compress(huffmanBuilder, uncompressed);
 }
 
-std::map<int, int> Huffman::countFrequencies(const std::forward_list<int> &uncompressed){
+std::map<int, int> Huffman::countFrequencies(const std::vector<int> &uncompressed){
     std::map<int, int> frequencies;
     for(const auto elem : uncompressed){
         auto it = frequencies.find(elem);
@@ -70,7 +70,7 @@ void Huffman::storeCodes(struct MinHeapNode *root, std::string str, bool print)
     storeCodes(root->rChild, str + "1", print);
 }
 
-void Huffman::compress(BitVecBuilder &builder, const std::forward_list<int> &uncompressed){
+void Huffman::compress(BitVecBuilder &builder, const std::vector<int> &uncompressed){
     std::string compressed = "";
 //    for(int i = 0; i < uncompressed.size(); i++){
     for(auto val = uncompressed.begin(); val != uncompressed.end(); ++val ) {

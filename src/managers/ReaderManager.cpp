@@ -200,8 +200,7 @@ void ReaderManager::runCompressor() {
     // Huffman-encode Local offset list
     Huffman huffmanLOL;
     auto vecLOL = timestampManager.flattenLOL();
-    std::forward_list<int> listLOL(vecLOL.begin(), vecLOL.end());
-    huffmanLOL.runHuffmanEncoding(listLOL, false);
+    huffmanLOL.runHuffmanEncoding(vecLOL, true);
     huffmanLOL.encodeTree();
     MinHeapNode* LOLtreeRoot  = huffmanLOL.decodeTree();
     auto LOL = huffmanLOL.decodeLOL(LOLtreeRoot, huffmanLOL.huffmanBuilder.bytes);
@@ -210,8 +209,7 @@ void ReaderManager::runCompressor() {
     // Huffman-encode Global offset list
     Huffman huffmanGOL;
     auto vecGOL = timestampManager.flattenGOL();
-    std::forward_list<int> listGOL(vecGOL.begin(), vecGOL.end());
-    huffmanGOL.runHuffmanEncoding(listGOL, true);
+    huffmanGOL.runHuffmanEncoding(vecGOL, true);
     huffmanGOL.encodeTree();
     MinHeapNode* GOLtreeRoot  = huffmanGOL.decodeTree();
     auto GOL = huffmanGOL.decodeGOL(GOLtreeRoot, huffmanGOL.huffmanBuilder.bytes);
