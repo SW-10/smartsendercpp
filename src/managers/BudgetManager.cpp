@@ -63,12 +63,11 @@ void BudgetManager::endOfChunkCalculations() {
         double xp = (intercept - configManager.bufferGoal) / (slope*-1);
         if(xp < configManager.budgetLeftRegressionLength){
             if (slope > 0){
-                
+                // TODO lower error bounds
             }
             else if (slope < 0){
-
+                //TODO Increase error bounds
             }
-            // TODO: adjust opposite
         }
         if (xp > configManager.budgetLeftRegressionLength+configManager.chunksToGoal){
             if (slope < 0) {

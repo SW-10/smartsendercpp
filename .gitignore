@@ -54,3 +54,4 @@
 /.vs/
 
 smartsendercpp.code-workspace
+/cmake-build-debug-mingw-coverage/
