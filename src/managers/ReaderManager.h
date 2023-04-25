@@ -6,6 +6,7 @@
 #include "ModelManager.h"
 #include "TimestampManager.h"
 #include "BudgetManager.h"
+#include "../utils/OutlierDetector.h"
 #ifdef linux
 #include "../ArrowFlight.h"
 #endif
@@ -16,10 +17,12 @@
 #include <any>
 #include <functional>
 
+
 class ReaderManager : public IObserver {
 private:
     ConfigManager configManager;
     TimestampManager timestampManager;
+    OutlierDetector outlierDetector;
 
 public:
     ModelManager modelManager;
