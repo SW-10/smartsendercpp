@@ -122,7 +122,7 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
 
     model.mid = SWING;
     model.cid = modelContainer.localId;
-model.startTime = modelContainer.startTimestamp;
+    model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.swing.lastTimestamp->data;
     model.values.emplace_back((int) (start_value < end_value));
     model.error = modelContainer.errorBound;
@@ -179,7 +179,6 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
                                                    finishedSegment.errorAbsolute,
                                                    finishedSegment.localId,
                                                    finishedSegment.globalId);
-        //finishedSegment.startTimestamp = lastTimestamp;
 
         // TODO: get last constructed TS, and parse rest TS to fitSegment
         std::vector<Node*> timestampOffsets;

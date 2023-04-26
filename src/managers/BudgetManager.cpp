@@ -17,7 +17,6 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
 }
 
 void BudgetManager::endOfChunkCalculations() {
-    //DO STUFF
     for(auto &container : modelManager.timeSeries){
         if(timestampManager.timestampCurrent->data - container.startTimestamp > maxAge){
             modelManager.forceModelFlush(container.localId);
@@ -47,10 +46,35 @@ void BudgetManager::endOfChunkCalculations() {
         Huffman huffmanLOL;
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
-        temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
-        std::cout << temp << std::endl;
-        //std::cout << "HUFFMAN SIZE (LOL): " << huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size() << std::endl;
+        //Temp Used for testing
+        //temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
         timestampManager.localOffsetListToSend.clear();
+
+        //FOR REF
+        // Huffman-encode Local offset list
+        /*Huffman huffmanLOL;
+        auto vecLOL = timestampManager.flattenLOL();
+    //    std::vector<int> paperExample = {0,1,5,2,1,1,4,-2,
+    //                                     0,1,5,2,1,1,1,2,1,1,1,-2,
+    //                                     0,3,1,4,1,3,1,-2,
+    //                                     0,2,2,3,1,2,1,-2,
+    //                                     1,5,1,4,1,-3};
+        std::vector<int> paperExample = {60, 5, 5, 1, 55, 1, 60, 4,-3};
+        huffmanLOL.runHuffmanEncoding(paperExample, true);
+        huffmanLOL.encodeTree();
+        MinHeapNode* LOLtreeRoot  = huffmanLOL.decodeTree();
+        auto LOL = huffmanLOL.decodeLOL(LOLtreeRoot, huffmanLOL.huffmanBuilder.bytes);
+        std::cout << "HUFFMAN SIZE (LOL): " << huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size() << std::endl;
+
+        // Huffman-encode Global offset list
+        Huffman huffmanGOL;
+        auto vecGOL = timestampManager.flattenGOL();
+        huffmanGOL.runHuffmanEncoding(vecGOL, true);
+        huffmanGOL.encodeTree();
+        MinHeapNode* GOLtreeRoot  = huffmanGOL.decodeTree();
+        auto GOL = huffmanGOL.decodeGOL(GOLtreeRoot, huffmanGOL.huffmanBuilder.bytes);
+        std::cout << "HUFFMAN SIZE (GOL): " << huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size() << std::endl;
+    */
     }
 
 
@@ -70,8 +94,8 @@ void BudgetManager::endOfChunkCalculations() {
         double intercept = avgY - (slope * avgX);
 
         // Intercept of regression function and buffer goal
-        double xp = (intercept - configManager.bufferGoal) / (slope*-1);
-        if(xp < configManager.budgetLeftRegressionLength){
+        double xIntercept = (intercept - configManager.bufferGoal) / (slope * -1);
+        if(xIntercept < configManager.budgetLeftRegressionLength){
             if (slope > 0){
                 // TODO lower error bounds
             }
@@ -79,7 +103,7 @@ void BudgetManager::endOfChunkCalculations() {
                 //TODO Increase error bounds
             }
         }
-        if (xp > configManager.budgetLeftRegressionLength+configManager.chunksToGoal){
+        if (xIntercept > configManager.budgetLeftRegressionLength + configManager.chunksToGoal){
             if (slope < 0) {
                 // TODO: lower error bounds
             }

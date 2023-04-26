@@ -202,31 +202,6 @@ void ReaderManager::runCompressor() {
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
     //timestampManager.reconstructDeltaDelta();
 
-
-    // Huffman-encode Local offset list
-    /*Huffman huffmanLOL;
-    auto vecLOL = timestampManager.flattenLOL();
-//    std::vector<int> paperExample = {0,1,5,2,1,1,4,-2,
-//                                     0,1,5,2,1,1,1,2,1,1,1,-2,
-//                                     0,3,1,4,1,3,1,-2,
-//                                     0,2,2,3,1,2,1,-2,
-//                                     1,5,1,4,1,-3};
-    std::vector<int> paperExample = {60, 5, 5, 1, 55, 1, 60, 4,-3};
-    huffmanLOL.runHuffmanEncoding(paperExample, true);
-    huffmanLOL.encodeTree();
-    MinHeapNode* LOLtreeRoot  = huffmanLOL.decodeTree();
-    auto LOL = huffmanLOL.decodeLOL(LOLtreeRoot, huffmanLOL.huffmanBuilder.bytes);
-    std::cout << "HUFFMAN SIZE (LOL): " << huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size() << std::endl;
-
-    // Huffman-encode Global offset list
-    Huffman huffmanGOL;
-    auto vecGOL = timestampManager.flattenGOL();
-    huffmanGOL.runHuffmanEncoding(vecGOL, true);
-    huffmanGOL.encodeTree();
-    MinHeapNode* GOLtreeRoot  = huffmanGOL.decodeTree();
-    auto GOL = huffmanGOL.decodeGOL(GOLtreeRoot, huffmanGOL.huffmanBuilder.bytes);
-    std::cout << "HUFFMAN SIZE (GOL): " << huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size() << std::endl;
-*/
     #ifdef linux
     auto table = VectorToColumnarTable(
             this->modelManager.selectedModels).ValueOrDie();
