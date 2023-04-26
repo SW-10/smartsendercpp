@@ -19,4 +19,5 @@ private:
     int &maxAge;
     int *firstTimestampChunk;
     std::vector<int> lastBudget;
+    int temp = 0;
 };

@@ -1,6 +1,7 @@
 #include <numeric>
 #include <cmath>
 #include "BudgetManager.h"
+#include "../utils/Huffman.h"
 
 
 BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configManager,
@@ -38,6 +39,16 @@ void BudgetManager::endOfChunkCalculations() {
         }
 
     }
+    if (!timestampManager.localOffsetListToSend.empty()){
+        Huffman huffmanLOL;
+        huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
+        huffmanLOL.encodeTree();
+        temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+        std::cout << temp << std::endl;
+        //std::cout << "HUFFMAN SIZE (LOL): " << huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size() << std::endl;
+        timestampManager.localOffsetListToSend.clear();
+    }
+
 
     bytesLeft += budget;
     lastBudget.emplace_back(bytesLeft);

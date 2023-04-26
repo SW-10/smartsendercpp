@@ -156,27 +156,27 @@ void ReaderManager::runCompressor() {
             // Run code that handles new intervals directly after reading the timestamp
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
-//            if(newInterval){
-////                budgetManager.endOfChunkCalculations();
-//                std::cout << "Hello from reader " << hej << std::endl;
-//                newInterval = false;
-//                hej++;
-//            }
+            if(newInterval){
+                budgetManager.endOfChunkCalculations();
+                //std::cout << "Hello from reader " << hej << std::endl;
+                newInterval = false;
+                hej++;
+            }
 
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
             count++;
             // TODO: Adjust penalty dynamically
-//            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
-//                lastTimestampFlush = lineNumber;
-//                bool didFlush = modelManager.calculateFlushTimestamp();
-//                if (didFlush){
-//                    timestampFlusherPenalty -= 5;
-//                }
-//                else {
-//                    timestampFlusherPenalty +=5;
-//                }
-//            }
+            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
+                lastTimestampFlush = lineNumber;
+                bool didFlush = modelManager.calculateFlushTimestamp();
+                if (didFlush){
+                    timestampFlusherPenalty -= 5;
+                }
+                else {
+                    timestampFlusherPenalty +=5;
+                }
+            }
         }
 //        std::cout << "Line number " << lineNumber << std::endl;
 
@@ -188,13 +188,13 @@ void ReaderManager::runCompressor() {
     std::cout << "Size of global offset list: " << timestampManager.getSizeOfGlobalOffsetList() * sizeof(int) << " bytes" << std::endl;
 
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-    std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() * sizeof(int8_t) << std::endl;
-    std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList).size() * sizeof(int8_t) << std::endl;
+    //std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() * sizeof(int8_t) << std::endl;
+    //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList).size() * sizeof(int8_t) << std::endl;
 
-    timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList);
+    //timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList);
 
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
-    timestampManager.reconstructDeltaDelta();
+    //timestampManager.reconstructDeltaDelta();
 
 
     // Huffman-encode Local offset list

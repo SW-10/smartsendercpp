@@ -835,16 +835,22 @@ bool TimestampManager::flushTimestamps(
         // Erase global timestamps
 
         // Deletion of local offset lists
-        for (auto &lol: localOffsetList) {
-            if (lol.second.empty()) continue;
+        //for (auto &lol: localOffsetList) {
+        for (int i = 0; i<localOffsetList.size(); i++){
+            auto &lol = localOffsetList[i];
+            if (lol.empty()) continue;
             //Check whether the corresponding offset list contains deleted timestamps
-            if(latestTimestamps.at(lol.first).timestampFirst < index){
-                latestTimestamps.at(lol.first).timestampFirst = flushLocalOffsetList(lol.second, index-latestTimestamps.at(lol.first).timestampFirst);
+            if(latestTimestamps.at(i).timestampFirst < index){
+                latestTimestamps.at(i).timestampFirst = flushLocalOffsetList(lol, index-latestTimestamps.at(i).timestampFirst);
             }
             else{
-                latestTimestamps.at(lol.first).timestampFirst -= index;
+                latestTimestamps.at(i).timestampFirst -= index;
+            }
+            if(i != localOffsetList.size()-1){
+                localOffsetListToSend.emplace_back(-2);
             }
         }
+        localOffsetListToSend.emplace_back(-3);
         return true;
     }
     return false;
@@ -865,21 +871,31 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
         }
         if (instancesToFlush == localOffsetListRef.front().second){
             offset = localOffsetListRef.front().first * instancesToFlush - numberOfFlushedIndices;
+            makeForwardListToSend(localOffsetListRef.at(0));
             localOffsetListRef.erase(localOffsetListRef.begin());
         }
         else{
             offset = localOffsetListRef.front().first * instancesToFlush - numberOfFlushedIndices;
+            auto toSave = std::make_pair(localOffsetListRef.at(0).first,instancesToFlush);
             localOffsetListRef.front().second -= instancesToFlush;
+            makeForwardListToSend(toSave);
         }
     }
     else if (containedTimestamps == numberOfFlushedIndices) {
+        makeForwardListToSend(localOffsetListRef.at(0));
         localOffsetListRef.erase(localOffsetListRef.begin());
     }
     else{
+        makeForwardListToSend(localOffsetListRef.at(0));
         localOffsetListRef.erase(localOffsetListRef.begin());
         offset = flushLocalOffsetList(localOffsetListRef, numberOfFlushedIndices - containedTimestamps);
     }
     return offset;
+}
+
+void TimestampManager::makeForwardListToSend(std::pair<int, int> &offset){
+    localOffsetListToSend.emplace_back(offset.first);
+    localOffsetListToSend.emplace_back(offset.second);
 }
 
 /**

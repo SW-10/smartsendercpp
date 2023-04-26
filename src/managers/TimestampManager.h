@@ -40,6 +40,7 @@ public:
     int currentOffset;
 
     std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
+    std::vector<int> localOffsetListToSend;
 
     std::unordered_map<int, std::vector<int>> deltaDeltas;
     std::unordered_map<int, BitVecBuilder> deltaDeltasBuilders;
@@ -97,7 +98,7 @@ public:
 
     bool flushTimestamps(Node *lastUsedTimestamp);
     TimestampManager();
-    static int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
+    int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
     size_t getSizeOfLocalOffsetList() const;
     size_t getSizeOfGlobalOffsetList() const;
 private:
@@ -127,4 +128,6 @@ private:
     std::tuple<int, int, int> findNumberOfBits(const int &val);
 
     std::unordered_map<int, int> deltaDeltaSizes;
+
+    void makeForwardListToSend(std::pair<int, int> &offset);
 };
