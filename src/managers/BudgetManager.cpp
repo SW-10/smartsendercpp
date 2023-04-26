@@ -8,7 +8,6 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
                              configManager(configManager), timestampManager(timestampManager),
                              budget(budget), maxAge(maxAge)
                              {
-    //this->budget = budget;
     this->firstTimestampChunk = firstTimestampChunk;
     this->bytesLeft = budget;
      for (auto &column: configManager.timeseriesCols) {

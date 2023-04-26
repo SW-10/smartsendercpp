@@ -121,7 +121,7 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
     }
 
     model.mid = SWING;
-    model.cid = modelContainer.globalId;
+    model.cid = modelContainer.localId;
 model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.swing.lastTimestamp->data;
     model.values.emplace_back((int) (start_value < end_value));
@@ -133,7 +133,7 @@ SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContain
     SelectedModel model = SelectedModel();
 
     model.mid = GORILLA;
-    model.cid = modelContainer.globalId;
+    model.cid = modelContainer.localId;
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.gorilla.lastTimestamp->data;
     for (auto x: modelContainer.gorilla.compressedValues.bytes) {

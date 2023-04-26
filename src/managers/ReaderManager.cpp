@@ -46,7 +46,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 float value = std::stof(*in);
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
-                  std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
+                  //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
@@ -144,7 +144,6 @@ void ReaderManager::runCompressor() {
     int lineNumber = 0;
     int timestampFlusherPenalty = 50;
     int lastTimestampFlush = 0;
-    int hej = 0;
 
     while (!this->csvFileStream.eof()) {
         row.clear();
@@ -166,26 +165,24 @@ void ReaderManager::runCompressor() {
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
             if(newInterval){
-                //budgetManager.endOfChunkCalculations();
-                //std::cout << "Hello from reader " << hej << std::endl;
+                budgetManager.endOfChunkCalculations();
                 newInterval = false;
-                hej++;
             }
 
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
             count++;
             // TODO: Adjust penalty dynamically
-//            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
-//                lastTimestampFlush = lineNumber;
-//                bool didFlush = modelManager.calculateFlushTimestamp();
-//                if (didFlush){
-//                    timestampFlusherPenalty -= 5;
-//                }
-//                else {
-//                    timestampFlusherPenalty +=5;
-//                }
-//            }
+            if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
+                lastTimestampFlush = lineNumber;
+                bool didFlush = modelManager.calculateFlushTimestamp();
+                if (didFlush){
+                    timestampFlusherPenalty -= 5;
+                }
+                else {
+                    timestampFlusherPenalty +=5;
+                }
+            }
         }
 
         lineNumber++;
@@ -193,14 +190,10 @@ void ReaderManager::runCompressor() {
     this->csvFileStream.close();
     std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-//    std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() << std::endl;
-//    std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList).size() << std::endl;
     std::cout << "size glob: " << timestampManager.getSizeOfGlobalOffsetList() << std::endl;
     std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
     std::cout << "size of int: " << sizeof(int) << std::endl;
 
-
-    //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
 
     #ifdef linux
     auto table = VectorToColumnarTable(

@@ -51,28 +51,13 @@ public:
 
     void compressTimestamps(int timestamp);
 
-    std::vector<int> reconstructTimestamps();
-
-    bool calcIndexRangeFromTimestamps(int first, int second, int &first_out, int &second_out);
-
-    int getTimestampFromIndex(int index);
-
-    std::vector<int> getTimestampsFromIndices(int index1, int index2);
-
     void makeLocalOffsetList(int lineNumber, int globalID);
 
     void deltaDeltaCompress(int lineNumber, int globalID);
 
-    std::vector<int>
-    getTimestampRangeForColumns(int globID, int indexA, int indexB);
-
     void
     getTimestampsByGlobalId(int globID, Node *timestampA,
                             Node *timestampB, std::vector<Node *> &res);
-
-    int getTimestampsFromIndexForColumns(int globID, int index);
-
-    std::vector<int> reconstructNTimestamps(int n);
 
     void makeCompressionSchemes();
 
@@ -80,9 +65,6 @@ public:
 
     std::vector<uint8_t>
     binaryCompressLocOffsets(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
-
-    std::vector<uint8_t>
-    binaryCompressLocOffsets2(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
 
     std::vector<int> decompressOffsetList(const std::vector<uint8_t> &values);
     bool decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader, int* currentVal, std::vector<int> *decompressed);
@@ -105,14 +87,6 @@ private:
     Timekeeper &timekeeper;
 
     std::tuple<int, int> deltaDeltaLimits(const int &val);
-
-    bool valueCanBeRepresented(const int &currentLimit, const int &val, BitVecBuilder &builder);
-
-    bool valueCanBeRepresented(const int &currentLimit, int currentControlCode, const int &val,
-                               BitVecBuilder &builder);
-
-    bool valueCanBeRepresented(const int &currentLimit, int currentControlCode, int bitsForVal,
-                               const int &val, BitVecBuilder &builder);
 
     bool valueCanBeRepresented(const int &currentLimit, const int &val);
 
