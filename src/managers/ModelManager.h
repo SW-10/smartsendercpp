@@ -21,24 +21,24 @@ struct CachedValues {
 };
 
 struct SelectedModel{
-    int8_t mid;
-    int8_t cid;
     int64_t startTime;
     int64_t endTime;
-    std::vector<float> values;
     float error;
+    int8_t mid;
+    int8_t cid;
+    std::vector<float> values;
 };
 
 struct TimeSeriesModelContainer {
+    double errorBound;
     int localId;
     int globalId;
-    double errorBound;
-    bool errorAbsolute;
     int startTimestamp;
+    Status status;
+    bool errorAbsolute;
     Gorilla gorilla;
     PmcMean pmcMean;
     Swing swing;
-    Status status;
     CachedValues cachedValues;
 
     TimeSeriesModelContainer(double &errorBound, bool errorAbsolute,
