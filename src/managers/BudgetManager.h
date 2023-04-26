@@ -20,6 +20,7 @@ private:
     int *firstTimestampChunk;
     std::vector<int> lastBudget;
     int temp = 0;
+    int tempg = 0;
     void errorBoundAdjuster();
     std::vector<std::vector<int>> storageImpact;
     int sizeOfModels;

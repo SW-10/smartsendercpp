@@ -329,9 +329,17 @@ bool TimestampManager::flushTimestamps(
             return false;
         }
     }
-
+    int currentOffset_ = 0;
     for(index = 0; iterator->prev != NULL; index++){
         Node* temp = iterator->prev;
+        if (iterator->data - temp->data != currentOffset_){
+            currentOffset_ = iterator->data - temp->data;
+            globalOffsetListToSend.emplace_back(currentOffset_);
+            globalOffsetListToSend.emplace_back(1);
+        }
+        else{
+            globalOffsetListToSend.at(globalOffsetListToSend.size()-1)++;
+        }
         delete iterator;
         iterator = temp;
     }
@@ -342,6 +350,7 @@ bool TimestampManager::flushTimestamps(
 
     // Flush timestamps when last used timestamp is not the first in vector
     if (index != 0) {
+        globalOffsetListToSend.emplace_back(-3);
         // Erase global timestamps
 
         // Deletion of local offset lists

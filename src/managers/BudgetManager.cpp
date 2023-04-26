@@ -80,6 +80,14 @@ void BudgetManager::endOfChunkCalculations() {
         std::cout << "HUFFMAN SIZE (GOL): " << huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size() << std::endl;
     */
     }
+    if(!timestampManager.globalOffsetListToSend.empty()){
+        Huffman huffmanLOL;
+        huffmanLOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
+        huffmanLOL.encodeTree();
+        tempg += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+        std::cout << tempg << std::endl;
+        timestampManager.globalOffsetListToSend.clear();
+    }
 
 
     bytesLeft += budget;

@@ -41,6 +41,7 @@ public:
 
     std::unordered_map<int, std::vector<std::pair<int, int>>> localOffsetList;
     std::vector<int> localOffsetListToSend;
+    std::vector<int> globalOffsetListToSend;
 
     std::unordered_map<int, std::vector<int>> deltaDeltas;
     std::unordered_map<int, BitVecBuilder> deltaDeltasBuilders;
@@ -91,4 +92,5 @@ private:
     std::unordered_map<int, int> deltaDeltaSizes;
 
     void makeForwardListToSend(std::pair<int, int> &offset);
+
 };

@@ -100,21 +100,21 @@ void Huffman::compress(BitVecBuilder &builder, const std::vector<int> &uncompres
 }
 
 void Huffman::encodeTree() {
-    std::cout << "Tree: ";
+    //std::cout << "Tree: ";
     encodeTreeRec(getRoot());
-    std::cout << std::endl;
+    //std::cout << std::endl;
     treeBuilder.bytes.emplace_back(treeBuilder.currentByte);
 }
 
 void Huffman::encodeTreeRec(MinHeapNode* node){
     if (node->lChild==NULL && node->rChild==NULL){
         appendAOneBit(&treeBuilder);
-        std::cout << "1 ";
+        //std::cout << "1 ";
         appendBits(&treeBuilder, node->value, 32);
-        std::cout << "[" << node->value << "] ";
+        //std::cout << "[" << node->value << "] ";
     } else {
         appendAZeroBit(&treeBuilder);
-        std::cout << "0 ";
+        //std::cout << "0 ";
         encodeTreeRec(node->lChild);
         encodeTreeRec(node->rChild);
     }
