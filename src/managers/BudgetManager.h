@@ -20,4 +20,8 @@ private:
     int *firstTimestampChunk;
     std::vector<int> lastBudget;
     int temp = 0;
+    void errorBoundAdjuster();
+    std::vector<std::vector<int>> storageImpact;
+
+    void spaceKeeperEmplace(int size, int index);
 };

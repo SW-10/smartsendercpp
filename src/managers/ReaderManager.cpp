@@ -6,6 +6,7 @@
 #include "../utils/Timer.h"
 #include "../utils/Utils.h"
 #include "../utils/Huffman.h"
+#include "../utils/OutlierDetector.h"
 #include <functional>
 #include <forward_list>
 
@@ -16,7 +17,8 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols, configManager.textCols,
                        timestampManager),
-                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp) {
+                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp),
+          outlierDetector(4.0, configManager.timeseriesCols.size()) {
     timekeeper.Attach(this);
     timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
@@ -37,14 +39,21 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
     // Handle time series columns
     int i = 0;
     for (const auto &c: configManager.timeseriesCols) {
+        outlierDetector.count.push_back(0);
+        outlierDetector.mean.push_back(0.0);
+        outlierDetector.m2.push_back(0.0);
         std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
                                                   int &lineNum) {
             if (!in->empty()) {
+                float value = std::stof(*in);
+                if(outlierDetector.addValueAndDetectOutlier(i, value)){
+                  //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
+                }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
 
-                timestampManager.deltaDeltaCompress(lineNum, c.col);
-                modelManager.fitSegment(i, std::stof(*in),
+                //timestampManager.deltaDeltaCompress(lineNum, c.col);
+                modelManager.fitSegment(i, value,
                                         timestampManager.timestampCurrent);
             }
             return CompressionType::VALUES;
@@ -91,7 +100,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      latCol->col); //c.col is the global ID
-                timestampManager.deltaDeltaCompress(lineNum, latCol->col);
+                //timestampManager.deltaDeltaCompress(lineNum, latCol->col);
 
             }
             return CompressionType::POSITION;
@@ -106,7 +115,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      longCol->col); //c.col is the global ID
-                timestampManager.deltaDeltaCompress(lineNum, longCol->col);
+                //timestampManager.deltaDeltaCompress(lineNum, longCol->col);
             }
             return CompressionType::POSITION;
         };
@@ -136,7 +145,7 @@ void ReaderManager::runCompressor() {
     int lineNumber = 0;
     int timestampFlusherPenalty = 50;
     int lastTimestampFlush = 0;
-    int hej = 0;
+
     while (!this->csvFileStream.eof()) {
         row.clear();
         std::getline(this->csvFileStream, line);
@@ -158,9 +167,7 @@ void ReaderManager::runCompressor() {
             // Update() function in ReaderManager.cpp
             if(newInterval){
                 budgetManager.endOfChunkCalculations();
-                //std::cout << "Hello from reader " << hej << std::endl;
                 newInterval = false;
-                hej++;
             }
 
             // Update the compression type in the map
@@ -178,27 +185,26 @@ void ReaderManager::runCompressor() {
                 }
             }
         }
-//        std::cout << "Line number " << lineNumber << std::endl;
 
         lineNumber++;
     }
     this->csvFileStream.close();
-    timestampManager.finishDeltaDelta();
+    //timestampManager.finishDeltaDelta();
     std::cout << "Size of local offset list: " << timestampManager.getSizeOfLocalOffsetList() * sizeof(int) << " bytes" << std::endl;
     std::cout << "Size of global offset list: " << timestampManager.getSizeOfGlobalOffsetList() * sizeof(int) << " bytes" << std::endl;
 
     std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-    //std::cout << "size glob: " << timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList).size() * sizeof(int8_t) << std::endl;
-    //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList).size() * sizeof(int8_t) << std::endl;
+    std::cout << "size glob: " << timestampManager.getSizeOfGlobalOffsetList() << std::endl;
+    std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
+    std::cout << "size of int: " << sizeof(int) << std::endl;
 
-    //timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList);
 
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
     //timestampManager.reconstructDeltaDelta();
 
 
     // Huffman-encode Local offset list
-    Huffman huffmanLOL;
+    /*Huffman huffmanLOL;
     auto vecLOL = timestampManager.flattenLOL();
 //    std::vector<int> paperExample = {0,1,5,2,1,1,4,-2,
 //                                     0,1,5,2,1,1,1,2,1,1,1,-2,
@@ -220,9 +226,9 @@ void ReaderManager::runCompressor() {
     MinHeapNode* GOLtreeRoot  = huffmanGOL.decodeTree();
     auto GOL = huffmanGOL.decodeGOL(GOLtreeRoot, huffmanGOL.huffmanBuilder.bytes);
     std::cout << "HUFFMAN SIZE (GOL): " << huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size() << std::endl;
-
+*/
     #ifdef linux
-    /*auto table = VectorToColumnarTable(
+    auto table = VectorToColumnarTable(
             this->modelManager.selectedModels).ValueOrDie();
 
     auto recordBatch = MakeRecordBatch(table).ValueOrDie();
@@ -237,7 +243,6 @@ void ReaderManager::runCompressor() {
     if (!st.ok()) {
         std::cerr << st << std::endl;
         exit(1);
-    }*/
-
+    }
     #endif
 }

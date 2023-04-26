@@ -64,6 +64,8 @@ int main(int argc, char *argv[]) {
     ReaderManager readerManager(path, *timekeeper);
     readerManager.runCompressor();
 
+
+
 #ifndef NDEBUG
     return res + client_stuff_return_code;
 #else

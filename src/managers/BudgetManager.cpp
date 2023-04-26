@@ -9,9 +9,11 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
                              configManager(configManager), timestampManager(timestampManager),
                              budget(budget), maxAge(maxAge)
                              {
-    //this->budget = budget;
     this->firstTimestampChunk = firstTimestampChunk;
     this->bytesLeft = budget;
+     for (auto &column: configManager.timeseriesCols) {
+         storageImpact.emplace_back();
+     }
 }
 
 void BudgetManager::endOfChunkCalculations() {
@@ -25,11 +27,13 @@ void BudgetManager::endOfChunkCalculations() {
         bool flushAll = true;
         int i;
         for(i = 0; i < selected.size(); i++){
-            if (bytesLeft < 22 + selected.at(i).values.size()*4){
+            int modelSize = 22 + selected.at(i).values.size()*4;
+            if (bytesLeft < modelSize){
                 flushAll = false;
                 break;
             }
-            bytesLeft -= 22 + selected.at(i).values.size()*4;
+            bytesLeft -= modelSize;
+            spaceKeeperEmplace(modelSize, selected.at(i).cid);
         }
         if (flushAll){
             selected.clear();
@@ -54,7 +58,7 @@ void BudgetManager::endOfChunkCalculations() {
     lastBudget.emplace_back(bytesLeft);
     if(lastBudget.size()-1 == configManager.budgetLeftRegressionLength){
         lastBudget.erase(lastBudget.begin());
-        const double avgX = 0.5 + (configManager.budgetLeftRegressionLength * 0.5); //= 5.5;
+        const double avgX = 0.5 + (configManager.budgetLeftRegressionLength * 0.5);
         const double avgY = std::reduce(lastBudget.begin(), lastBudget.end(), 0.0) / lastBudget.size();
         double ba = 0;
         double bb = 0;
@@ -67,27 +71,36 @@ void BudgetManager::endOfChunkCalculations() {
 
         // Intercept of regression function and buffer goal
         double xp = (intercept - configManager.bufferGoal) / (slope*-1);
-        if (xp < 0){
-            //TODO: adjust error bounds
+        if(xp < configManager.budgetLeftRegressionLength){
+            if (slope > 0){
+                // TODO lower error bounds
+            }
+            else if (slope < 0){
+                //TODO Increase error bounds
+            }
         }
-        //if ()
-
-
-
-        //double xpAngle = atan((intercept)/(1+intercept*0))*180/M_PI;
-        int i = 2;
-
-        //if(bytesLeft > configManager.bufferGoal){
-
-            /*double estimatedUsage = slope * (configManager.chunksToGoal + configManager.budgetLeftRegressionLength) + intercept;
-            if (estimatedUsage < configManager.bufferGoal){
-                //TODO: Adjust error bounds
-            }*/
-        //}
+        if (xp > configManager.budgetLeftRegressionLength+configManager.chunksToGoal){
+            if (slope < 0) {
+                // TODO: lower error bounds
+            }
+            else if (slope > 0) {
+                // TODO: Increase error bounds
+            }
+        }
     }
+}
 
-
+void BudgetManager::errorBoundAdjuster() {
 
 }
+
+void BudgetManager::spaceKeeperEmplace(int size, int index){
+    if (storageImpact.at(index).size() == configManager.chunksToGoal){
+        storageImpact.at(index).erase(storageImpact.at(index).begin());
+    }
+    storageImpact.at(index).emplace_back(size);
+}
+
+
 
 

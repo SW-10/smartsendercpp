@@ -27,7 +27,6 @@ TimestampManager::TimestampManager(ConfigManager &confMan, Timekeeper &timekeepe
 }
 
 void TimestampManager::compressTimestamps(int timestamp) {
-//    timestampCount++;
     timekeeper.update(timestamp);
 
     if (!readyForOffset){
@@ -54,87 +53,6 @@ void TimestampManager::compressTimestamps(int timestamp) {
     readyForOffset = true;
 }
 
-std::vector<int> TimestampManager::reconstructTimestamps() {
-    std::vector<int> reconstructed;
-    reconstructed.push_back(firstTimestamp);
-    int current = firstTimestamp;
-    for (auto o: offsetList) {
-        for (int i = 0; i < o.second; i++) {
-            current += o.first;
-            reconstructed.push_back(current);
-        }
-    }
-
-    return reconstructed;
-}
-
-bool TimestampManager::calcIndexRangeFromTimestamps(int first, int second, int &first_out,
-                                                    int &second_out) {
-    int out1, out2;
-    bool success = true;
-    std::vector<int> reconstructed = reconstructTimestamps();
-    out1 = Utils::BinarySearch(reconstructed, first);
-    out2 = Utils::BinarySearch(reconstructed, second);
-
-    if (out1 == -1) {
-        std::cout << "First value (" << first << ")  in range not found";
-        success = false;
-    }
-    if (out2 == -1) {
-        std::cout << "Second value (" << second << ")  in range not found";
-        success = false;
-    }
-    if (first >= second) {
-        success = false;
-    }
-
-    first_out = out1;
-    second_out = out2;
-
-    return success;
-}
-
-int TimestampManager::getTimestampFromIndex(int index) {
-    int count = 0;
-    int current = firstTimestamp;
-    for (auto o: offsetList) {
-        for (int i = 0; i < o.second; i++) {
-            if (count == index) {
-                // Index found
-                return current;
-            }
-            count++;
-            current += o.first;
-        }
-    }
-
-    // Index not found
-    return -1;
-}
-
-std::vector<int>
-TimestampManager::getTimestampsFromIndices(int index1, int index2) {
-    std::vector<int> result;
-
-    int count = 0;
-    int current = firstTimestamp;
-    for (auto o: offsetList) {
-        for (int i = 0; i < o.second; i++) {
-            if (count > index2) {
-                return result;
-            }
-            if (count >= index1) {
-                // First index found, add to 'result' until second index found
-                result.push_back(current);
-            }
-            count++;
-            current += o.first;
-        }
-    }
-    // Index not found
-    std::cout << "Timestamp range not valid";
-    return result;
-}
 
 void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
     auto elem = &latestTimestamps.at(globalID);
@@ -145,6 +63,7 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
 
         // Offset = Difference between current and previous timestamp
         elem->currentOffset = elem->timestampCurrent - elem->timestampPrevious;
+
 
         // Insert new offset if first element or if current offset is not equal to previous offset
         // Else, increase counter for current offset
@@ -898,96 +817,6 @@ void TimestampManager::makeForwardListToSend(std::pair<int, int> &offset){
     localOffsetListToSend.emplace_back(offset.second);
 }
 
-/**
- * This is a compression method that, instead of prepending every value with a control code,
- * puts a control code for all following values, given that the optimal number of bits used to describe
- * all these values is the same. When a value can be described with fewer bits, or if it requires
- * more bits, a new control code will be appended.
- * The current problem with this method is that the values in the offset list fluctuates too much,
- * so that nealy all values will update the optimal number of buts, resulting in a control code
- * before nearly all values in the list.
- */
-void TimestampManager::binaryCompressLocOffsets2(
-        std::unordered_map<int, std::vector<std::pair<int, int>>> offsets) {
-
-    bool first = true;
-    BitVecBuilder builder;
-
-    std::vector<int> flatList;
-    std::map<int, std::vector<int>> firsts;
-    std::map<int, std::vector<int>> seconds;
-
-    //Sort unordered map
-    std::map<int, std::vector<std::pair<int, int>>> ordered(offsets.begin(),
-                                                            offsets.end());
-
-
-    int globID = 0;
-    for(const auto i : ordered){
-        flatList.emplace_back(i.first);
-//        appendBits(&builder, i.first ,numberOfBits);
-        for(auto j : i.second) {
-            flatList.emplace_back(j.first);
-            firsts[globID].emplace_back(j.first);
-            flatList.emplace_back(j.second);
-            seconds[globID].emplace_back(j.second);
-        }
-        globID++;
-    }
-
-    std::vector<int>::iterator it = flatList.begin();
-    int ctrlCode = 0;
-    int numberOfBits = 0;
-    int upperLimit;
-    if(first){
-        auto bits = findNumberOfBits(*it);
-        it++;
-        ctrlCode        = std::get<0>(bits);
-        numberOfBits    = std::get<1>(bits);
-        upperLimit      = std::get<2>(bits);
-    }
-
-    std::map<int, std::vector<BitVecBuilder>> firstCompressed;
-    std::map<int, std::vector<BitVecBuilder>> secondsCompressed;
-
-    //Length of control bit
-    // Src: https://stackoverflow.com/questions/29388711/how-to-get-the-bit-length-of-an-integer-in-c
-    unsigned bits, var = ctrlCode;
-    for(bits = 0; var != 0; ++bits) var >>= 1;
-
-    bool first2 = true;
-    for(int i = 0; i < firsts.size(); i++){
-        BitVecBuilder bvb;
-        firstCompressed[i].emplace_back(bvb);
-        for(const auto j : firsts.at(i)){
-            if(first2){
-                auto bits = findNumberOfBits(j);
-                ctrlCode        = std::get<0>(bits);
-                numberOfBits    = std::get<1>(bits);
-                upperLimit      = std::get<2>(bits);
-                first2 = false;
-            }
-            if(valueCanBeRepresented(upperLimit, j)){
-//                std::cout << "APPENDING BITS!\n" << j << std::endl;
-
-                appendBits(&firstCompressed[i].back() , j, numberOfBits);
-            } else {
-                BitVecBuilder bvb;
-                firstCompressed[i].emplace_back(bvb);
-                auto bits = findNumberOfBits(j);
-//                std::cout << j <<  " CANT BE REPRESENTED WITH CONTROL CODE " << ctrlCode << ", LIMIT: " << upperLimit << std::endl;
-//                std::cout << "ADJUSTING UPPER LIMIT ..." << std::endl;
-                ctrlCode        = std::get<0>(bits);
-                numberOfBits    = std::get<1>(bits);
-                upperLimit      = std::get<2>(bits);
-//                std::cout << "UPPER LIMIT ADJUSTED TO " << upperLimit << "\n" << std::endl;
-
-                appendBits(&firstCompressed[i].back() , j, numberOfBits);
-            }
-
-        }
-    }
-}
 
 bool TimestampManager::valueCanBeRepresented(const int &currentLimit,  const int &val){
     // Extract the optimal upper limit for the value
