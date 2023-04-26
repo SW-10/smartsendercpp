@@ -270,8 +270,9 @@ std::vector<int> TimestampManager::flattenLOL(){
     //Sort unordered map
     std::map<int, std::vector<std::pair<int, int>>> ordered(localOffsetList.begin(),
                                                             localOffsetList.end());
-    int count = 1;
+    int count = 0;
     for(const auto &column : ordered){
+        flat.emplace_back(latestTimestamps.at(count).timestampFirst);
         for(const auto &row : column.second){
             flat.emplace_back(row.first);
             flat.emplace_back(row.second);
@@ -281,7 +282,7 @@ std::vector<int> TimestampManager::flattenLOL(){
         flat.emplace_back(-2);
     }
     // -3 is a value representing end of list
-    flat.emplace_back(-3);
+    flat.back() = -3;
     return flat;
 }
 

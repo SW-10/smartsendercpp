@@ -101,16 +101,21 @@ void Huffman::compress(BitVecBuilder &builder, const std::vector<int> &uncompres
 }
 
 void Huffman::encodeTree() {
+    std::cout << "Tree: ";
     encodeTreeRec(getRoot());
+    std::cout << std::endl;
     treeBuilder.bytes.emplace_back(treeBuilder.currentByte);
 }
 
 void Huffman::encodeTreeRec(MinHeapNode* node){
     if (node->lChild==NULL && node->rChild==NULL){
         appendAOneBit(&treeBuilder);
+        std::cout << "1 ";
         appendBits(&treeBuilder, node->value, 32);
+        std::cout << "[" << node->value << "] ";
     } else {
         appendAZeroBit(&treeBuilder);
+        std::cout << "0 ";
         encodeTreeRec(node->lChild);
         encodeTreeRec(node->rChild);
     }
@@ -177,12 +182,14 @@ std::vector<std::pair<int, int>> Huffman::decodeGOL(struct MinHeapNode* root, st
 std::map<int, std::vector<std::pair<int, int>>> Huffman::decodeLOL(struct MinHeapNode* root, std::vector<uint8_t> s)
 {
     std::map<int, std::vector<std::pair<int, int>>> LOLreconstructed;
+    std::vector<int> firstTimestamps;
     int currentID = 1;
     BitReader bitReader(s, s.size());
     struct MinHeapNode* curr = root;
 
     bool pairCompleted = true;
     std::pair<int,int> pair;
+    bool readyForFirstTS = true;
     while(true)
     {
         bool bit = readBit(&bitReader);
@@ -194,8 +201,16 @@ std::map<int, std::vector<std::pair<int, int>>> Huffman::decodeLOL(struct MinHea
         // reached leaf node
         if (curr->lChild==NULL and curr->rChild==NULL)
         {
+            if(curr->value == -3){
+                break;
+            }
             if(curr->value == -2){
                 currentID++;
+                readyForFirstTS = true;
+            } else if (readyForFirstTS){
+                std::cout << "First timestamp: " << curr->value << std::endl;
+                firstTimestamps.emplace_back(curr->value);
+                readyForFirstTS = false;
             } else {
                 if(pairCompleted){
                     pair.first = curr->value;
@@ -206,9 +221,7 @@ std::map<int, std::vector<std::pair<int, int>>> Huffman::decodeLOL(struct MinHea
                     LOLreconstructed[currentID].emplace_back(pair);
                 }
             }
-            if(curr->value == -3){
-                break;
-            }
+
             curr = root;
         }
     }
