@@ -64,21 +64,10 @@ public:
 
     std::vector<int> flattenGOL();
 
-    std::vector<int>
-    getTimestampRangeForColumns(int globID, int indexA, int indexB);
-
     void
     getTimestampsByGlobalId(int globID, Node *timestampA,
                             Node *timestampB, std::vector<Node *> &res);
 
-    void makeCompressionSchemes();
-
-    std::vector<uint8_t> binaryCompressGlobOffsets(const std::vector<std::pair<int, int>> &offsets);
-
-    std::vector<uint8_t>
-    binaryCompressLocOffsets(std::unordered_map<int, std::vector<std::pair<int, int>>> offsets);
-
-    std::vector<int> decompressOffsetList(const std::vector<uint8_t> &values);
     bool decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader, int* currentVal, std::vector<int> *decompressed, bool valueIsSigned);
 
     bool flushTimestamps(Node *lastUsedTimestamp);
@@ -88,7 +77,6 @@ public:
     size_t getSizeOfGlobalOffsetList() const;
 private:
     Timekeeper tk;
-    const int bitsUsedForSchemeID = 4 ;
     int timestampPrevious;
     bool readyForOffset = false;
     Node *allTimestampsReconstructed;
@@ -99,10 +87,6 @@ private:
     Timekeeper &timekeeper;
 
     std::tuple<int, int> deltaDeltaLimits(const int &val);
-
-    bool valueCanBeRepresented(const int &currentLimit, const int &val);
-
-    std::tuple<int, int, int> findNumberOfBits(const int &val);
 
     std::unordered_map<int, int> deltaDeltaSizes;
 

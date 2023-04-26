@@ -9,9 +9,8 @@ void Huffman::runHuffmanEncoding(const std::vector<int> &uncompressed, bool prin
     // Run Huffman until there is only one node in the tree that contains all other nodes
     constructTree(frequencies);
 
-
+    // Store the found codes in a map
     storeCodes(minHeap.top(), "", print);
-
 
     // Compress the data using the found codes
     compress(huffmanBuilder, uncompressed);
