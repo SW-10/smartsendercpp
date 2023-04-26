@@ -11,9 +11,13 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
                              {
     this->firstTimestampChunk = firstTimestampChunk;
     this->bytesLeft = budget;
-     for (auto &column: configManager.timeseriesCols) {
+    for (auto &column: configManager.timeseriesCols) {
          storageImpact.emplace_back();
-     }
+    }
+    sizeOfModels = 0;
+    sizeOfModels += sizeof(float); // Size of error
+    sizeOfModels += sizeof(int)*2; // size of start+end timestamp
+    sizeOfModels += sizeof(int8_t)*2; // Size of model id, column id
 }
 
 void BudgetManager::endOfChunkCalculations() {
@@ -26,7 +30,7 @@ void BudgetManager::endOfChunkCalculations() {
         bool flushAll = true;
         int i;
         for(i = 0; i < selected.size(); i++){
-            int modelSize = 22 + selected.at(i).values.size()*4;
+            int modelSize = sizeOfModels + selected.at(i).values.size()*4;
             if (bytesLeft < modelSize){
                 flushAll = false;
                 break;

@@ -268,6 +268,8 @@ void ConfigManager::adjustErrorBound(int globId, double errorBound){
 }
 
 void ConfigManager::fixQuotation(){
+    // Debug mode seems to add single quotation marks around the arguments.
+    // The following two if's remove those
     if(optarg[strlen(optarg)-1] == '\r'){
         optarg[strlen(optarg)-1] = '\0';
     }

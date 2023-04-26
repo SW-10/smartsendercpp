@@ -22,6 +22,7 @@ private:
     int temp = 0;
     void errorBoundAdjuster();
     std::vector<std::vector<int>> storageImpact;
+    int sizeOfModels;
 
     void spaceKeeperEmplace(int size, int index);
 };
