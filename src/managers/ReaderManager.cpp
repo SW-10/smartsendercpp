@@ -132,7 +132,7 @@ void ReaderManager::Update(const std::string &message_from_subject) {
 
 void ReaderManager::runCompressor() {
     #ifdef linux
-    //ConnectionAddress address("0.0.0.0", 9999);
+    ConnectionAddress address("0.0.0.0", 9999);
     #endif
 
     std::vector<std::string> row;
