@@ -2,10 +2,10 @@
 #include "../constants.h"
 #include <cmath>
 #include <cstdio>
-#include "../doctest.h"
-
 #include <iostream>
-
+#ifndef NDEBUG
+#include "../doctest.h"
+#endif
 PmcMean::PmcMean(double &errorBound, bool errorAbsolute)
         : error(errorBound) {
     error = errorBound;
@@ -77,6 +77,8 @@ PmcMean &PmcMean::operator=(const PmcMean &instance) {
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
+
+#ifndef NDEBUG
 
 TEST_CASE("All values fit") {
     double error = 0.5;
@@ -151,6 +153,7 @@ TEST_CASE("Grid") {
 
     CHECK(equal == true);
 }
+#endif
 
 #pragma clang diagnostic pop
 

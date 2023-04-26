@@ -3,9 +3,11 @@
 #include <cmath>
 #include <cstdint>
 #include <iostream>
+#ifndef NDEBUG
 #include "../doctest.h"
 #include "../utils/Utils.h"
 
+#endif
 Swing::Swing(double &errorBound, bool isErrorAbsolute)
         : errorBound(errorBound) {
     firstTimestamp = 0;
@@ -209,6 +211,8 @@ bool float_equal(float a, float b) {
     return (std::fabs(a - b) < 0.00001);
 }
 
+#ifndef NDEBUG
+
 TEST_CASE("Swing") {
     double error_bound = 0.3;
     Swing p(error_bound, true);
@@ -294,5 +298,5 @@ TEST_CASE("Not all values fit") {
     newNode->data = 9;
     CHECK(p.fitValueSwing(newNode, 1.12) == 0);
 }
-
+#endif
 

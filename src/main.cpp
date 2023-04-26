@@ -1,8 +1,10 @@
+#include <iostream>
 #include "models/Gorilla.h"
-#include "doctest.h"
 #include "managers/ConfigManager.h"
 #include "managers/ReaderManager.h"
 
+#ifndef NDEBUG
+#include "doctest.h"
 // This function is required by Doctest to make it possible to have asserts inside the code.
 // The function is passed to the Doctest context in our main function.
 // Source:
@@ -38,10 +40,11 @@ static void handler(const doctest::AssertData& ad) {
 
     std::cout << std::endl;
 }
-
+#endif
 
 int main(int argc, char *argv[]) {
-    
+
+#ifndef NDEBUG
    	//Doctest things
 	doctest::Context context;
     // sets the context as the default one - so asserts used outside of a testing context do not
@@ -52,11 +55,21 @@ int main(int argc, char *argv[]) {
     // without setting a handler we would get std::abort() called when an assert fails
     context.setAssertHandler(handler);
 
-	int res = context.run();
+    int res = context.run();
 	int client_stuff_return_code = 0;
+#endif
+    Timekeeper *timekeeper = new Timekeeper;
+
     std::string path = "moby.cfg";
-    ReaderManager readerManager(path);
+    ReaderManager readerManager(path, *timekeeper);
     readerManager.runCompressor();
-	return res + client_stuff_return_code;
-    
+
+
+
+#ifndef NDEBUG
+    return res + client_stuff_return_code;
+#else
+    return 0;
+#endif
+
 }

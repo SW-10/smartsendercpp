@@ -26,6 +26,8 @@ struct BitReader {
 
 uint32_t readBits(BitReader *bitReader, uint8_t numberOfBits);
 
+uint32_t readBitsSigned(BitReader *bitReader, uint8_t numberOfBits);
+
 uint32_t readBit(BitReader *bitReader);
 
 float intToFloat(uint32_t value);
@@ -35,3 +37,5 @@ void appendAZeroBit(BitVecBuilder *data);
 void appendAOneBit(BitVecBuilder *data);
 
 void appendBits(BitVecBuilder *data, long bits, uint8_t numberOfBits);
+
+uint8_t getLengthOfBinaryRepresentation(int val);

@@ -5,12 +5,22 @@
 #include <iostream>
 #include "../utils/Timer.h"
 #include "../utils/Utils.h"
+#include "../utils/Huffman.h"
+#include "../utils/OutlierDetector.h"
 #include <functional>
+#include <forward_list>
 
-ReaderManager::ReaderManager(std::string configFile)
-        : configManager(configFile), timestampManager(configManager),
+//int Observer::static_number_ = 0;
+//Timekeeper *timekeeper = new Timekeeper;
+
+ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
+        : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols, configManager.textCols,
-                       timestampManager) {
+                       timestampManager),
+                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp),
+          outlierDetector(4.0, configManager.timeseriesCols.size()) {
+    timekeeper.Attach(this);
+    timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
             "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
             std::ios::in);
@@ -29,12 +39,21 @@ ReaderManager::ReaderManager(std::string configFile)
     // Handle time series columns
     int i = 0;
     for (const auto &c: configManager.timeseriesCols) {
+        outlierDetector.count.push_back(0);
+        outlierDetector.mean.push_back(0.0);
+        outlierDetector.m2.push_back(0.0);
         std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
                                                   int &lineNum) {
             if (!in->empty()) {
+                float value = std::stof(*in);
+                if(outlierDetector.addValueAndDetectOutlier(i, value)){
+                  //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
+                }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
-                modelManager.fitSegment(i, std::stof(*in),
+
+                //timestampManager.deltaDeltaCompress(lineNum, c.col);
+                modelManager.fitSegment(i, value,
                                         timestampManager.timestampCurrent);
             }
             return CompressionType::VALUES;
@@ -81,6 +100,8 @@ ReaderManager::ReaderManager(std::string configFile)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      latCol->col); //c.col is the global ID
+                //timestampManager.deltaDeltaCompress(lineNum, latCol->col);
+
             }
             return CompressionType::POSITION;
         };
@@ -94,13 +115,26 @@ ReaderManager::ReaderManager(std::string configFile)
             if (!in->empty()) {
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      longCol->col); //c.col is the global ID
+                //timestampManager.deltaDeltaCompress(lineNum, longCol->col);
             }
             return CompressionType::POSITION;
         };
     }
 }
 
+// Overwritten function in the observer pattern
+// Used to receive a notification from the timekeeper about a new interval
+void ReaderManager::Update(const std::string &message_from_subject) {
+    if(message_from_subject == "New interval"){
+        newInterval = true;
+    }
+}
+
 void ReaderManager::runCompressor() {
+    #ifdef linux
+    ConnectionAddress address("0.0.0.0", 9999);
+    #endif
+
     std::vector<std::string> row;
     std::string line, word;
 
@@ -111,6 +145,7 @@ void ReaderManager::runCompressor() {
     int lineNumber = 0;
     int timestampFlusherPenalty = 50;
     int lastTimestampFlush = 0;
+
     while (!this->csvFileStream.eof()) {
         row.clear();
         std::getline(this->csvFileStream, line);
@@ -127,6 +162,14 @@ void ReaderManager::runCompressor() {
             // Call the compression function
             CompressionType ct = compressFunction(&word,lineNumber);
 
+            // Run code that handles new intervals directly after reading the timestamp
+            // newInterval is set to true when timekeeper sends a message which is received by the
+            // Update() function in ReaderManager.cpp
+            if(newInterval){
+                budgetManager.endOfChunkCalculations();
+                newInterval = false;
+            }
+
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
             count++;
@@ -142,12 +185,39 @@ void ReaderManager::runCompressor() {
                 }
             }
         }
+
         lineNumber++;
     }
     this->csvFileStream.close();
-    std::cout << "Size of local offset list: " << sizeof(timestampManager.localOffsetList) << std::endl;
-    std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-    timestampManager.binaryCompressGlobOffsets(timestampManager.offsetList);
-    timestampManager.binaryCompressLocOffsets(timestampManager.localOffsetList);
+    //timestampManager.finishDeltaDelta();
+    std::cout << "Size of local offset list: " << timestampManager.getSizeOfLocalOffsetList() * sizeof(int) << " bytes" << std::endl;
+    std::cout << "Size of global offset list: " << timestampManager.getSizeOfGlobalOffsetList() * sizeof(int) << " bytes" << std::endl;
 
+    std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
+    std::cout << "size glob: " << timestampManager.getSizeOfGlobalOffsetList() << std::endl;
+    std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
+    std::cout << "size of int: " << sizeof(int) << std::endl;
+
+
+    //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
+    //timestampManager.reconstructDeltaDelta();
+
+    #ifdef linux
+    auto table = VectorToColumnarTable(
+            this->modelManager.selectedModels).ValueOrDie();
+
+    auto recordBatch = MakeRecordBatch(table).ValueOrDie();
+
+    ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
+    auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
+                        arrow::flight::FlightDescriptor{arrow::flight
+                                                        ::FlightDescriptor::Path(std::vector<std::string>{"table.parquet"})}, recordBatch->schema()).ValueOrDie();
+
+    ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
+    arrow::Status st = arrow::Status::OK();
+    if (!st.ok()) {
+        std::cerr << st << std::endl;
+        exit(1);
+    }
+    #endif
 }
