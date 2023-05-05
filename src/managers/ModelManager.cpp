@@ -202,6 +202,8 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
 
 bool ModelManager::calculateFlushTimestamp() {
     Node* earliestUsedTimestamp = nullptr;
+
+    // Update the earliest used timestamp across all models
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
             if(earliestUsedTimestamp == nullptr || (*container.cachedValues.startTimestamp).data < (*earliestUsedTimestamp).data) {
@@ -209,6 +211,8 @@ bool ModelManager::calculateFlushTimestamp() {
             }
         }
     }
+
+    // Return whether we flushed or not
     return earliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
 }
 

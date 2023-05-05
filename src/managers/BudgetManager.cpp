@@ -21,11 +21,17 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
 }
 
 void BudgetManager::endOfChunkCalculations() {
+
+    // Flush if the first timestamp of the current chunk becomes too old
     for(auto &container : modelManager.timeSeries){
         if(timestampManager.timestampCurrent->data - container.startTimestamp > maxAge){
             modelManager.forceModelFlush(container.localId);
         }
     }
+
+    // Run through all models created for all columns in the chunk.
+    // If the sum of all models of a column is within the budget, we can flush all.
+    // Otherwise, we'll only flush up til the model that exceeded the budget
     for(auto &selected : modelManager.selectedModels){
         bool flushAll = true;
         int i;
