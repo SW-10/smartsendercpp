@@ -330,8 +330,8 @@ bool TimestampManager::flushTimestamps(
         }
     }
 
-    // Roll back to first the first timestamp in the linked list
-    // index counts how many timestamps we need to flush
+    // Roll back to the first timestamp in the linked list.
+    // 'index' counts how many timestamps we need to flush
     for(index = 0; iterator->prev != NULL; index++){
         Node* temp = iterator->prev;
         delete iterator;

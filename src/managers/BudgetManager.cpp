@@ -29,8 +29,8 @@ void BudgetManager::endOfChunkCalculations() {
         }
     }
 
-    // Run through all models created for all columns in the chunk.
-    // If the sum of all models of a column is within the budget, we can flush all.
+    // Run through all models created for all time series in the chunk.
+    // If the sum of all models of a time series is within the budget, we can flush all.
     // Otherwise, we'll only flush up til the model that exceeded the budget
     for(auto &selected : modelManager.selectedModels){
         bool flushAll = true;
