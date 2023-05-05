@@ -2,6 +2,7 @@
 #include <cmath>
 #include "BudgetManager.h"
 #include "../utils/Huffman.h"
+#include "../utils/arithmetic-coding/Encoder.h"
 
 
 BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configManager,
@@ -47,9 +48,17 @@ void BudgetManager::endOfChunkCalculations() {
 
     }
     if (!timestampManager.localOffsetListToSend.empty()){
+        // == DO HUFFMAN CODING ==
         Huffman huffmanLOL;
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
+
+        // == DO ARITHMETIC CODING ==
+        Encoder enc;
+        std::map<int, int>  uniqueVals;
+        std::vector<float> accFreqs;
+        enc.encode(timestampManager.localOffsetListToSend,  &uniqueVals, &accFreqs);
+
         //Temp Used for testing
         //temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
         timestampManager.localOffsetListToSend.clear();
