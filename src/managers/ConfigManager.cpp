@@ -281,3 +281,14 @@ void ConfigManager::fixQuotation(){
         optarg[strlen(optarg) - 1] = '\0';
     }
 }
+
+
+columns::columns(int col, double error, int isAbsolute) {
+    this->col = col;
+    this->error = error;
+    this->isAbsolute = isAbsolute;
+}
+
+columnsExtra::columnsExtra(int col, double error, int isAbsolute) : columns(col, error, isAbsolute) {
+    this->errorSwing = error;
+}

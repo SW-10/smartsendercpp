@@ -15,7 +15,7 @@
 
 ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         : configManager(configFile), timestampManager(configManager, timekeeper),
-          modelManager(configManager.timeseriesCols, configManager.textCols,
+          modelManager(configManager.timeseriesCols,
                        timestampManager),
                        budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp),
           outlierDetector(4.0, configManager.timeseriesCols.size()) {
@@ -53,27 +53,18 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                                                      c.col); //c.col is the global ID
 
                 //timestampManager.deltaDeltaCompress(lineNum, c.col);
-                modelManager.fitSegment(i, value,
-                                        timestampManager.timestampCurrent);
+                modelManager.fitSegment(i, value,timestampManager.timestampCurrent);
+
+                //If adjusted model for current time series exist, fit!
+                if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
+                    budgetManager.adjustingModelManager.fitSegment(budgetManager.adjustableTimeSeries[i], value,
+                                                                   timestampManager.timestampCurrent);
+                }
             }
             return CompressionType::VALUES;
         };
         std::get<1>(myMap[c.col]) = CompressionType::VALUES;
         std::get<2>(myMap[c.col]) = i;         // Store 'local' ID
-        i++;
-    }
-
-    // Handle text series columns
-    i = 0;
-    for (const auto &c: configManager.textCols) {
-        std::get<0>(myMap[c]) = [this, i](std::string *in, int &lineNum) {
-            if (!in->empty()) {
-                modelManager.fitTextModels(i, *in);
-            }
-            return CompressionType::TEXT;
-        };
-
-        std::get<2>(myMap[c]) = i;        // Store 'local' ID
         i++;
     }
 
@@ -166,7 +157,9 @@ void ReaderManager::runCompressor() {
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
             if(newInterval){
+                //std::cout << "timebefore" << lineNumber << std::endl;
                 budgetManager.endOfChunkCalculations();
+                //std::cout << "timenow" << lineNumber << std::endl;
                 newInterval = false;
             }
 
@@ -175,14 +168,14 @@ void ReaderManager::runCompressor() {
             count++;
             // TODO: Adjust penalty dynamically
             if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
-                lastTimestampFlush = lineNumber;
-                bool didFlush = modelManager.calculateFlushTimestamp();
-                if (didFlush){
-                    timestampFlusherPenalty -= 5;
-                }
-                else {
-                    timestampFlusherPenalty +=5;
-                }
+//                lastTimestampFlush = lineNumber;
+//                bool didFlush = modelManager.calculateFlushTimestamp();
+//                if (didFlush){
+//                    timestampFlusherPenalty -= 5;
+//                }
+//                else {
+//                    timestampFlusherPenalty +=5;
+//                }
             }
         }
 

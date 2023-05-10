@@ -18,6 +18,8 @@ Swing::Swing(double &errorBound, bool isErrorAbsolute)
     lowerBoundIntercept = 0;
     length = 0;
     errorAbsolute = isErrorAbsolute;
+    adjustable = false;
+    maxError = 10;
 }
 
 bool Swing::fitValueSwing(Node *timestamp, double value) {
@@ -78,9 +80,28 @@ bool Swing::fitValueSwing(Node *timestamp, double value) {
                 upperBoundSlope * timestamp->data + upperBoundIntercept;
         double lowerBoundApproximateValue =
                 lowerBoundSlope * timestamp->data + lowerBoundIntercept;
-
-        if (upperBoundApproximateValue + maximumDeviation < value
-            || lowerBoundApproximateValue - maximumDeviation > value) {
+        if (upperBoundApproximateValue + maximumDeviation < value){
+            if(adjustable){
+                double requiredMaximumDeviation = value - upperBoundApproximateValue;
+                double newErrorBound = fabs(100 * requiredMaximumDeviation / value);
+                if(newErrorBound < maxError){
+                    errorBound = newErrorBound;
+                    length += 1;
+                    return true;
+                }
+            }
+            return false;
+        }
+        else if(lowerBoundApproximateValue - maximumDeviation > value){
+            if(adjustable){
+                double requiredMaximumDeviation = value - lowerBoundApproximateValue;
+                double newErrorBound = fabs(100 * requiredMaximumDeviation / value);
+                if(newErrorBound < maxError){
+                    errorBound = newErrorBound;
+                    length += 1;
+                    return true;
+                }
+            }
             return false;
         } else {
             lastTimestamp = timestamp;
@@ -204,6 +225,7 @@ Swing &Swing::operator=(const Swing &instance) {
     lowerBoundSlope = instance.upperBoundIntercept;
     lowerBoundIntercept = instance.lowerBoundIntercept;
     length = instance.length;
+    lastTimestamp = instance.lastTimestamp;
     return *this;
 }
 

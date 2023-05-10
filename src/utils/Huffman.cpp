@@ -156,7 +156,7 @@ std::vector<std::pair<int, int>> Huffman::decodeGOL(struct MinHeapNode* root, st
             curr = curr->rChild;
 
         // reached leaf node
-        if (curr->lChild==NULL and curr->rChild==NULL)
+        if (curr->lChild==NULL && curr->rChild==NULL)
         {
 
             if(pairCompleted){
@@ -198,7 +198,7 @@ std::map<int, std::vector<std::pair<int, int>>> Huffman::decodeLOL(struct MinHea
             curr = curr->rChild;
 
         // reached leaf node
-        if (curr->lChild==NULL and curr->rChild==NULL)
+        if (curr->lChild==NULL && curr->rChild==NULL)
         {
             if(curr->value == -3){
                 break;

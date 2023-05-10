@@ -14,6 +14,8 @@ PmcMean::PmcMean(double &errorBound, bool errorAbsolute)
     sumOfValues = 0;
     length = 0;
     isErrorAbsolute = errorAbsolute;
+    adjustable = false;
+    maxError = 10;
 }
 
 int PmcMean::fitValuePmc(float value) {
@@ -45,7 +47,15 @@ PmcMean::isValueWithinErrorBound(float realValue, float approxValue) const {
         if (isErrorAbsolute) {  // check if relative or absolute error
             return fabsf(difference) <= error;
         }
-        return (result * 100) <= error;
+        float currentError = result * 100;
+        if (currentError <= error){
+            return true;
+        }
+        else if (adjustable && currentError < maxError) {
+            error = currentError;
+            return true;
+        }
+        return false;
     }
 }
 
@@ -72,6 +82,7 @@ PmcMean &PmcMean::operator=(const PmcMean &instance) {
     maxValue = instance.maxValue;
     sumOfValues = instance.sumOfValues;
     length = instance.length;
+    lastTimestamp = instance.lastTimestamp;
     return *this;
 }
 

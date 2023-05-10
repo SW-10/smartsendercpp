@@ -7,12 +7,14 @@
 
 class PmcMean {
 public:
+    size_t length;
     Node* lastTimestamp;
+    double &error;
     float minValue;
     float maxValue;
     float sumOfValues;
-    size_t length;
-    double &error;
+    float maxError;
+    bool adjustable;
 
     PmcMean(double &errorBound, bool errorAbsolute);
 
@@ -30,4 +32,6 @@ private:
     int isValueWithinErrorBound(float realValue, float approxValue) const;
 
     static int equalOrNanPmc(float v1, float v2);
+public:
+
 };

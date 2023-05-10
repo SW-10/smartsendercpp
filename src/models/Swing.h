@@ -12,17 +12,18 @@ struct slopeAndIntercept {
 
 class Swing {
 public:
+    Node * lastTimestamp;
     double &errorBound;
     int firstTimestamp;
-    Node * lastTimestamp;
+    int length;
     double firstValue; // f64 instead of Value to remove casts in fit_value()
     double upperBoundSlope;
     double upperBoundIntercept;
     double lowerBoundSlope;
     double lowerBoundIntercept;
-    int length;
+    float maxError;
+    bool adjustable;
     bool errorAbsolute;
-
     Swing(double &errorBound, bool isErrorAbsolute);
 
     bool fitValueSwing(Node *timestamp, double value);

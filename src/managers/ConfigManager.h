@@ -8,6 +8,15 @@ struct columns {
     int col;
     double error;
     int isAbsolute;
+
+    columns(int col, double error, int isAbsolute);
+    columns() = default;
+};
+
+struct columnsExtra : columns{
+    double errorSwing;
+    columnsExtra(int col, double error, int isAbsolute);
+    columnsExtra() = default;
 };
 
 class ConfigManager {

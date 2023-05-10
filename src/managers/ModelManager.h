@@ -24,12 +24,25 @@ struct SelectedModel{
     int64_t startTime;
     int64_t endTime;
     float error;
+    float bitRate;
+    int length;
     int8_t mid;
     int8_t cid;
+    int8_t localId;
+    bool send = true;
     std::vector<float> values;
+
+
 };
 
 struct TimeSeriesModelContainer {
+
+    TimeSeriesModelContainer(columnsExtra &timeSeries, int localId, bool adjustable);
+
+    TimeSeriesModelContainer(columns &timeSeries, int localId, bool adjustable);
+
+    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int localId, int globalId, bool adjustable);
+
     double errorBound;
     int localId;
     int globalId;
@@ -41,9 +54,8 @@ struct TimeSeriesModelContainer {
     Swing swing;
     CachedValues cachedValues;
 
-    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute,
-                             int localId, int globalId);
     //TimeSeriesModelContainer& operator= (const TimeSeriesModelContainer& t);
+    TimeSeriesModelContainer &operator=(const TimeSeriesModelContainer &instance);
 };
 
 struct TextModelContainer {
@@ -57,12 +69,13 @@ struct TextModelContainer {
 
 class ModelManager {
 public:
-    //std::vector<SelectedModel> selectedModels;
+    explicit ModelManager(TimestampManager &timestampManager);
+
+//std::vector<SelectedModel> selectedModels;
     std::vector<std::vector<SelectedModel>> selectedModels;
     void fitSegment(int id, float value, Node *timestamp);
 
     ModelManager(std::vector<columns> &timeSeriesConfig,
-                 std::vector<int> &textCols,
                  TimestampManager &timestampManager);
 
     void constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
@@ -70,20 +83,33 @@ public:
 
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
-    void fitTextModels(int localId, const std::string &value);
-
     bool calculateFlushTimestamp();
 
     void forceModelFlush(int localId);
 
     std::vector<TimeSeriesModelContainer> timeSeries;
+
+    void
+    resetModelManager(std::vector<columnsExtra> &timeSeriesConfig,
+                      std::vector<TimeSeriesModelContainer> &&existingModels);
+
+    int getUnfinishedModelSize(int localId);
+
 private:
-    std::vector<TextModelContainer> textModels;
     TimestampManager &timestampManager;
 
-    static SelectedModel selectPmcMean(TimeSeriesModelContainer &modelContainer);
-    static SelectedModel selectSwing(TimeSeriesModelContainer &modelContainer);
-    static SelectedModel selectGorilla(TimeSeriesModelContainer &modelContainer);
-
     static bool shouldCacheData(TimeSeriesModelContainer &container);
+
+    static SelectedModel selectGorilla(TimeSeriesModelContainer &modelContainer, float bitrate);
+
+    static SelectedModel selectSwing(TimeSeriesModelContainer &modelContainer, float bitRate);
+
+    static SelectedModel selectPmcMean(TimeSeriesModelContainer &modelContainer, float bitRate);
+
+    template <class T>
+    void RefreshTimeSeries(T &timeSeriesConfig, bool adjustable = false);
+
+    static void CleanAdjustedModels(TimeSeriesModelContainer &finishedSegment);
+
+
 };
