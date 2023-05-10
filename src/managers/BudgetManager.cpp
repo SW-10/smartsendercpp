@@ -43,6 +43,7 @@ void BudgetManager::endOfChunkCalculations() {
         for(i = 0; i < selected.size(); i++){
             int modelSize = sizeOfModels + selected.at(i).values.size()*4;
             if (!selected.at(i).send){
+                //TODO: Only flush non sending models when, corresponding adjusted has been send.
                 spaceKeeperEmplace(std::make_pair(selected.at(i).length, selected.at(i).bitRate), selected.at(i).localId);
             }
             else if (bytesLeft < modelSize){
@@ -218,7 +219,7 @@ void BudgetManager::selectAdjustedModels(){
         //Get size of last unfinished original model
         int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
         if (sizeUnfinishedModel != 0){
-            originalModelSize += sizeOfModels + sizeUnfinishedModel;
+            originalModelSize += sizeOfModels + sizeUnfinishedModel*4;
         }
 
         //Calculate saved bytes by adjusting error bound
