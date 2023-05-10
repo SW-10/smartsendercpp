@@ -52,12 +52,15 @@ void BudgetManager::endOfChunkCalculations() {
         Huffman huffmanLOL;
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
+        std::cout << "HUFFMAN SIZE: " << huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size() << std::endl;
 
         // == DO ARITHMETIC CODING ==
         Encoder enc;
         std::map<int, int>  uniqueVals;
         std::vector<float> accFreqs;
-        enc.encode(timestampManager.localOffsetListToSend,  &uniqueVals, &accFreqs);
+        auto arith_encoding = enc.encode(timestampManager.localOffsetListToSend,  &uniqueVals, &accFreqs);
+        std::cout << "ARITHME SIZE: " << arith_encoding.size() + (uniqueVals.size() * 2) * sizeof(int) +  accFreqs.size() * sizeof(float) << std::endl;
+        std::cout << std::endl;
 
         //Temp Used for testing
         //temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
