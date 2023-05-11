@@ -330,6 +330,8 @@ bool TimestampManager::flushTimestamps(
         }
     }
 
+    // Roll back to the first timestamp in the linked list.
+    // 'index' counts how many timestamps we need to flush
     for(index = 0; iterator->prev != NULL; index++){
         Node* temp = iterator->prev;
         delete iterator;
@@ -372,6 +374,9 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
     int offset = 0;
     // Calculate number of timestamps in first offset
     int containedTimestamps = localOffsetListRef.front().first * localOffsetListRef.front().second;
+
+    // If the first pair in the offset list describes more timestamps than we need to remove,
+    // we only need to alter that pair
     if (containedTimestamps > numberOfFlushedIndices){
         // How many instances can be flushed
         int instancesToFlush = numberOfFlushedIndices / localOffsetListRef.front().first;
@@ -379,22 +384,30 @@ int TimestampManager::flushLocalOffsetList(std::vector<std::pair<int, int>> &loc
         if(numberOfFlushedIndices % localOffsetListRef.front().first > 0){
             instancesToFlush += 1;
         }
+        // If the first pair exactly contains all the timestamps we need to flush, calculate new first timestamp,
+        // add the pair to the output file and erase it from the list in memory
         if (instancesToFlush == localOffsetListRef.front().second){
             offset = localOffsetListRef.front().first * instancesToFlush - numberOfFlushedIndices;
             makeForwardListToSend(localOffsetListRef.at(0));
             localOffsetListRef.erase(localOffsetListRef.begin());
         }
         else{
+            // If the first pair contains more timestamps than we need to flush, calculate new first timestamp,
+            // store the timestamps that we remove from memory, and count down the second element in the first pair
             offset = localOffsetListRef.front().first * instancesToFlush - numberOfFlushedIndices;
             auto toSave = std::make_pair(localOffsetListRef.at(0).first,instancesToFlush);
             localOffsetListRef.front().second -= instancesToFlush;
             makeForwardListToSend(toSave);
         }
     }
+    // If first pair describes exactly the number of timestamps we need to flush, store it and
+    // remove it from memory
     else if (containedTimestamps == numberOfFlushedIndices) {
         makeForwardListToSend(localOffsetListRef.at(0));
         localOffsetListRef.erase(localOffsetListRef.begin());
     }
+    // If first pair describes less timestamps than we need to flush, store first pair, remove it
+    // and call this function recursively with the remaining timestamps
     else{
         makeForwardListToSend(localOffsetListRef.at(0));
         localOffsetListRef.erase(localOffsetListRef.begin());
