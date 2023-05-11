@@ -11,6 +11,13 @@ if(UNIX)
     list(APPEND CMAKE_PREFIX_PATH "./lib")
 endif(UNIX)
 
+option(HUFFMAN "Enable/Disable HUFFMAN" ON)
+
+if(HUFFMAN)
+    add_definitions(-DHUFFMAN_ENABLED)
+endif()
+
+
 add_executable(smartsendercpp "src/CMakeLists.txt" "src/models/CMakeLists.txt" "src/utils/CMakeLists.txt")
 
 add_subdirectory(src)

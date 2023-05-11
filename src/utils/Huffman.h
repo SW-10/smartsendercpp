@@ -1,3 +1,5 @@
+#ifdef HUFFMAN_ENABLED
+
 #pragma once
 
 #include <iostream>
@@ -71,3 +73,5 @@ private:
     std::map<int, std::string> codes;
     std::priority_queue<MinHeapNode *, std::vector<MinHeapNode *>, compare> minHeap;
 };
+
+#endif

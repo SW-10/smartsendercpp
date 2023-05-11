@@ -1,3 +1,4 @@
+#ifdef HUFFMAN_ENABLED
 #include "Huffman.h"
 #include <queue>
 
@@ -76,7 +77,7 @@ void Huffman::compress(BitVecBuilder &builder, const std::vector<int> &uncompres
         auto it = codes.find(*val);
         if ( it == codes.end() ) {
             // not found
-            std::cout<<"Element " << *val << " not found" << std::endl;
+            std::cout<< "Element " << *val << " not found" << std::endl;
         } else {
 //            std::cout << "Code for " << *i << " is " << it->second << std::endl;
             compressed += it->second;
@@ -100,21 +101,16 @@ void Huffman::compress(BitVecBuilder &builder, const std::vector<int> &uncompres
 }
 
 void Huffman::encodeTree() {
-    std::cout << "Tree: ";
     encodeTreeRec(getRoot());
-    std::cout << std::endl;
     treeBuilder.bytes.emplace_back(treeBuilder.currentByte);
 }
 
 void Huffman::encodeTreeRec(MinHeapNode* node){
     if (node->lChild==NULL && node->rChild==NULL){
         appendAOneBit(&treeBuilder);
-        std::cout << "1 ";
         appendBits(&treeBuilder, node->value, 32);
-        std::cout << "[" << node->value << "] ";
     } else {
         appendAZeroBit(&treeBuilder);
-        std::cout << "0 ";
         encodeTreeRec(node->lChild);
         encodeTreeRec(node->rChild);
     }
@@ -226,3 +222,5 @@ std::map<int, std::vector<std::pair<int, int>>> Huffman::decodeLOL(struct MinHea
     }
     return LOLreconstructed;
 }
+
+#endif

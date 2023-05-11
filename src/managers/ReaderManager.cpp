@@ -165,15 +165,18 @@ void ReaderManager::runCompressor() {
             // Run code that handles new intervals directly after reading the timestamp
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
+            /*
             if(newInterval){
                 budgetManager.endOfChunkCalculations();
                 newInterval = false;
             }
+             */
 
             // Update the compression type in the map
             std::get<1>(mapElement->second) = ct;
             count++;
             // TODO: Adjust penalty dynamically
+            /*
             if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
                 lastTimestampFlush = lineNumber;
                 bool didFlush = modelManager.calculateFlushTimestamp();
@@ -184,6 +187,7 @@ void ReaderManager::runCompressor() {
                     timestampFlusherPenalty +=5;
                 }
             }
+             */
         }
 
         lineNumber++;

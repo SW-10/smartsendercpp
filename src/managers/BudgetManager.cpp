@@ -47,9 +47,11 @@ void BudgetManager::endOfChunkCalculations() {
 
     }
     if (!timestampManager.localOffsetListToSend.empty()){
+        #ifdef  HUFFMAN_ENABLED
         Huffman huffmanLOL;
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
+        #endif
         //Temp Used for testing
         //temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
         timestampManager.localOffsetListToSend.clear();
