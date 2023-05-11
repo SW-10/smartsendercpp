@@ -172,6 +172,7 @@ void BudgetManager::increaseErrorBounds(){
     std::vector<int> cooldownIDs;
     for(auto iter : outlierCooldown){
         if(iter.second > 0){
+            // iter.first is the global ID
             cooldownIDs.push_back(iter.first);
         }
     }
@@ -233,6 +234,8 @@ void BudgetManager::lowerErrorBounds(){
         //Create config instance for adjusted modeManager
         int locID = smalllestImpacts.at(i).second.first;
 
+        modelManager.forceModelFlush(locID);
+
         // Set error bound to 0
         configManager.timeseriesCols.at(locID).error = 0;
 
@@ -241,6 +244,8 @@ void BudgetManager::lowerErrorBounds(){
 }
 
 void BudgetManager::lowerErrorBounds(int locID){
+
+    modelManager.forceModelFlush(locID);
 
     // Set error bound to 0
     configManager.timeseriesCols.at(locID).error = 0;
