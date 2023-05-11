@@ -26,8 +26,13 @@ public:
                   int &budget, int &maxAge, int *firstTimestampChunk);
 
     void endOfChunkCalculations();
+    void lowerErrorBounds();
+    void lowerErrorBounds(int locID);
     ModelManager adjustingModelManager;
     std::unordered_map<int, int> adjustableTimeSeries;
+
+    std::map<int,int> outlierCooldown;
+    const int cooldown = 10;
 private:
     ModelManager &modelManager;
 
@@ -51,6 +56,8 @@ private:
 
     void increaseErrorBounds();
 
+
+
     void cleanSpaceKeeper();
 
     void WriteBitToCSV();
@@ -58,4 +65,6 @@ private:
     void errorBoundStats(double error, int index);
 
     void selectAdjustedModels();
+
+
 };

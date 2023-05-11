@@ -15,6 +15,7 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     this->bytesLeft = budget;
     for (auto &_: configManager.timeseriesCols) {
         tsInformation.emplace_back(_.col);
+        outlierCooldown[_.col] = 0;
     }
     sizeOfModels = 0;
     sizeOfModels += sizeof(float); // Size of error
@@ -24,6 +25,10 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
 
 void BudgetManager::endOfChunkCalculations() {
     for(auto &container : modelManager.timeSeries){
+
+        // Reset error bound to default error bound
+        configManager.timeseriesCols.at(container.localId).error = container.errorBound;
+
         if(timestampManager.timestampCurrent->data - container.startTimestamp > maxAge){
             modelManager.forceModelFlush(container.localId);
         }
@@ -58,7 +63,7 @@ void BudgetManager::endOfChunkCalculations() {
             }
             else {
                 bytesLeft -= modelSize;
-                if (selected.at(i).error == configManager.timeseriesCols.at(selected.at(i).cid).error){
+                if (selected.at(i).error == configManager.timeseriesCols.at(selected.at(i).localId).error){
                     spaceKeeperEmplace(std::make_pair(selected.at(i).length, selected.at(i).bitRate), selected.at(i).localId);
                 }
             }
@@ -106,6 +111,7 @@ void BudgetManager::endOfChunkCalculations() {
         double xIntercept = (intercept - configManager.bufferGoal) / (slope * -1);
         if(xIntercept < configManager.budgetLeftRegressionLength){
             if (slope > 0){
+                lowerErrorBounds();
                 // TODO lower error bounds
             }
             else if (slope < 0){
@@ -114,6 +120,7 @@ void BudgetManager::endOfChunkCalculations() {
         }
         if (xIntercept > configManager.budgetLeftRegressionLength + configManager.chunksToGoal){
             if (slope < 0) {
+                lowerErrorBounds();
                 // TODO: lower error bounds
             }
             else if (slope > 0) {
@@ -161,15 +168,36 @@ void BudgetManager::increaseErrorBounds(){
     std::vector<std::pair<float, std::pair<int,int>>> largestImpacts;
     largestImpacts.reserve(tsInformation.size());
 
+    // Get global IDs of time series that are cooldowning
+    std::vector<int> cooldownIDs;
+    for(auto iter : outlierCooldown){
+        if(iter.second > 0){
+            // iter.first is the global ID
+            cooldownIDs.push_back(iter.first);
+        }
+    }
+
+    // Don't add time series that are cooldowning
+    bool cooldownerFound = false;;
     for (int i = 0; i < tsInformation.size(); i++){
+        cooldownerFound = false;
+        for(auto cooldown : cooldownIDs){
+            if(tsInformation.at(i).globalId == cooldown){
+                cooldownerFound  = true;
+                break;
+            }
+        }
+
+        if(!cooldownerFound){
             largestImpacts.emplace_back(tsInformation.at(i).byteRate, std::make_pair(i, tsInformation.at(i).globalId));
+        }
     }
 
     //Sort time series by byte rate
     std::sort(largestImpacts.begin(), largestImpacts.end(),
               [](std::pair<float, std::pair<int,int>> &left, std::pair<float, std::pair<int,int>> &right){
-        return left.first > right.first;
-    });
+                  return left.first > right.first;
+              });
     int stop = std::min(10, static_cast<int>(largestImpacts.size()-1));
     std::vector<TimeSeriesModelContainer> existingModels;
     existingModels.reserve(stop);
@@ -183,6 +211,46 @@ void BudgetManager::increaseErrorBounds(){
     }
     adjustingModelManager.resetModelManager(adjustableTimeSeriesConfig, std::move(existingModels));
 }
+
+void BudgetManager::lowerErrorBounds(){
+
+    std::vector<std::pair<float, std::pair<int,int>>> smalllestImpacts;
+    smalllestImpacts.reserve(tsInformation.size());
+
+    for (int i = 0; i < tsInformation.size(); i++){
+        smalllestImpacts.emplace_back(tsInformation.at(i).byteRate, std::make_pair(i, tsInformation.at(i).globalId));
+    }
+
+    //Sort time series by byte rate
+    std::sort(smalllestImpacts.begin(), smalllestImpacts.end(),
+              [](std::pair<float, std::pair<int,int>> &left, std::pair<float, std::pair<int,int>> &right){
+                  return left.first < right.first;
+              });
+
+    int stop = std::min(10, static_cast<int>(smalllestImpacts.size()-1));
+
+    for(int i = 0; i < stop; i++){
+
+        //Create config instance for adjusted modeManager
+        int locID = smalllestImpacts.at(i).second.first;
+
+        modelManager.forceModelFlush(locID);
+
+        // Set error bound to 0
+        configManager.timeseriesCols.at(locID).error = 0;
+
+    }
+
+}
+
+void BudgetManager::lowerErrorBounds(int locID){
+
+    modelManager.forceModelFlush(locID);
+
+    // Set error bound to 0
+    configManager.timeseriesCols.at(locID).error = 0;
+}
+
 
 void BudgetManager::selectAdjustedModels(){
     std::cout << std::endl << "New Chunky" << std::endl;

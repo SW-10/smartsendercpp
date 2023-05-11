@@ -41,9 +41,9 @@ struct TimeSeriesModelContainer {
 
     TimeSeriesModelContainer(columns &timeSeries, int localId, bool adjustable);
 
-    TimeSeriesModelContainer(double &errorBound, bool errorAbsolute, int localId, int globalId, bool adjustable);
+    TimeSeriesModelContainer(double errorBound, bool errorAbsolute, int localId, int globalId, bool adjustable);
 
-    double errorBound;
+    const double errorBound;
     int localId;
     int globalId;
     int startTimestamp;

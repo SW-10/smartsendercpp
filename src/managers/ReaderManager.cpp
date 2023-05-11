@@ -45,9 +45,15 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
                                                   int &lineNum) {
             if (!in->empty()) {
+                if(this->budgetManager.outlierCooldown[i] > 0){
+                    this->budgetManager.outlierCooldown[i]--;
+                }
+
                 float value = std::stof(*in);
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
                   //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
+                  this->budgetManager.lowerErrorBounds(i);
+                  this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
