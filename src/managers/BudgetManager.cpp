@@ -24,16 +24,14 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
 }
 
 void BudgetManager::endOfChunkCalculations() {
-    int globID = 1;
     for(auto &container : modelManager.timeSeries){
 
         // Reset error bound to default error bound
-        configManager.timeseriesCols.at(globID-1).error = container.errorBound;
+        configManager.timeseriesCols.at(container.localId).error = container.errorBound;
 
         if(timestampManager.timestampCurrent->data - container.startTimestamp > maxAge){
             modelManager.forceModelFlush(container.localId);
         }
-        globID++;
     }
 
     if(!adjustableTimeSeriesConfig.empty()){
@@ -65,7 +63,7 @@ void BudgetManager::endOfChunkCalculations() {
             }
             else {
                 bytesLeft -= modelSize;
-                if (selected.at(i).error == configManager.timeseriesCols.at(selected.at(i).cid).error){
+                if (selected.at(i).error == configManager.timeseriesCols.at(selected.at(i).localId).error){
                     spaceKeeperEmplace(std::make_pair(selected.at(i).length, selected.at(i).bitRate), selected.at(i).localId);
                 }
             }
@@ -179,8 +177,9 @@ void BudgetManager::increaseErrorBounds(){
     }
 
     // Don't add time series that are cooldowning
-    bool cooldownerFound = false;
+    bool cooldownerFound = false;;
     for (int i = 0; i < tsInformation.size(); i++){
+        cooldownerFound = false;
         for(auto cooldown : cooldownIDs){
             if(tsInformation.at(i).globalId == cooldown){
                 cooldownerFound  = true;
@@ -189,7 +188,6 @@ void BudgetManager::increaseErrorBounds(){
         }
 
         if(!cooldownerFound){
-            cooldownerFound = false;
             largestImpacts.emplace_back(tsInformation.at(i).byteRate, std::make_pair(i, tsInformation.at(i).globalId));
         }
     }
@@ -233,19 +231,19 @@ void BudgetManager::lowerErrorBounds(){
     for(int i = 0; i < stop; i++){
 
         //Create config instance for adjusted modeManager
-        int globID = smalllestImpacts.at(i).second.second;
+        int locID = smalllestImpacts.at(i).second.first;
 
         // Set error bound to 0
-        configManager.timeseriesCols.at(globID-1).error = 0;
+        configManager.timeseriesCols.at(locID).error = 0;
 
     }
 
 }
 
-void BudgetManager::lowerErrorBounds(int globID){
+void BudgetManager::lowerErrorBounds(int locID){
 
     // Set error bound to 0
-    configManager.timeseriesCols.at(globID-1).error = 0;
+    configManager.timeseriesCols.at(locID).error = 0;
 }
 
 
