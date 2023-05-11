@@ -6,11 +6,11 @@
 #include <utility>
 #include "vector"
 
-TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound,
+TimeSeriesModelContainer::TimeSeriesModelContainer(double errorBound,
                                                    bool errorAbsolute,
                                                    int localId, int globalId, bool adjustable)
-        : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute) {
-    this->errorBound = errorBound;
+        : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute),
+        errorBound(errorBound){
     this->errorAbsolute = errorAbsolute;
     this->localId = localId;
     this->globalId = globalId;
@@ -22,9 +22,9 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(double &errorBound,
 TimeSeriesModelContainer::TimeSeriesModelContainer(columns &timeSeries, int localId,
                                                    bool adjustable)
                                                    : pmcMean(timeSeries.error, timeSeries.isAbsolute),
-                                                   swing(timeSeries.error, timeSeries.isAbsolute)
+                                                   swing(timeSeries.error, timeSeries.isAbsolute),
+                                                   errorBound(timeSeries.error)
 {
-    this->errorBound = timeSeries.error;
     this->errorAbsolute = timeSeries.isAbsolute;
     this->localId = localId;
     this->globalId = timeSeries.col;
@@ -36,9 +36,9 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(columns &timeSeries, int loca
 
 TimeSeriesModelContainer::TimeSeriesModelContainer(columnsExtra &timeSeries, int localId,
                                                    bool adjustable)
-        : pmcMean(timeSeries.error, timeSeries.isAbsolute), swing(timeSeries.errorSwing, timeSeries.isAbsolute)
+        : pmcMean(timeSeries.error, timeSeries.isAbsolute), swing(timeSeries.errorSwing, timeSeries.isAbsolute),
+          errorBound(errorBound)
                                                    {
-    this->errorBound = timeSeries.error;
     this->errorAbsolute = timeSeries.isAbsolute;
     this->localId = localId;
     this->globalId = timeSeries.col;
@@ -48,7 +48,7 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(columnsExtra &timeSeries, int
 }
 
 TimeSeriesModelContainer &TimeSeriesModelContainer::operator=(const TimeSeriesModelContainer &instance){
-    errorBound = instance.errorBound;
+
     errorAbsolute = instance.errorAbsolute;
     cachedValues = instance.cachedValues;
     startTimestamp = instance.startTimestamp;
