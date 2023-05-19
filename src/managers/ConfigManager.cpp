@@ -42,7 +42,6 @@ ConfigManager::ConfigManager(std::string &path) {
         int this_option_optind = optind ? optind : 1;
         int option_index = 0;
         static struct option long_options[] = {
-                {"position",   required_argument, 0, 'p'},
                 {"columns",    required_argument, 0, 'c'},
                 {"timestamps", required_argument, 0, 't'},
                 {"output",     required_argument, 0, 'o'},
@@ -54,7 +53,6 @@ ConfigManager::ConfigManager(std::string &path) {
                 {"bufferGoal", required_argument, 0, 'g'},
                 {"budgetLeftRegressionLength", required_argument, 0, 'r'},
                 {"chunksToGoal", required_argument, 0, 'l'},
-                {"goalErrorMargin", required_argument, 0, 'e'},
                 {0,            0                , 0,  0 }
         };
 
@@ -62,10 +60,6 @@ ConfigManager::ConfigManager(std::string &path) {
                         long_options, &option_index);
         if (c == -1) break;
         switch (c) {
-            case 'e':
-                fixQuotation();
-                this->goalErrorMargin = atoi(optarg);
-                break;
             case 'l':
                 fixQuotation();
                 this->chunksToGoal = atoi(optarg);
@@ -99,48 +93,6 @@ ConfigManager::ConfigManager(std::string &path) {
                 }
                 this->chunkSize = atoi(optarg);
                 break;
-            case 'p':
-                // Debug mode seems to add single quotation marks around the arguments.
-                // The following two if's remove those
-                if (optarg[0] == '\'' || optarg[0] == '\"') {
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
-
-                count = 0;
-                token = strtok(optarg, s);
-                while (token != NULL) {
-                    count++;
-                    // Handle args here
-                    if (count == 1) {
-                        latCol.col = atoi(token) - 1;
-                        totalNumberOfCols++;
-                    }
-                    if (count == 2) {
-                        longCol.col = atoi(token) - 1;
-                        totalNumberOfCols++;
-                    }
-                    if (count == 3) {
-                        latCol.error = atof(token);
-                        longCol.error = atof(token);
-                        containsPosition = true;
-                    }
-                    if (count > 3) {
-                        printf("Too many arguments for position. Arguments should be: <lat> <long> <error>\n");
-                        exit(1);
-                    }
-                    // Get next arg
-                    token = strtok(NULL, s); // NULL is not a mistake!
-                }
-
-                if (count < 3) {
-                    printf("Too few arguments for position. Arguments should be: <lat> <long> <error>\n");
-                    exit(1);
-                }
-                break;
             case 'c':
                 //From documentation. Not sure what it does
                 if (digit_optind != 0 && digit_optind != this_option_optind)
@@ -167,36 +119,10 @@ ConfigManager::ConfigManager(std::string &path) {
 
                 if (count % 3 != 0) {
                     printf("Not the expected number of arguments for columns. Number of parameters should be divisible by 3 and follow the following format:\n");
-                    printf("<column (int)> <error (float)> <absolute (A) / relative (R)>\n");
+                    printf("<column (int)> <error (float)> - <max error (float) <Outlier thresh hold (float)>\n");
                 }
 
                 totalNumberOfCols += (count / 3);
-                break;
-            case 'x':
-                //From documentation. Not sure what it does
-                if (digit_optind != 0 && digit_optind != this_option_optind)
-                    printf("digits occur in two different argv-elements.\n");
-                digit_optind = this_option_optind;
-
-                // Debug mode seems to add single quotation marks around the arguments.
-                // The following two if's remove those
-                if (optarg[0] == '\'' || optarg[0] == '\"') {
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
-
-                count = 0;
-                token = strtok(optarg, s);
-                while (token != NULL) {
-                    textCols.emplace_back(atoi(token) - 1);
-                    number_of_text_cols++;
-                    token = strtok(NULL, s); // NULL is not a mistake!
-                    count++;
-                    totalNumberOfCols++;
-                }
                 break;
             case 't':
                 if (optarg[0] == '\'' || optarg[0] == '\"') {
@@ -241,7 +167,7 @@ ConfigManager::ConfigManager(std::string &path) {
     }
 }
 
-void ConfigManager::columnOrText(int *count, char *token) {
+void ConfigManager::columnOrText(const int *count, char *token) {
     // Handle arg here
     if (*count % 3 == 0) {
         numberOfCols++;
@@ -250,21 +176,15 @@ void ConfigManager::columnOrText(int *count, char *token) {
     }
     if (*count % 3 == 1) {
         columns &ptr = timeseriesCols.back();
-        ptr.error = atof(token);
+        std::string errors = token;
+        size_t index = errors.find('-');
+        ptr.error = std::stod(errors.substr(0,index));
+        ptr.maxError = std::stod(errors.substr(index+1, errors.length()));
     }
     if (*count % 3 == 2) {
         columns &ptr = timeseriesCols.back();
-        if (*token == 'A') { // Absolute
-            ptr.isAbsolute = 1;
-        }
-        if (*token == 'R') { // Relative
-            ptr.isAbsolute = 0;
-        }
+        ptr.outlierThreshHold = atof(token);
     }
-}
-
-void ConfigManager::adjustErrorBound(int globId, double errorBound){
-    timeseriesCols.at(globId).error = errorBound;
 }
 
 void ConfigManager::fixQuotation(){
@@ -283,12 +203,13 @@ void ConfigManager::fixQuotation(){
 }
 
 
-columns::columns(int col, double error, int isAbsolute) {
+columns::columns(int col, double error, double outlierThreshHold, double maxError) {
     this->col = col;
     this->error = error;
-    this->isAbsolute = isAbsolute;
+    this->outlierThreshHold = outlierThreshHold;
+    this->maxError = maxError;
 }
 
-columnsExtra::columnsExtra(int col, double error, int isAbsolute) : columns(col, error, isAbsolute) {
+columnsExtra::columnsExtra(int col, double error, double outlierThreshHold, double maxError) : columns(col, error, outlierThreshHold, maxError) {
     this->errorSwing = error;
 }

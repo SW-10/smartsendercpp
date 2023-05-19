@@ -5,13 +5,11 @@
 #include <cmath>
 #include <numeric>
 #include <limits>
+#include "../managers/ConfigManager.h"
 
 class OutlierDetector {
 public:
-    OutlierDetector(double thresholdValue, size_t numberOfColumns) {
-      for(int i=0; i < numberOfColumns; i++){
-        threshold.push_back(thresholdValue);
-      }
+    OutlierDetector(ConfigManager &configManager) : configManager(configManager) {
     }
 
     // Welford's online algorithm for calculating variance combined with Z-score.
@@ -25,7 +23,7 @@ public:
       double std_dev = std::sqrt(m2[column_number] / count[column_number]);
       double z_score = std_dev > std::numeric_limits<double>::epsilon() ? (value - mean[column_number]) / std_dev : 0.0;
 
-      if (std::abs(z_score) > threshold[column_number]) {
+      if (std::abs(z_score) > configManager.timeseriesCols[column_number].outlierThreshHold) {
           return true;
       }
       else {
@@ -37,4 +35,5 @@ public:
     std::vector<int> count;
     std::vector<double> mean;
     std::vector<double> m2;
+    ConfigManager &configManager;
 };

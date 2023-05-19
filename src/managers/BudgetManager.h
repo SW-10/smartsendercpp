@@ -27,7 +27,7 @@ public:
 
     void endOfChunkCalculations();
     void lowerErrorBounds();
-    void lowerErrorBounds(int locID);
+    void decreaseErrorBounds(int locID);
     ModelManager adjustingModelManager;
     std::unordered_map<int, int> adjustableTimeSeries;
 

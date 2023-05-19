@@ -203,8 +203,8 @@ void BudgetManager::increaseErrorBounds(){
     existingModels.reserve(stop);
     for(int i = 0; i < stop; i++){
         //Create config instance for adjusted modeManager
-        //TODO set error according to config
-        adjustableTimeSeriesConfig.emplace_back(largestImpacts.at(i).second.second,5,0);
+        auto &config = configManager.timeseriesCols.at(largestImpacts.at(i).second.first);
+        adjustableTimeSeriesConfig.emplace_back(largestImpacts.at(i).second.second, config.error, config.outlierThreshHold, config.maxError);
         //Create map, which are used to map original localID's to adjusted localID's
         adjustableTimeSeries[largestImpacts.at(i).second.first] = i;
         existingModels.emplace_back(modelManager.timeSeries.at(largestImpacts.at(i).second.first));
@@ -243,7 +243,7 @@ void BudgetManager::lowerErrorBounds(){
 
 }
 
-void BudgetManager::lowerErrorBounds(int locID){
+void BudgetManager::decreaseErrorBounds(int locID){
 
     modelManager.forceModelFlush(locID);
 
@@ -263,6 +263,17 @@ void BudgetManager::selectAdjustedModels(){
         //Get finished models
         std::vector<SelectedModel> &adjustedModels = adjustingModelManager.selectedModels.at(map.second);
         std::vector<SelectedModel> &originalModels =  modelManager.selectedModels.at(map.first);
+
+        //TESTINGS
+        int lengthAdj = 0;
+        int lengthOrg = 0;
+        for (auto &adj : adjustedModels){
+            lengthAdj += adj.length;
+        }
+        for (auto &org : originalModels){
+            lengthOrg += org.length;
+        }
+
         int adjustedModelStart = adjustedModels.front().startTime;
         int adjustedModelSize = 0;
         int originalModelSize = 0;

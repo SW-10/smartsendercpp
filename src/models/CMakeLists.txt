@@ -7,7 +7,6 @@ target_sources(smartsendercpp PRIVATE PMCMean.cpp)
 target_sources(smartsendercpp PRIVATE Swing.h)
 target_sources(smartsendercpp PRIVATE Swing.cpp)
 
-target_sources(smartsendercpp PRIVATE VectorBased.h)
-target_sources(smartsendercpp PRIVATE VectorBased.cpp)
+
 
 

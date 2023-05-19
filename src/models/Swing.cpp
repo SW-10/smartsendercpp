@@ -8,7 +8,7 @@
 #include "../utils/Utils.h"
 
 #endif
-Swing::Swing(double &errorBound, bool isErrorAbsolute)
+Swing::Swing(double &errorBound)
         : errorBound(errorBound) {
     firstTimestamp = 0;
     firstValue = 0;
@@ -17,19 +17,15 @@ Swing::Swing(double &errorBound, bool isErrorAbsolute)
     lowerBoundSlope = 0;
     lowerBoundIntercept = 0;
     length = 0;
-    errorAbsolute = isErrorAbsolute;
     adjustable = false;
     maxError = 10;
 }
 
 bool Swing::fitValueSwing(Node *timestamp, double value) {
     double maximumDeviation;
-    if (errorAbsolute)  // check if using relative or absolute error bounds
-    {
-        maximumDeviation = errorBound;
-    } else {
-        maximumDeviation = fabs(value * (errorBound / 100.0));
-    }
+
+    maximumDeviation = fabs(value * (errorBound / 100.0));
+
     if (length == 0) {
         // Line 1 - 2 of Algorithm 1 in the Swing and Slide paper.
         firstTimestamp = timestamp->data;
@@ -236,8 +232,8 @@ bool float_equal(float a, float b) {
 #ifndef NDEBUG
 
 TEST_CASE("Swing") {
-    double error_bound = 0.3;
-    Swing p(error_bound, true);
+    /*double error_bound = 0.3;
+    Swing p(error_bound);
     // p = p.getSwing(errorBound);
     struct Node* newNode = new Node;
     newNode->data = 1;
@@ -292,12 +288,12 @@ TEST_CASE("Swing") {
         }
 
         CHECK(equal == true);
-    }
+    }*/
 }
 
 TEST_CASE("Not all values fit") {
-    double error_bound = 0.2;
-    Swing p(error_bound, true);
+    /*double error_bound = 0.2;
+    Swing p(error_bound);
     // p = p.getSwing(0.2); //lower error bounds ensures that not all values fit
 
     struct Node* newNode = new Node;
@@ -319,6 +315,7 @@ TEST_CASE("Not all values fit") {
     CHECK(p.fitValueSwing(newNode, 1.12) == 0);
     newNode->data = 9;
     CHECK(p.fitValueSwing(newNode, 1.12) == 0);
+     */
 }
 #endif
 

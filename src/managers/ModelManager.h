@@ -41,14 +41,13 @@ struct TimeSeriesModelContainer {
 
     TimeSeriesModelContainer(columns &timeSeries, int localId, bool adjustable);
 
-    TimeSeriesModelContainer(double errorBound, bool errorAbsolute, int localId, int globalId, bool adjustable);
+    TimeSeriesModelContainer(double errorBound, int localId, int globalId, bool adjustable);
 
     const double errorBound;
     int localId;
     int globalId;
     int startTimestamp;
     Status status;
-    bool errorAbsolute;
     Gorilla gorilla;
     PmcMean pmcMean;
     Swing swing;
@@ -83,7 +82,7 @@ public:
 
     static bool shouldConstructModel(TimeSeriesModelContainer &container);
 
-    bool calculateFlushTimestamp();
+    Node * calculateFlushTimestamp();
 
     void forceModelFlush(int localId);
 

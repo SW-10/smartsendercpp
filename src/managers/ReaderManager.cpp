@@ -18,7 +18,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
           modelManager(configManager.timeseriesCols,
                        timestampManager),
                        budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp),
-          outlierDetector(4.0, configManager.timeseriesCols.size()) {
+          outlierDetector(configManager) {
     timekeeper.Attach(this);
     timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
@@ -52,7 +52,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 float value = std::stof(*in);
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
                   //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
-                  this->budgetManager.lowerErrorBounds(i);
+                    this->budgetManager.decreaseErrorBounds(i);
                   this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
@@ -82,7 +82,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
     };
 
     // Handle position columns
-    if (configManager.containsPosition) {
+    /*if (configManager.containsPosition) {
         auto latCol = &configManager.latCol;
         auto longCol = &configManager.longCol;
 
@@ -116,7 +116,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             }
             return CompressionType::POSITION;
         };
-    }
+    }*/
 }
 
 // Overwritten function in the observer pattern
@@ -174,14 +174,31 @@ void ReaderManager::runCompressor() {
             count++;
             // TODO: Adjust penalty dynamically
             if ((lastTimestampFlush + timestampFlusherPenalty) == lineNumber){
-//                lastTimestampFlush = lineNumber;
-//                bool didFlush = modelManager.calculateFlushTimestamp();
-//                if (didFlush){
-//                    timestampFlusherPenalty -= 5;
-//                }
-//                else {
-//                    timestampFlusherPenalty +=5;
-//                }
+                lastTimestampFlush = lineNumber;
+                Node* latestUsedOriginal = modelManager.calculateFlushTimestamp();
+                Node* latestUsedAdjustable = budgetManager.adjustingModelManager.calculateFlushTimestamp();
+                bool didFlush = false;
+                if (latestUsedOriginal != nullptr && latestUsedAdjustable != nullptr){
+                    if (latestUsedOriginal->data < latestUsedAdjustable->data){
+                        didFlush = timestampManager.flushTimestamps(latestUsedOriginal);
+                    }
+                    else {
+                        didFlush = timestampManager.flushTimestamps(latestUsedAdjustable);
+                    }
+                }
+                else if(latestUsedAdjustable == nullptr && latestUsedOriginal != nullptr){
+                    didFlush = timestampManager.flushTimestamps(latestUsedOriginal);
+                }
+                else if (latestUsedAdjustable != nullptr){
+                    didFlush = timestampManager.flushTimestamps(latestUsedOriginal);
+                }
+
+                if (didFlush){
+                    timestampFlusherPenalty -= 5;
+                }
+                else {
+                    timestampFlusherPenalty +=5;
+                }
             }
         }
 

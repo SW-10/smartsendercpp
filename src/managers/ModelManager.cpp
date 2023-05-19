@@ -7,11 +7,9 @@
 #include "vector"
 
 TimeSeriesModelContainer::TimeSeriesModelContainer(double errorBound,
-                                                   bool errorAbsolute,
                                                    int localId, int globalId, bool adjustable)
-        : pmcMean(errorBound, errorAbsolute), swing(errorBound, errorAbsolute),
+        : pmcMean(errorBound), swing(errorBound),
         errorBound(errorBound){
-    this->errorAbsolute = errorAbsolute;
     this->localId = localId;
     this->globalId = globalId;
     this->startTimestamp = 0;
@@ -21,11 +19,10 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(double errorBound,
 
 TimeSeriesModelContainer::TimeSeriesModelContainer(columns &timeSeries, int localId,
                                                    bool adjustable)
-                                                   : pmcMean(timeSeries.error, timeSeries.isAbsolute),
-                                                   swing(timeSeries.error, timeSeries.isAbsolute),
+                                                   : pmcMean(timeSeries.error),
+                                                   swing(timeSeries.error),
                                                    errorBound(timeSeries.error)
 {
-    this->errorAbsolute = timeSeries.isAbsolute;
     this->localId = localId;
     this->globalId = timeSeries.col;
     this->startTimestamp = 0;
@@ -36,20 +33,19 @@ TimeSeriesModelContainer::TimeSeriesModelContainer(columns &timeSeries, int loca
 
 TimeSeriesModelContainer::TimeSeriesModelContainer(columnsExtra &timeSeries, int localId,
                                                    bool adjustable)
-        : pmcMean(timeSeries.error, timeSeries.isAbsolute), swing(timeSeries.errorSwing, timeSeries.isAbsolute),
-          errorBound(errorBound)
+        : pmcMean(timeSeries.error), swing(timeSeries.errorSwing),
+          errorBound(timeSeries.error)
                                                    {
-    this->errorAbsolute = timeSeries.isAbsolute;
     this->localId = localId;
     this->globalId = timeSeries.col;
     this->startTimestamp = 0;
     pmcMean.adjustable = adjustable;
     swing.adjustable = adjustable;
+    pmcMean.maxError = timeSeries.maxError;
+    swing.maxError = timeSeries.maxError;
 }
 
 TimeSeriesModelContainer &TimeSeriesModelContainer::operator=(const TimeSeriesModelContainer &instance){
-
-    errorAbsolute = instance.errorAbsolute;
     cachedValues = instance.cachedValues;
     startTimestamp = instance.startTimestamp;
     status = instance.status;
@@ -247,7 +243,6 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
         CachedValues currentCache = std::move(finishedSegment.cachedValues);
         // TODO: MAYBE MOVE
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
-                                                   finishedSegment.errorAbsolute,
                                                    finishedSegment.localId,
                                                    finishedSegment.globalId,
                                                    finishedSegment.pmcMean.adjustable && finishedSegment.swing.adjustable);
@@ -264,7 +259,6 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
         }
     } else {
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
-                                                   finishedSegment.errorAbsolute,
                                                    finishedSegment.localId,
                                                    finishedSegment.globalId,
                                                    finishedSegment.pmcMean.adjustable && finishedSegment.swing.adjustable);
@@ -273,7 +267,7 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
 
 #pragma clang diagnostic pop
 
-bool ModelManager::calculateFlushTimestamp() {
+Node * ModelManager::calculateFlushTimestamp() {
     Node* earliestUsedTimestamp = nullptr;
     for (auto &container : timeSeries){
         if (!container.cachedValues.values.empty()){
@@ -282,7 +276,7 @@ bool ModelManager::calculateFlushTimestamp() {
             }
         }
     }
-    return earliestUsedTimestamp == nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
+    return earliestUsedTimestamp ;//== nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
 }
 
 void ModelManager::forceModelFlush(int localId) {
@@ -291,15 +285,15 @@ void ModelManager::forceModelFlush(int localId) {
 
 int ModelManager::getUnfinishedModelSize(int localId){
     auto unfinishedSegment = timeSeries.at(localId);
-    float pmcMeanSize = unfinishedSegment.pmcMean.getBytesPerValue();
-    float swingSize = unfinishedSegment.swing.getBytesPerValue();
-    float gorillaSize = unfinishedSegment.gorilla.getBytesPerValue();
+    float pmcMeanLength = unfinishedSegment.pmcMean.length;
+    float swingLength = unfinishedSegment.swing.length;
+    float gorillaLength = unfinishedSegment.gorilla.length;
     if (unfinishedSegment.pmcMean.length == 0){
         return 0;
     }
-    else if (pmcMeanSize <= swingSize && pmcMeanSize <= gorillaSize) {
+    else if (pmcMeanLength >= swingLength && pmcMeanLength >= gorillaLength) {
         return 1;
-    } else if (swingSize <= pmcMeanSize && swingSize <= gorillaSize) {
+    } else if (swingLength >= pmcMeanLength && swingLength >= gorillaLength) {
         return 3;
     } else {
         return unfinishedSegment.gorilla.compressedValues.bytes.size();

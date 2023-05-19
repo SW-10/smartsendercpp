@@ -16,7 +16,7 @@ public:
     float maxError;
     bool adjustable;
 
-    PmcMean(double &errorBound, bool errorAbsolute);
+    explicit PmcMean(double &errorBound);
 
     int fitValuePmc(float value);
 
@@ -27,7 +27,6 @@ public:
     PmcMean &operator=(const PmcMean &instance);
 
 private:
-    bool isErrorAbsolute;
 
     int isValueWithinErrorBound(float realValue, float approxValue) const;
 

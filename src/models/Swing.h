@@ -23,8 +23,7 @@ public:
     double lowerBoundIntercept;
     float maxError;
     bool adjustable;
-    bool errorAbsolute;
-    Swing(double &errorBound, bool isErrorAbsolute);
+    Swing(double &errorBound);
 
     bool fitValueSwing(Node *timestamp, double value);
 
