@@ -45,7 +45,6 @@ ConfigManager::ConfigManager(std::string &path) {
                 {"columns",    required_argument, 0, 'c'},
                 {"timestamps", required_argument, 0, 't'},
                 {"output",     required_argument, 0, 'o'},
-                {"text",       required_argument, 0, 'x'},
                 {"inputFile",  required_argument, 0, 'i'},
                 {"maxAge",     required_argument, 0, 'm'},
                 {"chunkSize",  required_argument, 0, 's'},
@@ -81,38 +80,17 @@ ConfigManager::ConfigManager(std::string &path) {
                 this->maxAge = atoi(optarg);
                 break;
             case 's':
-                if(optarg[strlen(optarg)-1] == '\r'){
-                    optarg[strlen(optarg)-1] = '\0';
-                }
-                if(optarg[0] == '\'' || optarg[0] == '\"'){
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
+                fixQuotation();
                 this->chunkSize = atoi(optarg);
                 break;
             case 'c':
                 //From documentation. Not sure what it does
-                if (digit_optind != 0 && digit_optind != this_option_optind)
-                    //printf("digits occur in two different argv-elements.\n");
-                    digit_optind = this_option_optind;
-
-                // Debug mode seems to add single quotation marks around the arguments.
-                // The following two if's remove those
-                if (optarg[0] == '\'' || optarg[0] == '\"') {
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
+                fixQuotation();
 
                 count = 0;
                 token = strtok(optarg, s);
                 while (token != NULL) {
-                    columnOrText(&count, token);
+                    handleColumns(&count, token);
                     token = strtok(NULL, s); // NULL is not a mistake!
                     count++;
                 }
@@ -125,33 +103,17 @@ ConfigManager::ConfigManager(std::string &path) {
                 totalNumberOfCols += (count / 3);
                 break;
             case 't':
-                if (optarg[0] == '\'' || optarg[0] == '\"') {
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
+                fixQuotation();
                 timestampCol = atoi(optarg) - 1;
                 totalNumberOfCols++;
                 break;
             case 'o':
                 //Future use for flight credentials
+                fixQuotation();
                 output = optarg;
-                outPutCsvFile = optarg;
-                outPutCsvFile += "/";
                 break;
             case 'i':
-                if(optarg[strlen(optarg)-1] == '\r'){
-                    optarg[strlen(optarg)-1] = '\0';
-                }
-                if(optarg[0] == '\'' || optarg[0] == '\"'){
-                    optarg = &optarg[1];
-                }
-                if (optarg[strlen(optarg) - 1] == '\'' ||
-                    optarg[strlen(optarg) - 1] == '\"') {
-                    optarg[strlen(optarg) - 1] = '\0';
-                }
+                fixQuotation();
                 this->inputFile = optarg;
                 break;
             default:
@@ -167,7 +129,7 @@ ConfigManager::ConfigManager(std::string &path) {
     }
 }
 
-void ConfigManager::columnOrText(const int *count, char *token) {
+void ConfigManager::handleColumns(const int *count, char *token) {
     // Handle arg here
     if (*count % 3 == 0) {
         numberOfCols++;

@@ -53,24 +53,14 @@ struct TimeSeriesModelContainer {
     Swing swing;
     CachedValues cachedValues;
 
-    //TimeSeriesModelContainer& operator= (const TimeSeriesModelContainer& t);
     TimeSeriesModelContainer &operator=(const TimeSeriesModelContainer &instance);
 };
 
-struct TextModelContainer {
-    int localId;
-    int globalId;
-    std::string text;
-    bool reCheck;
-
-    TextModelContainer(int localId, int globalId);
-};
 
 class ModelManager {
 public:
     explicit ModelManager(TimestampManager &timestampManager);
 
-//std::vector<SelectedModel> selectedModels;
     std::vector<std::vector<SelectedModel>> selectedModels;
     void fitSegment(int id, float value, Node *timestamp);
 
@@ -94,6 +84,7 @@ public:
 
     int getUnfinishedModelSize(int localId);
 
+    void resetModeManagerLower(std::vector<columnsExtra> timeSeriesConfig);
 private:
     TimestampManager &timestampManager;
 
@@ -109,6 +100,7 @@ private:
     void RefreshTimeSeries(T &timeSeriesConfig, bool adjustable = false);
 
     static void CleanAdjustedModels(TimeSeriesModelContainer &finishedSegment);
+
 
 
 };

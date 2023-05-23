@@ -17,15 +17,13 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         : configManager(configFile), timestampManager(configManager, timekeeper),
           modelManager(configManager.timeseriesCols,
                        timestampManager),
-                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge, &timekeeper.firstTimestamp),
+                       budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge),
           outlierDetector(configManager) {
     timekeeper.Attach(this);
     timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
             "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
             std::ios::in);
-
-    bothLatLongSeen = false;
 
     // Initialise all elements in the map
     for (int i = 0; i < configManager.totalNumberOfCols; i++) {
@@ -80,43 +78,6 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         timestampManager.compressTimestamps(std::stoi(*in));
         return CompressionType::TIMESTAMP;
     };
-
-    // Handle position columns
-    /*if (configManager.containsPosition) {
-        auto latCol = &configManager.latCol;
-        auto longCol = &configManager.longCol;
-
-        // Package lat and long into a pair instead of calling them separately.
-        std::get<0>(myMap[latCol->col]) = [this, latCol](
-                std::string *in, int &lineNum) {
-            if (bothLatLongSeen) { // Ensure that both lat and long are available before calling the function
-                bothLatLongSeen = false;
-            } else {
-                bothLatLongSeen = true;
-            }
-            if (!in->empty()) {
-                timestampManager.makeLocalOffsetList(lineNum,
-                                                     latCol->col); //c.col is the global ID
-                //timestampManager.deltaDeltaCompress(lineNum, latCol->col);
-
-            }
-            return CompressionType::POSITION;
-        };
-        std::get<0>(myMap[longCol->col]) = [this, longCol](
-                std::string *in, int &lineNum) {
-            if (bothLatLongSeen) { // Ensure that both lat and long are available before calling the function
-                bothLatLongSeen = false;
-            } else {
-                bothLatLongSeen = true;
-            }
-            if (!in->empty()) {
-                timestampManager.makeLocalOffsetList(lineNum,
-                                                     longCol->col); //c.col is the global ID
-                //timestampManager.deltaDeltaCompress(lineNum, longCol->col);
-            }
-            return CompressionType::POSITION;
-        };
-    }*/
 }
 
 // Overwritten function in the observer pattern

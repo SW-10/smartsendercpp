@@ -6,12 +6,11 @@
 
 
 BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configManager,
-                             TimestampManager &timestampManager, int &budget, int &maxAge, int *firstTimestampChunk) : modelManager(modelManager),
+                             TimestampManager &timestampManager, int &budget, int &maxAge) : modelManager(modelManager),
                              configManager(configManager), timestampManager(timestampManager),
                              budget(budget), maxAge(maxAge),
                              adjustingModelManager(timestampManager)
                              {
-    this->firstTimestampChunk = firstTimestampChunk;
     this->bytesLeft = budget;
     for (auto &_: configManager.timeseriesCols) {
         tsInformation.emplace_back(_.col);
@@ -21,13 +20,16 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     sizeOfModels += sizeof(float); // Size of error
     sizeOfModels += sizeof(int)*2; // size of start+end timestamp
     sizeOfModels += sizeof(int8_t)*2; // Size of model id, column id
+    numberAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
+    increasingError = false;
+    loweringError = false;
 }
 
 void BudgetManager::endOfChunkCalculations() {
     for(auto &container : modelManager.timeSeries){
 
         // Reset error bound to default error bound
-        configManager.timeseriesCols.at(container.localId).error = container.errorBound;
+        // configManager.timeseriesCols.at(container.localId).error = container.errorBound;
 
         if(timestampManager.timestampCurrent->data - container.startTimestamp > maxAge){
             modelManager.forceModelFlush(container.localId);
@@ -38,6 +40,8 @@ void BudgetManager::endOfChunkCalculations() {
         selectAdjustedModels();
         adjustableTimeSeriesConfig.clear();
         adjustableTimeSeries.clear();
+        loweringError = false;
+        increasingError = false;
     }
 
     int penaltySender = 0;
@@ -112,7 +116,6 @@ void BudgetManager::endOfChunkCalculations() {
         if(xIntercept < configManager.budgetLeftRegressionLength){
             if (slope > 0){
                 lowerErrorBounds();
-                // TODO lower error bounds
             }
             else if (slope < 0){
                 increaseErrorBounds();
@@ -121,7 +124,6 @@ void BudgetManager::endOfChunkCalculations() {
         if (xIntercept > configManager.budgetLeftRegressionLength + configManager.chunksToGoal){
             if (slope < 0) {
                 lowerErrorBounds();
-                // TODO: lower error bounds
             }
             else if (slope > 0) {
                 increaseErrorBounds();
@@ -165,6 +167,7 @@ void BudgetManager::cleanSpaceKeeper(){
 }
 
 void BudgetManager::increaseErrorBounds(){
+    increasingError = true;
     std::vector<std::pair<float, std::pair<int,int>>> largestImpacts;
     largestImpacts.reserve(tsInformation.size());
 
@@ -198,7 +201,7 @@ void BudgetManager::increaseErrorBounds(){
               [](std::pair<float, std::pair<int,int>> &left, std::pair<float, std::pair<int,int>> &right){
                   return left.first > right.first;
               });
-    int stop = std::min(10, static_cast<int>(largestImpacts.size()-1));
+    int stop = std::min(numberAdjustableTimeSeries, static_cast<int>(largestImpacts.size()-1));
     std::vector<TimeSeriesModelContainer> existingModels;
     existingModels.reserve(stop);
     for(int i = 0; i < stop; i++){
@@ -213,7 +216,7 @@ void BudgetManager::increaseErrorBounds(){
 }
 
 void BudgetManager::lowerErrorBounds(){
-
+    loweringError = true;
     std::vector<std::pair<float, std::pair<int,int>>> smalllestImpacts;
     smalllestImpacts.reserve(tsInformation.size());
 
@@ -233,13 +236,15 @@ void BudgetManager::lowerErrorBounds(){
 
         //Create config instance for adjusted modeManager
         int locID = smalllestImpacts.at(i).second.first;
-
-        modelManager.forceModelFlush(locID);
+        auto &config = configManager.timeseriesCols.at(smalllestImpacts.at(i).second.first);
+        adjustableTimeSeriesConfig.emplace_back(smalllestImpacts.at(i).second.second, 0, config.outlierThreshHold, config.maxError);
+        //modelManager.forceModelFlush(locID);
 
         // Set error bound to 0
-        configManager.timeseriesCols.at(locID).error = 0;
+        //configManager.timeseriesCols.at(locID).error = 0;
 
     }
+    adjustingModelManager.resetModeManagerLower(adjustableTimeSeriesConfig);
 
 }
 
@@ -254,84 +259,121 @@ void BudgetManager::decreaseErrorBounds(int locID){
 
 void BudgetManager::selectAdjustedModels(){
     std::cout << std::endl << "New Chunky" << std::endl;
-    std::vector<adjustedModelSelectionInfo> scores;
 
-    int toSave = configManager.bufferGoal - lastBudget.back();
-    scores.reserve(adjustableTimeSeries.size());
-    for (auto &map : adjustableTimeSeries){
-        adjustingModelManager.forceModelFlush(map.second);
-        //Get finished models
-        std::vector<SelectedModel> &adjustedModels = adjustingModelManager.selectedModels.at(map.second);
-        std::vector<SelectedModel> &originalModels =  modelManager.selectedModels.at(map.first);
+    if (increasingError){
+        std::vector<adjustedModelSelectionInfo> scores;
+        int toSave = configManager.bufferGoal - lastBudget.back();
+        scores.reserve(adjustableTimeSeries.size());
+        for (auto &map : adjustableTimeSeries){
+            adjustingModelManager.forceModelFlush(map.second);
+            //Get finished models
+            std::vector<SelectedModel> &adjustedModels = adjustingModelManager.selectedModels.at(map.second);
+            std::vector<SelectedModel> &originalModels =  modelManager.selectedModels.at(map.first);
 
-        //TESTINGS
-        int lengthAdj = 0;
-        int lengthOrg = 0;
-        for (auto &adj : adjustedModels){
-            lengthAdj += adj.length;
-        }
-        for (auto &org : originalModels){
-            lengthOrg += org.length;
-        }
-
-        int adjustedModelStart = adjustedModels.front().startTime;
-        int adjustedModelSize = 0;
-        int originalModelSize = 0;
-
-        int accumulatedError = 0;
-        int accumulatedLength = 0;
-
-        for(const SelectedModel& model: adjustedModels){
-            adjustedModelSize += sizeOfModels + model.values.size()*4;
-            accumulatedError += model.error * model.length;
-            accumulatedLength += model.length;
-        }
-        int weightedAverageError = accumulatedError / accumulatedLength;
-
-        //Get size of original models - But only those which are on the same chunk as adjusted models
-        for(const SelectedModel& model: originalModels){
-            if (model.startTime >= adjustedModelStart){
-                originalModelSize += sizeOfModels + model.values.size()*4;
+            //TESTINGS
+            int lengthAdj = 0;
+            int lengthOrg = 0;
+            for (auto &adj : adjustedModels){
+                lengthAdj += adj.length;
             }
-        }
+            for (auto &org : originalModels){
+                lengthOrg += org.length;
+            }
 
-        //Get size of last unfinished original model
-        int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
-        if (sizeUnfinishedModel != 0){
-            originalModelSize += sizeOfModels + sizeUnfinishedModel*4;
-        }
+            int adjustedModelStart = adjustedModels.front().startTime;
+            int adjustedModelSize = 0;
+            int originalModelSize = 0;
 
-        //Calculate saved bytes by adjusting error bound
-        int saved = originalModelSize - adjustedModelSize;
-        if (saved > 0){
-            //emplace score
-            scores.emplace_back(map.first,static_cast<float>(saved) / weightedAverageError, saved, adjustedModelStart);
-        }
-    }
-    //Sort by score
-    std::sort(scores.begin(), scores.end(),
-              [](auto &left, auto &right){
-                  return left.score > right.score;
-              });
-    if (scores.size() > 0){
-        for(int i = 0; toSave > 0 && i < scores.size()-1; i++){
-            auto scoreEntry = scores.at(i);
-            toSave -= scoreEntry.saved;
-            //Flush model of original modelManager
-            modelManager.forceModelFlush(scoreEntry.localId);
-            //Set original models in same time series not to be sent - but only those in same chunk as adjusted models
-            //They are not deleted at they still are needed to calculate storage impact
-            for (auto &originalModel: modelManager.selectedModels.at(scoreEntry.localId)){
-                if (originalModel.startTime >= scoreEntry.adjustmentStart){
-                    originalModel.send = false;
+            int accumulatedError = 0;
+            int accumulatedLength = 0;
+
+            for(const SelectedModel& model: adjustedModels){
+                adjustedModelSize += sizeOfModels + model.values.size()*4;
+                accumulatedError += model.error * model.length;
+                accumulatedLength += model.length;
+            }
+            int weightedAverageError = accumulatedError / accumulatedLength;
+
+            //Get size of original models - But only those which are on the same chunk as adjusted models
+            for(const SelectedModel& model: originalModels){
+                if (model.startTime >= adjustedModelStart){
+                    originalModelSize += sizeOfModels + model.values.size()*4;
                 }
             }
-            //Append adjusted models til vector, which should be sent
-            modelManager.selectedModels.at(scoreEntry.localId).insert(modelManager.selectedModels.at(scoreEntry.localId).end(),
-                                                                      adjustingModelManager.selectedModels.at(adjustableTimeSeries[scoreEntry.localId]).begin(),
-                                                                      adjustingModelManager.selectedModels.at(adjustableTimeSeries[scoreEntry.localId]).end());
+
+            //Get size of last unfinished original model
+            int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
+            if (sizeUnfinishedModel != 0){
+                originalModelSize += sizeOfModels + sizeUnfinishedModel*4;
+            }
+
+            //Calculate saved bytes by adjusting error bound
+            int saved = originalModelSize - adjustedModelSize;
+            if (saved > 0){
+                //emplace score
+                scores.emplace_back(map.first,static_cast<float>(saved) / weightedAverageError, saved, adjustedModelStart);
+            }
+        }
+        //Sort by score
+        std::sort(scores.begin(), scores.end(),
+                  [](auto &left, auto &right){
+                      return left.score > right.score;
+                  });
+        if (scores.size() > 0){
+            int i;
+            for(i = 0; toSave > 0 && i < scores.size(); i++){
+                auto scoreEntry = scores.at(i);
+                toSave -= scoreEntry.saved;
+                //Flush model of original modelManager
+                modelManager.forceModelFlush(scoreEntry.localId);
+                //Set original models in same time series not to be sent - but only those in same chunk as adjusted models
+                //They are not deleted at they still are needed to calculate storage impact
+                for (auto &originalModel: modelManager.selectedModels.at(scoreEntry.localId)){
+                    if (originalModel.startTime >= scoreEntry.adjustmentStart){
+                        originalModel.send = false;
+                    }
+                }
+                //Append adjusted models til vector, which should be sent
+                modelManager.selectedModels.at(scoreEntry.localId).insert(modelManager.selectedModels.at(scoreEntry.localId).end(),
+                                                                          adjustingModelManager.selectedModels.at(adjustableTimeSeries[scoreEntry.localId]).begin(),
+                                                                          adjustingModelManager.selectedModels.at(adjustableTimeSeries[scoreEntry.localId]).end());
+            }
+            if (toSave > 0){
+                numberAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), numberAdjustableTimeSeries + 1);
+            }
+            else if(i != scores.size()){
+                numberAdjustableTimeSeries = std::max(numberAdjustableTimeSeries -1, 1);
+            }
         }
     }
+    else if (loweringError){
+        int toFill = lastBudget.back() - configManager.bufferGoal;
+        for (auto &map : adjustableTimeSeries){
+            adjustingModelManager.forceModelFlush(map.second);
+            std::vector<SelectedModel> &adjustedModels = adjustingModelManager.selectedModels.at(map.second);
+            std::vector<SelectedModel> &originalModels =  modelManager.selectedModels.at(map.first);
+            int adjustedModelStart = adjustedModels.front().startTime;
+            int adjustedModelSize = 0;
+            int originalModelSize = 0;
+            for(const SelectedModel& model: adjustedModels){
+                adjustedModelSize += sizeOfModels + model.values.size()*4;
+            }
+            //Get size of original models - But only those which are on the same chunk as adjusted models
+            for(const SelectedModel& model: originalModels){
+                if (model.startTime >= adjustedModelStart){
+                    originalModelSize += sizeOfModels + model.values.size()*4;
+                }
+            }
+
+            //Get size of last unfinished original model
+            int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
+            if (sizeUnfinishedModel != 0){
+                originalModelSize += sizeOfModels + sizeUnfinishedModel*4;
+            }
+
+        }
+    }
+
 }
 
 void BudgetManager::WriteBitToCSV(){

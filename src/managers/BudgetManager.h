@@ -23,7 +23,7 @@ struct adjustedModelSelectionInfo {
 class BudgetManager {
 public:
     BudgetManager(ModelManager &modelManager, ConfigManager &configManager, TimestampManager &timestampManager,
-                  int &budget, int &maxAge, int *firstTimestampChunk);
+                  int &budget, int &maxAge);
 
     void endOfChunkCalculations();
     void lowerErrorBounds();
@@ -41,22 +41,17 @@ private:
     std::vector<columnsExtra> adjustableTimeSeriesConfig;
     int &budget;
     int bytesLeft;
+    bool loweringError;
+    bool increasingError;
     int &maxAge;
-    int *firstTimestampChunk;
     std::vector<int> lastBudget;
-    int temp = 0;
-    int tempg = 0;
-    int modelspace = 0;
-    void errorBoundAdjuster();
-    //std::vector<std::pair<float ,std::vector<std::pair<int, float>>>> storageImpact;
     std::vector<timeSeriesInformation> tsInformation;
     int sizeOfModels;
+    int numberAdjustableTimeSeries;
 
     void spaceKeeperEmplace(std::pair<int, float> size, int index);
 
     void increaseErrorBounds();
-
-
 
     void cleanSpaceKeeper();
 

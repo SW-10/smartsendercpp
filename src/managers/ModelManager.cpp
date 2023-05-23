@@ -93,6 +93,12 @@ void ModelManager::fitSegment(int id, float value, Node *timestamp) {
 
 ModelManager::ModelManager(TimestampManager &timestampManager) : timestampManager(timestampManager) { }
 
+void ModelManager::resetModeManagerLower(std::vector<columnsExtra> timeSeriesConfig){
+    selectedModels.clear();
+    timeSeries.clear();
+    RefreshTimeSeries(timeSeriesConfig, false);
+}
+
 void ModelManager::resetModelManager(std::vector<columnsExtra> &timeSeriesConfig,
                                      std::vector<TimeSeriesModelContainer>&& existingModels) {
     selectedModels.clear();
@@ -103,7 +109,6 @@ void ModelManager::resetModelManager(std::vector<columnsExtra> &timeSeriesConfig
 //        timeSeries.at(i) = std::move(existingModels.at(0));
 //        existingModels.erase(existingModels.begin());
 //    }
-    int e = 0;
 }
 
 template <class T>
@@ -300,11 +305,6 @@ int ModelManager::getUnfinishedModelSize(int localId){
     }
 }
 
-TextModelContainer::TextModelContainer(int localId, int globalId) {
-    this->localId = localId;
-    this->globalId = globalId;
-    this->reCheck = true;
-}
 
 /*TEST_CASE("Same values return 1"){
 

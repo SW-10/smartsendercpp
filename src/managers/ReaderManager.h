@@ -33,10 +33,9 @@ public:
 private:
     BudgetManager budgetManager;
     enum class CompressionType : int {
-        TEXT, VALUES, TIMESTAMP, POSITION, NONE
+        VALUES, TIMESTAMP, NONE
     };
     std::fstream csvFileStream;
-    bool bothLatLongSeen;
     std::unordered_map<
             int, // key
             std::tuple<

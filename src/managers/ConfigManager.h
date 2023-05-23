@@ -37,12 +37,10 @@ public:
     explicit ConfigManager(std::string &path);
 
 private:
-    int number_of_text_cols = 0;
-    std::string outPutCsvFile;
 
     char *output;
 
-    void columnOrText(const int *count, char *token);
+    void handleColumns(const int *count, char *token);
 
     void fixQuotation();
 };

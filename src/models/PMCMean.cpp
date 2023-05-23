@@ -66,8 +66,9 @@ int PmcMean::equalOrNanPmc(float v1, float v2) {
 
 std::vector<float> PmcMean::gridPmcMean(float value, int timestampCount) {
     std::vector<float> result;
+    result.reserve(timestampCount);
     for (int i = 0; i < timestampCount; i++) {
-        result.push_back(value);
+            result.push_back(value);
     }
 
     return result;
@@ -88,8 +89,36 @@ PmcMean &PmcMean::operator=(const PmcMean &instance) {
 #ifndef NDEBUG
 
 TEST_CASE("All values fit") {
-    double error = 0.5;
+    double error = 5;
     PmcMean p(error);
+
+
+    p.fitValuePmc(18);
+    p.fitValuePmc(19);
+    p.fitValuePmc(19);
+    p.fitValuePmc(19);
+    p.fitValuePmc(19);
+
+    CHECK(p.error == 5);
+    CHECK(p.length == 5);
+    CHECK(p.maxValue == 19.f);
+    CHECK(p.minValue == 18.f);
+    CHECK(p.sumOfValues == 94);
+
+    p.fitValuePmc(18.2);
+    p.fitValuePmc(19);
+    p.fitValuePmc(19.1);
+    p.fitValuePmc(18.5);
+
+    CHECK(p.error == 5);
+    CHECK(p.length == 9);
+    CHECK(p.maxValue == 19.1f);
+    CHECK(p.minValue == 18.0f);
+    CHECK(p.sumOfValues == 168.8f);
+
+
+
+
 /*    p.fitValuePmc(1.0);
     p.fitValuePmc(1.3);
     p.fitValuePmc(1.24);
@@ -121,20 +150,26 @@ TEST_CASE("All values fit") {
 #pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
 
 TEST_CASE("Not all values fit") {
-    /*double error = 0.2;
+    double error = 5;
     PmcMean p(error);
 
-    CHECK(p.fitValuePmc(1.0) == 1);
-    CHECK(p.fitValuePmc(1.3) == 1);
-    CHECK(p.fitValuePmc(1.24) == 1);
-    CHECK(p.fitValuePmc(1.045) == 1);
-    CHECK(p.fitValuePmc(0.9) == 0);
-    CHECK(p.fitValuePmc(1.54) == 0);
-    CHECK(p.fitValuePmc(1.45) == 0);
-    CHECK(p.fitValuePmc(1.12) == 1);
-    CHECK(p.fitValuePmc(1.12) == 1);
-      */
-     }
+    CHECK(p.fitValuePmc(1.0) == true);
+    CHECK(p.fitValuePmc(1.3) == false);
+
+}
+
+TEST_CASE("Unlocked errors fit") {
+    double error = 5;
+    PmcMean p(error);
+    p.maxError = 10;
+    p.adjustable = true;
+
+    p.fitValuePmc(10);
+    CHECK(p.error == 5);
+    p.fitValuePmc(11.5);
+    CHECK(std::fabs(p.error - 7.5) < 0.01);
+    CHECK(p.length == 2);
+}
 
 
 #pragma clang diagnostic pop
