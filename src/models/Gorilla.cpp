@@ -154,6 +154,55 @@ Gorilla::gridGorilla(std::vector<uint8_t> values, int valuesCount,
     return result;
 }
 
+std::vector<uint8_t> Gorilla::getNFirstValuesBitstring(int N, std::vector<uint8_t> bytes) {
+
+    int count = 0;
+    BitVecBuilder result;
+    BitReader bitReader(bytes, bytes.size());
+    int leadingZeros = 255;
+    int trailingZeros = 0;
+    uint32_t lastValue = readBits(&bitReader, VALUE_SIZE_IN_BITS);
+    appendBits(&result, lastValue, VALUE_SIZE_IN_BITS);
+    for (int i = 0; i < N-1; i++) {
+        if (readBit(&bitReader)) {
+            appendAOneBit(&result);
+            if (readBit(&bitReader)) {
+                appendAOneBit(&result);
+
+                leadingZeros = readBits(&bitReader, 5);
+                appendBits(&result, leadingZeros, 5);
+                uint8_t meaningfulBits = readBits(&bitReader, 6);
+                appendBits(&result, meaningfulBits, 6);
+                if (meaningfulBits == 63) {
+                    for (int j = 0; j < bytes.size(); j++) {
+                        printf("ERROR %d,", bytes.at(j));
+                    }
+                }
+                trailingZeros =
+                        VALUE_SIZE_IN_BITS - meaningfulBits - leadingZeros;
+            } else {
+                appendAZeroBit(&result);
+            }
+
+            uint8_t meaningfulBits =
+                    VALUE_SIZE_IN_BITS - leadingZeros - trailingZeros;
+            uint32_t value = readBits(&bitReader, meaningfulBits);
+            appendBits(&result, value, meaningfulBits);
+
+
+            value <<= trailingZeros;
+            value ^= lastValue;
+            lastValue = value;
+        } else {
+            appendAZeroBit(&result);
+        }
+    }
+
+    result.bytes.push_back(result.currentByte);
+
+    return result.bytes;
+}
+
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Woverloaded-shift-op-parentheses"
@@ -198,6 +247,21 @@ TEST_CASE("GORILLA TESTS") {
                 equal = false;
             }
         }
+        CHECK(equal == true);
+    }
+    SUBCASE("getNFirstValuesBitstring") {
+        bool equal = true;
+        for(int N = 1; N < values.size(); N++){
+            auto res = g.getNFirstValuesBitstring(N, original);
+            auto decompressed = g.gridGorilla(res, res.size(), N);
+            for (int i = 0; i < N; i++) {
+                if (std::fabs(values[i] - decompressed[i]) >
+                    0.00001) { //there might be some float inaccuracy
+                    equal = false;
+                }
+            }
+        }
+
         CHECK(equal == true);
     }
 }

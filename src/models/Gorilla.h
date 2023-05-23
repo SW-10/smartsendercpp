@@ -28,6 +28,8 @@ public:
     gridGorilla(std::vector<uint8_t> values, int valuesCount,
                 int timestampCount);
 
+    static std::vector<uint8_t> getNFirstValuesBitstring(int N, std::vector<uint8_t> bytes);
+
 private:
     float lastValue;
 
