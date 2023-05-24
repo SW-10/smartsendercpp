@@ -1,6 +1,7 @@
 #include <numeric>
 #include <cmath>
 #include <fstream>
+#include <cstdint>
 #include "BudgetManager.h"
 #include "../models/Gorilla.h"
 #include "../utils/Huffman.h"
@@ -76,9 +77,27 @@ void BudgetManager::endOfChunkCalculations() {
             }
         }
         if (flushAll){
+            #ifndef NDEBUG
+            for(auto const &s : selected){
+                if(s.send){
+                    modelSizeTotal += sizeOfModels;
+                    modelSizeTotal += s.values.size();
+                }
+            }
+            writeModelsToCsv(selected);
+            #endif
             selected.clear();
         }
         else if(toFlush > 0){
+            #ifndef NDEBUG
+            for(int j = 0; j <= i; j++){
+                if(selected.at(j).send){
+                    modelSizeTotal += sizeOfModels;
+                    modelSizeTotal += selected.at(j).values.size();
+                }
+            }
+            writeModelsToCsv(selected);
+            #endif
             selected.erase(selected.begin(), selected.begin()+i);
         }
     }
@@ -89,8 +108,10 @@ void BudgetManager::endOfChunkCalculations() {
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
 
+        #ifndef NDEBUG
         // CALC SIZE OF HUFFMAN
         huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+        #endif
         timestampManager.localOffsetListToSend.clear();
     }
     if(!timestampManager.globalOffsetListToSend.empty()){
@@ -98,8 +119,10 @@ void BudgetManager::endOfChunkCalculations() {
         huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
         huffmanGOL.encodeTree();
 
+        #ifndef NDEBUG
         // CALC SIZE OF HUFFMAN
         huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
+        #endif
         timestampManager.globalOffsetListToSend.clear();
     }
 
@@ -137,7 +160,6 @@ void BudgetManager::endOfChunkCalculations() {
         }
     }
     bytesLeft += budget;
-    WriteBitToCSV();
 
 }
 
@@ -421,14 +443,26 @@ void BudgetManager::selectAdjustedModels(){
 
 }
 
-void BudgetManager::WriteBitToCSV(){
-//    std::ofstream myfile;
-//    myfile.open ("example.csv", std::ios_base::app);
-//    for (const auto& instance : tsInformation){
-//        myfile << instance.byteRate << ",";
-//    }
-//    myfile << "\n";
-//    myfile.close();
+void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models){
+    std::ofstream myfile;
+    myfile.open ("../models.csv", std::ios_base::app);
+    for (const auto& model : models){
+        int mid = static_cast<int>(model.mid);
+        int cid = static_cast<int>(model.cid);
+
+        myfile <<
+        model.startTime << "," <<
+        model.endTime   << "," <<
+        model.length    << "," <<
+        mid        << "," <<
+        cid       << ",";
+
+        for(const auto val : model.values){
+            myfile << (int)(val) << "-";
+        }
+        myfile << std::endl;
+    }
+    myfile.close();
 }
 
 timeSeriesInformation::timeSeriesInformation(int8_t globalId) {

@@ -42,6 +42,11 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         outlierDetector.m2.push_back(0.0);
         std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
                                                   int &lineNum) {
+
+            #ifndef NDEBUG
+            datasetTotalSize += sizeof(float) + sizeof(int); // float = value, int = timestamp
+            #endif
+
             if (!in->empty()) {
                 if(this->budgetManager.outlierCooldown[i] > 0){
                     this->budgetManager.outlierCooldown[i]--;
@@ -178,7 +183,15 @@ void ReaderManager::runCompressor() {
     std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
     std::cout << "size of int: " << sizeof(int) << std::endl;
 
+
+
+
+#ifndef NDEBUG
     std::cout << "HUFFMAN TOTAL SIZE: " << budgetManager.huffmanSizeTotal <<  " bytes" << std::endl;
+    std::cout << "MODEL   TOTAL SIZE: " << budgetManager.modelSizeTotal   <<  " bytes" << std::endl;
+    std::cout << "DATASET TOTAL SIZE: " << datasetTotalSize   <<  " bytes" << std::endl;
+#endif
+
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
     //timestampManager.reconstructDeltaDelta();
 
@@ -206,6 +219,17 @@ void ReaderManager::finaliseCompression() {
     for(int i = 0; i < configManager.timeseriesCols.size(); i++){
         modelManager.forceModelFlush(i);
     }
+
+    for(auto const  &selected : modelManager.selectedModels){
+        for(auto const &s : selected){
+            if(s.send){
+                budgetManager.modelSizeTotal += budgetManager.sizeOfModels;
+                budgetManager.modelSizeTotal += s.values.size();
+            }
+        }
+    }
+
+
     timestampManager.flushTimestamps(timestampManager.timestampCurrent);
 
     if (!timestampManager.localOffsetListToSend.empty()){

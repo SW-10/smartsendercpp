@@ -48,5 +48,8 @@ private:
     void finaliseCompression();
     void Update(const std::string &message_from_subject) override;
     bool newInterval = false;
+    #ifndef NDEBUG
+    int datasetTotalSize = 0;
+    #endif
 
 };

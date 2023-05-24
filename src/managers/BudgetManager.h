@@ -33,7 +33,12 @@ public:
 
     std::map<int,int> outlierCooldown;
     const int cooldown = 10;
+    int sizeOfModels;
+
+
+    // ======== Variables for evaluation ========
     int huffmanSizeTotal = 0;
+    int modelSizeTotal = 0;
 private:
     ModelManager &modelManager;
 
@@ -52,7 +57,6 @@ private:
     std::vector<timeSeriesInformation> tsInformation;
     std::unordered_map<int, std::pair<int, int>> lowerModelLength;
     int lowerErrorBoundEndTimestamp;
-    int sizeOfModels;
     int numberIncreasingAdjustableTimeSeries;
     int numberDecreasingAdjustableTimeSeries;
 
@@ -62,7 +66,7 @@ private:
 
     void cleanSpaceKeeper();
 
-    void WriteBitToCSV();
+    static void writeModelsToCsv(std::vector<SelectedModel> models);
 
     void errorBoundStats(double error, int index);
 
