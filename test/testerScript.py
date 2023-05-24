@@ -64,7 +64,7 @@ config = Config()
 config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
 
 # Set columns with their error bounds and type
-config.set_columns(range(2, 63), (5, 10), 4.0)
+config.set_columns(range(2, 62), (5, 10), 4.0)
 
 # Define permutations
 params_dict = {
