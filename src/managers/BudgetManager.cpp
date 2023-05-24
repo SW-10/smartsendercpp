@@ -384,9 +384,9 @@ void BudgetManager::selectAdjustedModels(){
                     int iter = i;
                     int cutOffLength = 0;
                     while (IterModel.startTime != lowerModelLength[map.first].second){
-                        i--;
+                        iter--;
                         cutOffLength += IterModel.length;
-                        IterModel = originalModels.at(i);
+                        IterModel = originalModels.at(iter);
                     }
                     auto &model = originalModels.at(i);
                     model.endTime = lowerErrorBoundEndTimestamp;

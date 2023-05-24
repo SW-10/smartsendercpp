@@ -14,8 +14,8 @@ class Config:
         self.bufferGoal = "2000"
         self.budgetLeftRegressionLength = "10"
         self.chunksToGoal = "10"
-        self.cpp_program_path = "<path_to_your_cpp_program>"
-        self.config_file_path = "moby.cfg"
+        self.cpp_program_path = "C:\\Users\\power\\CLionProjects\\smartsendercpp\\cmake-build-release\\smartsendercpp.exe"
+        self.config_file_path = "../moby.cfg"
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -61,7 +61,7 @@ class Config:
 # Initialize configuration
 config = Config()
 
-config.cpp_program_path = "cmake-build-release/smartsendercpp.exe"
+config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
 
 # Set columns with their error bounds and type
 config.set_columns(range(2, 63), (5, 10), 4.0)
