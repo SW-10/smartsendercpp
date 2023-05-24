@@ -88,15 +88,18 @@ void BudgetManager::endOfChunkCalculations() {
         Huffman huffmanLOL;
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
-        //Temp Used for testing
-        //temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+
+        // CALC SIZE OF HUFFMAN
+        huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
         timestampManager.localOffsetListToSend.clear();
     }
     if(!timestampManager.globalOffsetListToSend.empty()){
-        Huffman huffmanLOL;
-        huffmanLOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
-        huffmanLOL.encodeTree();
-        //tempg += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+        Huffman huffmanGOL;
+        huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
+        huffmanGOL.encodeTree();
+
+        // CALC SIZE OF HUFFMAN
+        huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
         timestampManager.globalOffsetListToSend.clear();
     }
 

@@ -33,6 +33,7 @@ public:
 
     std::map<int,int> outlierCooldown;
     const int cooldown = 10;
+    int huffmanSizeTotal = 0;
 private:
     ModelManager &modelManager;
 
@@ -45,6 +46,9 @@ private:
     bool increasingError;
     int &maxAge;
     std::vector<int> lastBudget;
+    int temp = 0;
+    int modelspace = 0;
+    //std::vector<std::pair<float ,std::vector<std::pair<int, float>>>> storageImpact;
     std::vector<timeSeriesInformation> tsInformation;
     std::unordered_map<int, std::pair<int, int>> lowerModelLength;
     int lowerErrorBoundEndTimestamp;

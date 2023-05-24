@@ -165,6 +165,9 @@ void ReaderManager::runCompressor() {
 
         lineNumber++;
     }
+
+    finaliseCompression();
+
     this->csvFileStream.close();
     //timestampManager.finishDeltaDelta();
     std::cout << "Size of local offset list: " << timestampManager.getSizeOfLocalOffsetList() * sizeof(int) << " bytes" << std::endl;
@@ -175,7 +178,7 @@ void ReaderManager::runCompressor() {
     std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
     std::cout << "size of int: " << sizeof(int) << std::endl;
 
-
+    std::cout << "HUFFMAN TOTAL SIZE: " << budgetManager.huffmanSizeTotal <<  " bytes" << std::endl;
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
     //timestampManager.reconstructDeltaDelta();
 
@@ -197,4 +200,30 @@ void ReaderManager::runCompressor() {
         exit(1);
     }
     #endif
+}
+
+void ReaderManager::finaliseCompression() {
+    for(int i = 0; i < configManager.timeseriesCols.size(); i++){
+        modelManager.forceModelFlush(i);
+    }
+    timestampManager.flushTimestamps(timestampManager.timestampCurrent);
+
+    if (!timestampManager.localOffsetListToSend.empty()){
+        Huffman huffmanLOL;
+        huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
+        huffmanLOL.encodeTree();
+
+        // CALC SIZE OF HUFFMAN
+        budgetManager.huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+        timestampManager.localOffsetListToSend.clear();
+    }
+    if(!timestampManager.globalOffsetListToSend.empty()){
+        Huffman huffmanGOL;
+        huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
+        huffmanGOL.encodeTree();
+
+        // CALC SIZE OF HUFFMAN
+        budgetManager.huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
+        timestampManager.globalOffsetListToSend.clear();
+    }
 }

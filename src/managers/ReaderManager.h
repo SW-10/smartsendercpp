@@ -45,6 +45,7 @@ private:
             > // value (function, compressionType, count)
     > myMap;
 
+    void finaliseCompression();
     void Update(const std::string &message_from_subject) override;
     bool newInterval = false;
 
