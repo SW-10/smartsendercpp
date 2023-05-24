@@ -30,9 +30,7 @@ struct SelectedModel{
     int8_t cid;
     int8_t localId;
     bool send = true;
-    std::vector<float> values;
-
-
+    std::vector<uint8_t> values;
 };
 
 struct TimeSeriesModelContainer {
@@ -55,6 +53,7 @@ struct TimeSeriesModelContainer {
 
     TimeSeriesModelContainer &operator=(const TimeSeriesModelContainer &instance);
 };
+
 
 
 class ModelManager {
@@ -86,6 +85,12 @@ public:
 
     void resetModeManagerLower(std::vector<columnsExtra> timeSeriesConfig);
 private:
+
+    union FloatToUint8 {
+        float inputFloat;
+        uint8_t outputUint8[4];
+    };
+
     TimestampManager &timestampManager;
 
     static bool shouldCacheData(TimeSeriesModelContainer &container);
@@ -101,6 +106,7 @@ private:
 
     static void CleanAdjustedModels(TimeSeriesModelContainer &finishedSegment);
 
+    static void convertFloatToUint8Array(std::vector<uint8_t> &modelValues, float value);
 
-
+    static void convertFloatsToUint8Array(std::vector<uint8_t> &modelValues, float startValue, float endValue);
 };

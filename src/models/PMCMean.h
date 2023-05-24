@@ -7,7 +7,7 @@
 
 class PmcMean {
 public:
-    size_t length;
+    int length;
     Node* lastTimestamp;
     double &error;
     float minValue;

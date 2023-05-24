@@ -16,7 +16,7 @@ public:
     uint8_t lastLeadingZeroBits;
     uint8_t lastTrailingZeroBits;
     BitVecBuilder compressedValues;
-    size_t length;
+    int length;
 
     Gorilla();
 

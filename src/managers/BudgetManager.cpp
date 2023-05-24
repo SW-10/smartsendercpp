@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include "BudgetManager.h"
+#include "../models/Gorilla.h"
 #include "../utils/Huffman.h"
 
 
@@ -20,7 +21,8 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     sizeOfModels += sizeof(float); // Size of error
     sizeOfModels += sizeof(int)*2; // size of start+end timestamp
     sizeOfModels += sizeof(int8_t)*2; // Size of model id, column id
-    numberAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
+    numberIncreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
+    numberDecreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
     increasingError = false;
     loweringError = false;
 }
@@ -40,6 +42,7 @@ void BudgetManager::endOfChunkCalculations() {
         selectAdjustedModels();
         adjustableTimeSeriesConfig.clear();
         adjustableTimeSeries.clear();
+        lowerModelLength.clear();
         loweringError = false;
         increasingError = false;
     }
@@ -50,7 +53,7 @@ void BudgetManager::endOfChunkCalculations() {
         int i;
         int toFlush = 0;
         for(i = 0; i < selected.size(); i++){
-            int modelSize = sizeOfModels + selected.at(i).values.size()*4;
+            int modelSize = sizeOfModels + selected.at(i).values.size();
             if (!selected.at(i).send){
                 //TODO: Only flush non sending models when, corresponding adjusted has been send.
                 spaceKeeperEmplace(std::make_pair(selected.at(i).length, selected.at(i).bitRate), selected.at(i).localId);
@@ -201,7 +204,7 @@ void BudgetManager::increaseErrorBounds(){
               [](std::pair<float, std::pair<int,int>> &left, std::pair<float, std::pair<int,int>> &right){
                   return left.first > right.first;
               });
-    int stop = std::min(numberAdjustableTimeSeries, static_cast<int>(largestImpacts.size()-1));
+    int stop = std::min(numberIncreasingAdjustableTimeSeries, static_cast<int>(largestImpacts.size() - 1));
     std::vector<TimeSeriesModelContainer> existingModels;
     existingModels.reserve(stop);
     for(int i = 0; i < stop; i++){
@@ -230,7 +233,8 @@ void BudgetManager::lowerErrorBounds(){
                   return left.first < right.first;
               });
 
-    int stop = std::min(10, static_cast<int>(smalllestImpacts.size()-1));
+    int stop = std::min(numberDecreasingAdjustableTimeSeries, static_cast<int>(smalllestImpacts.size()-1));
+    auto &ongoingModels = modelManager.timeSeries;
 
     for(int i = 0; i < stop; i++){
 
@@ -239,12 +243,16 @@ void BudgetManager::lowerErrorBounds(){
         auto &config = configManager.timeseriesCols.at(smalllestImpacts.at(i).second.first);
         adjustableTimeSeriesConfig.emplace_back(smalllestImpacts.at(i).second.second, 0, config.outlierThreshHold, config.maxError);
         //modelManager.forceModelFlush(locID);
-
+        adjustableTimeSeries[locID] = i;
+        lowerModelLength[locID] = std::make_pair(std::max(ongoingModels.at(locID).swing.length,
+                                                          std::max(ongoingModels.at(locID).pmcMean.length, ongoingModels.at(locID).gorilla.length)), ongoingModels.at(locID).startTimestamp);
         // Set error bound to 0
         //configManager.timeseriesCols.at(locID).error = 0;
 
     }
+    lowerErrorBoundEndTimestamp = timestampManager.timestampCurrent->data;
     adjustingModelManager.resetModeManagerLower(adjustableTimeSeriesConfig);
+
 
 }
 
@@ -288,7 +296,7 @@ void BudgetManager::selectAdjustedModels(){
             int accumulatedLength = 0;
 
             for(const SelectedModel& model: adjustedModels){
-                adjustedModelSize += sizeOfModels + model.values.size()*4;
+                adjustedModelSize += sizeOfModels + model.values.size();
                 accumulatedError += model.error * model.length;
                 accumulatedLength += model.length;
             }
@@ -297,14 +305,14 @@ void BudgetManager::selectAdjustedModels(){
             //Get size of original models - But only those which are on the same chunk as adjusted models
             for(const SelectedModel& model: originalModels){
                 if (model.startTime >= adjustedModelStart){
-                    originalModelSize += sizeOfModels + model.values.size()*4;
+                    originalModelSize += sizeOfModels + model.values.size();
                 }
             }
 
             //Get size of last unfinished original model
             int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
             if (sizeUnfinishedModel != 0){
-                originalModelSize += sizeOfModels + sizeUnfinishedModel*4;
+                originalModelSize += sizeOfModels + sizeUnfinishedModel;
             }
 
             //Calculate saved bytes by adjusting error bound
@@ -339,10 +347,10 @@ void BudgetManager::selectAdjustedModels(){
                                                                           adjustingModelManager.selectedModels.at(adjustableTimeSeries[scoreEntry.localId]).end());
             }
             if (toSave > 0){
-                numberAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), numberAdjustableTimeSeries + 1);
+                numberIncreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), numberIncreasingAdjustableTimeSeries + 1);
             }
             else if(i != scores.size()){
-                numberAdjustableTimeSeries = std::max(numberAdjustableTimeSeries -1, 1);
+                numberIncreasingAdjustableTimeSeries = std::max(numberIncreasingAdjustableTimeSeries - 1, 1);
             }
         }
     }
@@ -356,21 +364,55 @@ void BudgetManager::selectAdjustedModels(){
             int adjustedModelSize = 0;
             int originalModelSize = 0;
             for(const SelectedModel& model: adjustedModels){
-                adjustedModelSize += sizeOfModels + model.values.size()*4;
-            }
-            //Get size of original models - But only those which are on the same chunk as adjusted models
-            for(const SelectedModel& model: originalModels){
-                if (model.startTime >= adjustedModelStart){
-                    originalModelSize += sizeOfModels + model.values.size()*4;
-                }
+                adjustedModelSize += sizeOfModels + model.values.size();
             }
 
             //Get size of last unfinished original model
             int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
             if (sizeUnfinishedModel != 0){
-                originalModelSize += sizeOfModels + sizeUnfinishedModel*4;
+                originalModelSize += sizeOfModels + sizeUnfinishedModel;
             }
 
+            //Get size of original models - But only those which are on the same chunk as adjusted models
+            for(int i = 0; i < originalModels.size(); i++){
+                if (i < originalModels.size()-1 &&
+                    originalModels.at(i).startTime < adjustedModelStart &&
+                    originalModels.at(i+1).startTime >= adjustedModelStart
+
+                ){
+                    auto IterModel = originalModels.at(i);
+                    int iter = i;
+                    int cutOffLength = 0;
+                    while (IterModel.startTime != lowerModelLength[map.first].second){
+                        i--;
+                        cutOffLength += IterModel.length;
+                        IterModel = originalModels.at(i);
+                    }
+                    auto &model = originalModels.at(i);
+                    model.endTime = lowerErrorBoundEndTimestamp;
+                    if (model.mid == GORILLA){
+                        model.values = Gorilla::getNFirstValuesBitstring(lowerModelLength[map.first].first - cutOffLength, model.values);
+                    }
+                }
+                else if (originalModels.at(i).startTime >= adjustedModelStart){
+                    originalModelSize += sizeOfModels + originalModels.at(i).values.size();
+                    originalModels.at(i).send = false;
+                }
+            }
+            toFill -= adjustedModelSize - originalModelSize;
+            modelManager.selectedModels.at(map.first).insert(modelManager.selectedModels.at(map.first).end(),
+                                                                      adjustingModelManager.selectedModels.at(adjustableTimeSeries[map.first]).begin(),
+                                                                      adjustingModelManager.selectedModels.at(adjustableTimeSeries[map.first]).end());
+
+            if (toFill < 0){
+                break;
+            }
+        }
+        if (toFill > 0){
+            numberDecreasingAdjustableTimeSeries  = std::min(static_cast<int>(modelManager.timeSeries.size()), numberDecreasingAdjustableTimeSeries -1);
+        }
+        else {
+            numberDecreasingAdjustableTimeSeries = std::max(numberDecreasingAdjustableTimeSeries + 1, 1);
         }
     }
 

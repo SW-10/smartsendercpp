@@ -46,8 +46,11 @@ private:
     int &maxAge;
     std::vector<int> lastBudget;
     std::vector<timeSeriesInformation> tsInformation;
+    std::unordered_map<int, std::pair<int, int>> lowerModelLength;
+    int lowerErrorBoundEndTimestamp;
     int sizeOfModels;
-    int numberAdjustableTimeSeries;
+    int numberIncreasingAdjustableTimeSeries;
+    int numberDecreasingAdjustableTimeSeries;
 
     void spaceKeeperEmplace(std::pair<int, float> size, int index);
 

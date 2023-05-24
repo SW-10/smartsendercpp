@@ -144,7 +144,8 @@ SelectedModel ModelManager::selectPmcMean(TimeSeriesModelContainer &modelContain
     model.localId = modelContainer.localId;
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.pmcMean.lastTimestamp->data;
-    model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
+    convertFloatToUint8Array(model.values, (modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
+    //model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
     if (modelContainer.pmcMean.adjustable){
         model.error = modelContainer.pmcMean.error;
     }
@@ -166,11 +167,9 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
                               .lowerBoundIntercept;
 
     if (start_value < end_value) {
-        model.values.emplace_back(start_value);
-        model.values.emplace_back(end_value);
+        convertFloatsToUint8Array(model.values, start_value, end_value);
     } else {
-        model.values.emplace_back(end_value);
-        model.values.emplace_back(start_value);
+        convertFloatsToUint8Array(model.values, end_value, start_value);
     }
 
     model.mid = SWING;
@@ -178,7 +177,7 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
     model.localId = modelContainer.localId;
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.swing.lastTimestamp->data;
-    model.values.emplace_back((int) (start_value < end_value));
+    //model.values.emplace_back((int) (start_value < end_value));
     if (modelContainer.swing.adjustable){
         model.error = modelContainer.swing.errorBound;
     }
@@ -198,14 +197,28 @@ SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContain
     model.localId = modelContainer.localId;
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.gorilla.lastTimestamp->data;
-    for (auto x: modelContainer.gorilla.compressedValues.bytes) {
+    /*for (auto x: modelContainer.gorilla.compressedValues.bytes) {
         model.values.emplace_back(x);
-    }
+    }*/
+    model.values = std::move(modelContainer.gorilla.compressedValues.bytes);
     model.error = modelContainer.errorBound;
     model.bitRate = bitrate;
     model.length = modelContainer.gorilla.length;
 
     return model;
+}
+
+void ModelManager::convertFloatsToUint8Array(std::vector<uint8_t> &modelValues, float startValue, float endValue){
+    convertFloatToUint8Array(modelValues, startValue);
+    convertFloatToUint8Array(modelValues, endValue);
+}
+
+void ModelManager::convertFloatToUint8Array(std::vector<uint8_t> &modelValues, float value){
+    FloatToUint8 converter;
+    converter.inputFloat = value;
+    for (unsigned char & i : converter.outputUint8){
+        modelValues.emplace_back(i);
+    }
 }
 
 void ModelManager::CleanAdjustedModels(TimeSeriesModelContainer &finishedSegment){
@@ -299,7 +312,7 @@ int ModelManager::getUnfinishedModelSize(int localId){
     else if (pmcMeanLength >= swingLength && pmcMeanLength >= gorillaLength) {
         return 1;
     } else if (swingLength >= pmcMeanLength && swingLength >= gorillaLength) {
-        return 3;
+        return 2;
     } else {
         return unfinishedSegment.gorilla.compressedValues.bytes.size();
     }
