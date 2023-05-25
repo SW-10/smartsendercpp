@@ -298,7 +298,11 @@ Node * ModelManager::calculateFlushTimestamp() {
 }
 
 void ModelManager::forceModelFlush(int localId) {
-    constructFinishedModels(timeSeries.at(localId), nullptr);
+    auto ts = timeSeries.at(localId);
+    if (ts.swing.length != 0 && ts.pmcMean.length != 0 && ts.gorilla.length != 0){
+        constructFinishedModels(timeSeries.at(localId), nullptr);
+    }
+
 }
 
 int ModelManager::getUnfinishedModelSize(int localId){

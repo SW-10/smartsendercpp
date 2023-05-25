@@ -61,10 +61,10 @@ void BudgetManager::endOfChunkCalculations() {
             }
             else if (bytesLeft < modelSize){
                 if(flushAll == false){
-                    toFlush = i;
                     penaltySender -= modelSize - bytesLeft;
                 }
                 else {
+                    toFlush = i;
                     penaltySender -= modelSize;
                     flushAll = false;
                 }
@@ -91,17 +91,17 @@ void BudgetManager::endOfChunkCalculations() {
         else if(toFlush > 0){
             #ifndef NDEBUG
             std::vector<SelectedModel> models;
-            for(int j = 0; j < i; j++){
+            for(int j = 0; j < toFlush; j++){
                 if(selected.at(j).send){
                     modelSizeTotal += sizeOfModels;
                     modelSizeTotal += selected.at(j).values.size();
-                    models.push_back(selected.at(i));
+                    models.push_back(selected.at(j));
                 }
             }
 
             writeModelsToCsv(models);
             #endif
-            selected.erase(selected.begin(), selected.begin()+i);
+            selected.erase(selected.begin(), selected.begin()+toFlush);
         }
     }
 
