@@ -298,7 +298,7 @@ Node * ModelManager::calculateFlushTimestamp() {
 }
 
 void ModelManager::forceModelFlush(int localId) {
-    auto finishedSegment = timeSeries.at(localId);
+    auto &finishedSegment = timeSeries.at(localId);
     if (finishedSegment.swing.length != 0 && finishedSegment.pmcMean.length != 0 && finishedSegment.gorilla.length != 0){
         float pmcMeanSize = finishedSegment.pmcMean.getBytesPerValue();
         float swingSize = finishedSegment.swing.getBytesPerValue();
@@ -310,13 +310,18 @@ void ModelManager::forceModelFlush(int localId) {
         } else {
             selectedModels.at(finishedSegment.localId).emplace_back(selectGorilla(finishedSegment, gorillaSize));
         }
+        finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
+                                                   finishedSegment.localId,
+                                                   finishedSegment.globalId,
+                                                   finishedSegment.pmcMean.adjustable && finishedSegment.swing.adjustable);
+
         //constructFinishedModels(timeSeries.at(localId), nullptr);
     }
 
 }
 
 int ModelManager::getUnfinishedModelSize(int localId){
-    auto unfinishedSegment = timeSeries.at(localId);
+    auto &unfinishedSegment = timeSeries.at(localId);
     float pmcMeanLength = unfinishedSegment.pmcMean.length;
     float swingLength = unfinishedSegment.swing.length;
     float gorillaLength = unfinishedSegment.gorilla.length;
