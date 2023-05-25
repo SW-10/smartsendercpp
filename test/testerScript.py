@@ -1,6 +1,8 @@
 import os
 import subprocess
 import itertools
+import pandas as pd
+import os
 
 
 class Config:
@@ -43,9 +45,29 @@ class Config:
             file.write("--budgetLeftRegressionLength=\"{}\"\n".format(self.budgetLeftRegressionLength))
             file.write("--chunksToGoal=\"{}\"\n".format(self.chunksToGoal))
 
-    def run_cpp_program(self):
+    def run_cpp_program(self, permutation, keys):
         result = subprocess.run([self.cpp_program_path], text=True, capture_output=True)
-        return result
+        file = "csvs/" + "_".join(permutation) + ".csv"
+        text_file = open(file, "w")
+        text_file.write("modelSize, tsSize, wErrorBound, wErrorActual")
+        text_file.write(result.stdout)
+
+    def plot_results(self):
+        df = pd.read_csv("temp1.csv")
+        experiments = os.listdir('csvs')
+        keys, values = zip(*params_dict.items())
+        experiments.sort()
+        evaluating = -1
+        for filename in experiments:
+            params = filename[:-4].split('_')
+            if evaluating == -1:
+                #set temp plot
+            else:
+
+            csv_list = []
+
+
+
 
     def run_with_permutations(self, params_dict):
         keys, values = zip(*params_dict.items())
@@ -55,7 +77,9 @@ class Config:
             params = dict(zip(keys, permutation))
             self.set_params(**params)
             self.write_config_file(self.config_file_path)
-            self.run_cpp_program()
+            self.run_cpp_program(permutation, keys)
+
+        self.plot_results()
 
 
 # Initialize configuration
