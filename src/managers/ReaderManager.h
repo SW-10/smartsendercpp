@@ -45,10 +45,15 @@ private:
             > // value (function, compressionType, count)
     > myMap;
 
+    void decompressModels();
+    float bytesToFloat(std::vector<uint8_t> bytes);
+    std::vector<float> bytesToFloats(std::vector<uint8_t> bytes);
     void finaliseCompression();
     void Update(const std::string &message_from_subject) override;
     bool newInterval = false;
     #ifndef NDEBUG
+    float calcActualError(const std::vector<float>& original, const std::vector<float>& reconstructed, int modelType, float errorbound);
+    std::map<int, std::vector<std::pair<int, float>>> timeseries;
     int datasetTotalSize = 0;
     #endif
 

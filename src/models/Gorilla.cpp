@@ -120,11 +120,11 @@ Gorilla::Gorilla() {
 
 std::vector<float>
 Gorilla::gridGorilla(std::vector<uint8_t> values, int valuesCount,
-                     int timestampCount) {
-    std::vector<float> result;
-    BitReader bitReader(values, valuesCount);
-    int leadingZeros = 255;
-    int trailingZeros = 0;
+            int timestampCount) {
+        std::vector<float> result;
+        BitReader bitReader(values, valuesCount);
+        int leadingZeros = 255;
+        int trailingZeros = 0;
     uint32_t lastValue = readBits(&bitReader, VALUE_SIZE_IN_BITS);
     result.push_back(intToFloat(lastValue));
     for (int i = 0; i < timestampCount - 1; i++) {
@@ -264,6 +264,7 @@ TEST_CASE("GORILLA TESTS") {
 
         CHECK(equal == true);
     }
+
 }
 
 #pragma clang diagnostic pop

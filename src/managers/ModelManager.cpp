@@ -171,13 +171,14 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
     } else {
         convertFloatsToUint8Array(model.values, end_value, start_value);
     }
+//    convertFloatsToUint8Array(model.values, start_value, end_value);
 
     model.mid = SWING;
     model.cid = modelContainer.globalId;
     model.localId = modelContainer.localId;
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.swing.lastTimestamp->data;
-    //model.values.emplace_back((int) (start_value < end_value));
+    model.values.emplace_back((int) (start_value < end_value));
     if (modelContainer.swing.adjustable){
         model.error = modelContainer.swing.errorBound;
     }
@@ -200,6 +201,9 @@ SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContain
     /*for (auto x: modelContainer.gorilla.compressedValues.bytes) {
         model.values.emplace_back(x);
     }*/
+
+    // Copy the remaining bits to the byte-array
+    modelContainer.gorilla.compressedValues.bytes.push_back(modelContainer.gorilla.compressedValues.currentByte);
     model.values = std::move(modelContainer.gorilla.compressedValues.bytes);
     model.error = modelContainer.errorBound;
     model.bitRate = bitrate;

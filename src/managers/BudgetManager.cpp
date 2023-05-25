@@ -78,13 +78,16 @@ void BudgetManager::endOfChunkCalculations() {
         }
         if (flushAll){
             #ifndef NDEBUG
+            std::vector<SelectedModel> models;
+
             for(auto const &s : selected){
                 if(s.send){
                     modelSizeTotal += sizeOfModels;
                     modelSizeTotal += s.values.size();
+                    models.push_back(s);
                 }
             }
-            writeModelsToCsv(selected);
+            writeModelsToCsv(models);
             #endif
             selected.clear();
         }

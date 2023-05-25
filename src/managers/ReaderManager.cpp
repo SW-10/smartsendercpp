@@ -19,6 +19,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                        timestampManager),
                        budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge),
           outlierDetector(configManager) {
+
     timekeeper.Attach(this);
     timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
@@ -53,6 +54,10 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 }
 
                 float value = std::stof(*in);
+
+                #ifndef NDEBUG
+                timeseries[c.col].push_back(std::make_pair(timestampManager.timestampCurrent->data, value));
+                #endif
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
                   //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
                     this->budgetManager.decreaseErrorBounds(i);
@@ -215,6 +220,9 @@ void ReaderManager::runCompressor() {
         exit(1);
     }
     #endif
+
+    decompressModels();
+
 }
 
 void ReaderManager::finaliseCompression() {
@@ -256,3 +264,223 @@ void ReaderManager::finaliseCompression() {
 
 
 }
+
+struct Model{
+    int start;
+    int end;
+    float errorBound;
+    int length;
+    int MID;
+    int CID;
+    std::vector<uint8_t> values;
+};
+
+void ReaderManager::decompressModels(){
+    std::fstream csvFileStream;
+    csvFileStream.open("../models.csv", std::ios::in);
+    if(!csvFileStream)
+    {
+        std::cout << "Can't open file!" << std::endl;
+    } else {
+        std::cout << "File opened successfully" << std::endl;
+    }
+
+    std::vector<Model> models;
+
+    std::vector<std::string> row;
+    std::string line, word;
+//    std::getline(csvFileStream, line);
+    int lineNO = 0;
+
+    while (std::getline(csvFileStream, line)) {
+        row.clear();
+        std::stringstream s(line);
+        Model m;
+        int count = 0;
+        while (std::getline(s, word, ',')) {
+            switch(count){
+                case 0:
+                    m.start = std::stoi(word);
+                    break;
+                case 1:
+                    m.end = std::stoi(word);
+                    break;
+                case 2:
+                    m.errorBound = std::stof(word);
+                    break;
+                case 3:
+                    m.length = std::stoi(word);
+                    break;
+                case 4:
+                    m.MID = std::stoi(word);
+                    break;
+                case 5:
+                    m.CID = std::stoi(word);
+                    break;
+                case 6:
+                    std::stringstream ss(word);
+                    std::string token;
+                    while (std::getline(ss, token, '-')) {
+                        m.values.push_back(std::stoi(token));
+                    }
+                    break;
+            }
+
+            count++;
+            if(count > 6){
+                count = 0;
+            }
+        }
+        lineNO++;
+        models.push_back(m);
+    }
+    double error = 0;
+    int totalValues = 0;
+    Swing swing(error);
+    int countModel = 0;
+    for(auto const& m : models){
+//        std::cout << "countModel: " << countModel << std::endl;
+        auto &tsInstance = timeseries[m.CID];
+        switch(m.MID){
+            case 0: {
+                //pmc
+                std::cout << "pmc!!!" << std::endl;
+                float val = bytesToFloat(m.values);
+
+                std::vector<int> timestamps;
+                std::vector<int> originalValues;
+                for(const auto elem : tsInstance){
+                    timestamps.push_back(elem.first);
+                    originalValues.push_back(elem.second);
+                }
+
+                // ORIGINAL TIMESTAMPS
+                auto first = timestamps.begin();
+                auto last  = timestamps.begin()+m.length;
+                std::vector<long> timestampsSub(first, last);
+
+                // ORIGINAL VALEUS
+                auto firstV = originalValues.begin();
+                auto lastV  = originalValues.begin()+m.length;
+                std::vector<float> originalValuesSub(firstV, lastV);
+
+                auto res = PmcMean::gridPmcMean(val, m.length);
+                calcActualError(originalValuesSub, res, 0, m.errorBound);
+
+                break;
+            }
+            case 1: {
+                //swing
+                // 4 første bytes af values og 4 næste bytes i values
+                std::cout << "hej" << std::endl;
+                std::vector<int> timestamps;
+                std::vector<int> originalValues;
+                for(const auto elem : tsInstance){
+                    timestamps.push_back(elem.first);
+                    originalValues.push_back(elem.second);
+                }
+
+                auto floats = bytesToFloats(m.values);
+
+                bool up = m.values.at(8);
+
+                // ORIGINAL TIMESTAMPS
+                auto first = timestamps.begin();
+                auto last  = timestamps.begin()+m.length;
+                std::vector<long> timestampsSub(first, last);
+
+                // ORIGINAL VALEUS
+                auto firstV = originalValues.begin();
+                auto lastV  = originalValues.begin()+m.length;
+                std::vector<float> originalValuesSub(firstV, lastV);
+
+                auto res = swing.gridSwing(floats.at(0), floats.at(1),up,timestampsSub, m.length);
+//                std::cout << "float 0: " << floats.at(0) << ", float 1: " << floats.at(1) << " error: " << m.errorBound << std::endl;
+//                for(int i = 0; i < res.size(); i++){
+//                    std::cout << "Swing res: " << res.at(i) << " ori: " << originalValuesSub.at(i) << std::endl;
+//                }
+                calcActualError(originalValuesSub, res, 1,  m.errorBound);
+                break;
+            }
+            case 2: {
+                //gorilla
+                std::vector<int> timestamps;
+                std::vector<int> originalValues;
+                for(const auto elem : tsInstance){
+                    timestamps.push_back(elem.first);
+                    originalValues.push_back(elem.second);
+                }
+
+                // ORIGINAL TIMESTAMPS
+                auto first = timestamps.begin();
+                auto last  = timestamps.begin()+m.length;
+                std::vector<long> timestampsSub(first, last);
+
+                // ORIGINAL VALEUS
+                auto firstV = originalValues.begin();
+                auto lastV  = originalValues.begin()+m.length;
+                std::vector<float> originalValuesSub(firstV, lastV);
+
+
+                auto res = Gorilla::gridGorilla(m.values, m.values.size(), m.length);
+
+                for(int i = 0; i < res.size(); i++){
+                    if(res.at(i) != originalValuesSub.at(i)){
+//                        std::cout << "!!!!!!!!!!!!!!!! res: " << res.at(i) << " ori: " << originalValuesSub.at(i) << std::endl;
+                    } else {
+//                        std::cout << ":-)" << std::endl;
+                    }
+                }
+//                std::cout<<std::endl;
+                break;
+            }
+
+        }
+        tsInstance.erase(tsInstance.begin(), tsInstance.begin()+m.length);
+        int f = 0;
+        countModel++;
+    }
+
+}
+
+float ReaderManager::bytesToFloat(std::vector<uint8_t> bytes) {
+    union ByteFloatUnion{
+        uint8_t bytes[4];
+        float floatValue;
+    };
+
+    ByteFloatUnion u;
+    std::copy(bytes.begin(), bytes.end(), u.bytes);
+    return u.floatValue;
+}
+
+std::vector<float> ReaderManager::bytesToFloats(std::vector<uint8_t> bytes) {
+
+    union ByteFloatUnion{
+        uint8_t bytes[8];
+        float floatValue[2];
+    };
+
+    ByteFloatUnion u;
+    std::copy(bytes.begin(), bytes.end()-1, u.bytes); // -1 because the last element is up/down indicator
+
+    std::vector<float> result;
+    result.push_back(u.floatValue[0]);
+    result.push_back(u.floatValue[1]);
+    return result;
+}
+
+#ifndef NDEBUG
+float ReaderManager::calcActualError(const std::vector<float>& original, const std::vector<float>& reconstructed, int modelType, float errorbound){
+    int size = original.size();
+    float result = 0;
+    for(int i = 0; i < size; i++){
+        float error = std::abs( (reconstructed.at(i) / original.at(i)  * 100 ) - 100);
+        if(error > errorbound){
+            std::cout << modelType << " ERROR: " << error  << ", ERROR BOUND: " << errorbound << std::endl;
+        }
+    }
+    std::cout << std::endl;
+    return result;
+}
+#endif
