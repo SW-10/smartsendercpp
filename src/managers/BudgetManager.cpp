@@ -90,13 +90,16 @@ void BudgetManager::endOfChunkCalculations() {
         }
         else if(toFlush > 0){
             #ifndef NDEBUG
+            std::vector<SelectedModel> models;
             for(int j = 0; j <= i; j++){
                 if(selected.at(j).send){
                     modelSizeTotal += sizeOfModels;
                     modelSizeTotal += selected.at(j).values.size();
+                    models.push_back(selected.at(i));
                 }
             }
-            writeModelsToCsv(selected);
+
+            writeModelsToCsv(models);
             #endif
             selected.erase(selected.begin(), selected.begin()+i);
         }
