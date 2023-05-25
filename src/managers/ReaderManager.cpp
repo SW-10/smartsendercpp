@@ -94,6 +94,9 @@ void ReaderManager::Update(const std::string &message_from_subject) {
 }
 
 void ReaderManager::runCompressor() {
+    std::ofstream myfile;
+    myfile.open ("../models.csv", std::ios_base::out);
+    myfile.close();
     #ifdef linux
     ConnectionAddress address("0.0.0.0", 9999);
     #endif

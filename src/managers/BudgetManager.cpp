@@ -440,8 +440,8 @@ void BudgetManager::selectAdjustedModels(){
             numberDecreasingAdjustableTimeSeries = std::max(numberDecreasingAdjustableTimeSeries + 1, 1);
         }
     }
-
 }
+
 
 void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models){
     std::ofstream myfile;
@@ -453,6 +453,7 @@ void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models){
         myfile <<
         model.startTime << "," <<
         model.endTime   << "," <<
+        model.error     << "," <<
         model.length    << "," <<
         mid        << "," <<
         cid       << ",";
