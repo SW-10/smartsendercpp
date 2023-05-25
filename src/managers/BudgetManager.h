@@ -39,6 +39,9 @@ public:
     // ======== Variables for evaluation ========
     int huffmanSizeTotal = 0;
     int modelSizeTotal = 0;
+
+    static void writeModelsToCsv(std::vector<SelectedModel> models);
+
 private:
     ModelManager &modelManager;
 
@@ -65,8 +68,6 @@ private:
     void increaseErrorBounds();
 
     void cleanSpaceKeeper();
-
-    static void writeModelsToCsv(std::vector<SelectedModel> models);
 
     void errorBoundStats(double error, int index);
 

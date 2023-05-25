@@ -229,6 +229,7 @@ void ReaderManager::finaliseCompression() {
                 budgetManager.modelSizeTotal += s.values.size();
             }
         }
+        BudgetManager::writeModelsToCsv(selected);
     }
 
 
@@ -252,4 +253,6 @@ void ReaderManager::finaliseCompression() {
         budgetManager.huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
         timestampManager.globalOffsetListToSend.clear();
     }
+
+
 }
