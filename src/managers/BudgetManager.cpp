@@ -91,7 +91,7 @@ void BudgetManager::endOfChunkCalculations() {
         else if(toFlush > 0){
             #ifndef NDEBUG
             std::vector<SelectedModel> models;
-            for(int j = 0; j <= i; j++){
+            for(int j = 0; j < i; j++){
                 if(selected.at(j).send){
                     modelSizeTotal += sizeOfModels;
                     modelSizeTotal += selected.at(j).values.size();
