@@ -9,6 +9,7 @@
 #include "../utils/OutlierDetector.h"
 #include <functional>
 #include <forward_list>
+#include <cstdlib>
 
 //int Observer::static_number_ = 0;
 //Timekeeper *timekeeper = new Timekeeper;
@@ -121,6 +122,7 @@ void ReaderManager::runCompressor() {
         row.clear();
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
+
         int count = 0;
         while (std::getline(s, word, ',')) {
             auto mapElement = myMap.find(count); //Get element in map
@@ -182,13 +184,11 @@ void ReaderManager::runCompressor() {
 
     this->csvFileStream.close();
     //timestampManager.finishDeltaDelta();
-    std::cout << "Size of local offset list: " << timestampManager.getSizeOfLocalOffsetList() * sizeof(int) << " bytes" << std::endl;
-    std::cout << "Size of global offset list: " << timestampManager.getSizeOfGlobalOffsetList() * sizeof(int) << " bytes" << std::endl;
-
-    std::cout << "Time Taken: " << time.end() << " ms" << std::endl;
-    std::cout << "size glob: " << timestampManager.getSizeOfGlobalOffsetList() << std::endl;
-    std::cout << "size loc : " << timestampManager.getSizeOfLocalOffsetList() << std::endl;
-    std::cout << "size of int: " << sizeof(int) << std::endl;
+    std::cerr <<
+    budgetManager.modelSizeTotal  << "," <<
+    budgetManager.huffmanSizeTotal   << "," <<
+    budgetManager.weightedSum / budgetManager.totalLength << "," <<
+    0.2;
 
 
 

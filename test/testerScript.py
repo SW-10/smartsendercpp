@@ -2,7 +2,11 @@ import os
 import subprocess
 import itertools
 import pandas as pd
-import os
+import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+import matplotlib.ticker as ticker
+import tikzplotlib as tikz
+import numpy as np
 
 
 class Config:
@@ -49,27 +53,60 @@ class Config:
         result = subprocess.run([self.cpp_program_path], text=True, capture_output=True)
         file = "csvs/" + "_".join(permutation) + ".csv"
         text_file = open(file, "w")
-        text_file.write("modelSize, tsSize, wErrorBound, wErrorActual")
-        text_file.write(result.stdout)
+        text_file.write("modelSize, tsSize, wErrorBound, wErrorActual \n")
+        text_file.write(result.stderr)
 
-    def plot_results(self):
-        df = pd.read_csv("temp1.csv")
-        experiments = os.listdir('csvs')
-        keys, values = zip(*params_dict.items())
-        experiments.sort()
-        evaluating = -1
-        for filename in experiments:
-            params = filename[:-4].split('_')
-            if evaluating == -1:
-                #set temp plot
+    def plot_results(self, sort_values=False, save_tikz=False):
+        directory = 'csvs/'
+
+        data = {}
+
+        for filename in os.listdir(directory):
+            if filename.endswith('.csv'):
+                df = pd.read_csv(directory + filename)
+
+                for column_name in df.columns:
+                    if column_name not in data:
+                        data[column_name] = {}
+                    data[column_name][filename] = df[column_name].tolist()
+
+        for column_name, column_data in data.items():
+
+            plot_df = pd.DataFrame(column_data)
+
+            fig, ax = plt.subplots()
+
+            width = 0.5
+
+            if sort_values:
+                plot_df = plot_df.sort_values(by=0, axis=1, ascending=False)
+
+            bar_values = []
+            bar_labels = []
+            for i, filename in enumerate(plot_df.columns):
+                for j in range(len(plot_df)):
+                    if not np.isnan(plot_df[filename].iloc[j]):
+                        bar_values.append(plot_df[filename].iloc[j])
+                        bar_labels.append(filename)
+
+            colors = cm.rainbow(np.linspace(0, 1, len(bar_values)))
+
+            ax.bar(range(len(bar_values)), bar_values, tick_label=bar_labels, color=colors)
+
+            ax.set_ylabel(column_name)
+            ax.set_title('Comparison of ' + column_name + ' across CSV files')
+
+            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=20))
+
+            plt.xticks(rotation=45, ha='right')
+
+            plt.tight_layout()
+            if save_tikz:
+                tikz.save(f'{column_name}.tex')
             else:
+                plt.show()
 
-            csv_list = []
-
-
-
-
-    def run_with_permutations(self, params_dict):
+    def run_with_permutations(self, params_dict, sort_values, save_tikz):
         keys, values = zip(*params_dict.items())
         permutations = list(itertools.product(*values))
 
@@ -79,23 +116,23 @@ class Config:
             self.write_config_file(self.config_file_path)
             self.run_cpp_program(permutation, keys)
 
-        self.plot_results()
+        self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
 
 
 # Initialize configuration
 config = Config()
 
-config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
+config.cpp_program_path = "../cmake-build-debug/smartsendercpp.exe"
 
 # Set columns with their error bounds and type
-config.set_columns(range(2, 62), (5, 10), 4.0)
+config.set_columns(range(2, 62), (5, 15), 4.0)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["180000", "190000"],
-    "budget": ["20000", "30000"],
-    "bufferGoal": ["2000", "3000"],
+    "maxAge": ["170000", "180000", "190000", "200000", "210000"],
+    "budget": ["3000"],
+    "bufferGoal": ["1000", "2000", "3000"],
 }
 
 # Run with permutations
-config.run_with_permutations(params_dict)
+config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)

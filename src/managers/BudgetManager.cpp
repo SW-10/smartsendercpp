@@ -22,8 +22,8 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     sizeOfModels += sizeof(float); // Size of error
     sizeOfModels += sizeof(int)*2; // size of start+end timestamp
     sizeOfModels += sizeof(int8_t)*2; // Size of model id, column id
-    numberIncreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
-    numberDecreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
+    numberIncreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 60);
+    numberDecreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 60);
     increasingError = false;
     loweringError = false;
 }
@@ -88,6 +88,7 @@ void BudgetManager::endOfChunkCalculations() {
                     models.push_back(s);
                 }
             }
+            captureWeightedSumAndLength(selected);
             writeModelsToCsv(models);
             #endif
             selected.clear();
@@ -102,7 +103,7 @@ void BudgetManager::endOfChunkCalculations() {
                     models.push_back(selected.at(j));
                 }
             }
-
+            captureWeightedSumAndLength(selected);
             writeModelsToCsv(models);
             #endif
             selected.erase(selected.begin(), selected.begin()+toFlush);
@@ -298,7 +299,6 @@ void BudgetManager::decreaseErrorBounds(int locID){
 
 
 void BudgetManager::selectAdjustedModels(){
-    std::cout << std::endl << "New Chunky" << std::endl;
 
     if (increasingError){
         std::vector<adjustedModelSelectionInfo> scores;
@@ -449,6 +449,12 @@ void BudgetManager::selectAdjustedModels(){
     }
 }
 
+void BudgetManager::captureWeightedSumAndLength(std::vector<SelectedModel> models){
+      for (const auto& model : models){
+        weightedSum += model.length * model.error;
+        totalLength += model.length;
+      }
+};
 
 void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models){
     std::ofstream myfile;
@@ -456,7 +462,6 @@ void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models){
     for (const auto& model : models){
         int mid = static_cast<int>(model.mid);
         int cid = static_cast<int>(model.cid);
-
         myfile <<
         model.startTime << "," <<
         model.endTime   << "," <<

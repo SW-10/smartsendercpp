@@ -39,6 +39,9 @@ public:
     // ======== Variables for evaluation ========
     int huffmanSizeTotal = 0;
     int modelSizeTotal = 0;
+    float weightedSum = 0;
+    int totalLength = 0;
+    float errorBoundTotal = 0;
 
     static void writeModelsToCsv(std::vector<SelectedModel> models);
 
@@ -73,5 +76,6 @@ private:
 
     void selectAdjustedModels();
 
+    void captureWeightedSumAndLength(std::vector<SelectedModel> models);
 
 };

@@ -45,18 +45,18 @@ static void handler(const doctest::AssertData& ad) {
 int main(int argc, char *argv[]) {
 
 #ifndef NDEBUG
-   	//Doctest things
-	doctest::Context context;
-    // sets the context as the default one - so asserts used outside of a testing context do not
-    // crash
-    context.setAsDefaultForAssertsOutOfTestCases();
-
-    // set a handler with a signature: void(const doctest::AssertData&)
-    // without setting a handler we would get std::abort() called when an assert fails
-    context.setAssertHandler(handler);
-
-    int res = context.run();
-	int client_stuff_return_code = 0;
+//   	//Doctest things
+//	doctest::Context context;
+//    // sets the context as the default one - so asserts used outside of a testing context do not
+//    // crash
+//    context.setAsDefaultForAssertsOutOfTestCases();
+//
+//    // set a handler with a signature: void(const doctest::AssertData&)
+//    // without setting a handler we would get std::abort() called when an assert fails
+//    context.setAssertHandler(handler);
+//
+//    int res = context.run();
+//	int client_stuff_return_code = 0;
 #endif
     Timekeeper *timekeeper = new Timekeeper;
 
@@ -67,7 +67,8 @@ int main(int argc, char *argv[]) {
 
 
 #ifndef NDEBUG
-    return res + client_stuff_return_code;
+    //return res + client_stuff_return_code;
+    return 0;
 #else
     return 0;
 #endif

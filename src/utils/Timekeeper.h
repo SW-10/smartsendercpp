@@ -18,7 +18,6 @@ public:
     int *intervalSeconds;
     int firstTimestamp = -1;
     virtual ~Timekeeper() {
-        std::cout << "bye " << std::endl;
     }
 
     /**
