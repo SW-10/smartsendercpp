@@ -307,12 +307,15 @@ void ModelManager::forceModelFlush(int localId) {
         float pmcMeanSize = finishedSegment.pmcMean.getBytesPerValue();
         float swingSize = finishedSegment.swing.getBytesPerValue();
         float gorillaSize = finishedSegment.gorilla.getBytesPerValue();
-        if (finishedSegment.pmcMean.length <= finishedSegment.swing.length && finishedSegment.pmcMean.length <= finishedSegment.gorilla.length) {
+        if (finishedSegment.pmcMean.length >= finishedSegment.swing.length && finishedSegment.pmcMean.length >= finishedSegment.gorilla.length) {
             selectedModels.at(finishedSegment.localId).emplace_back(selectPmcMean(finishedSegment, pmcMeanSize));
-        } else if (finishedSegment.swing.length <= finishedSegment.pmcMean.length && finishedSegment.swing.length <= finishedSegment.gorilla.length) {
+        } else if (finishedSegment.swing.length >= finishedSegment.pmcMean.length && finishedSegment.swing.length >= finishedSegment.gorilla.length) {
             selectedModels.at(finishedSegment.localId).emplace_back(selectSwing(finishedSegment, swingSize));
         } else {
             selectedModels.at(finishedSegment.localId).emplace_back(selectGorilla(finishedSegment, gorillaSize));
+        }
+        if(finishedSegment.pmcMean.adjustable && finishedSegment.swing.adjustable){
+            CleanAdjustedModels(finishedSegment);
         }
         finishedSegment = TimeSeriesModelContainer(finishedSegment.errorBound,
                                                    finishedSegment.localId,

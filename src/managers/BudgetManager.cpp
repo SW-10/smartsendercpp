@@ -53,6 +53,7 @@ void BudgetManager::endOfChunkCalculations() {
         bool flushAll = true;
         int i;
         int toFlush = 0;
+        int Extras = 0;
         for(i = 0; i < selected.size(); i++){
             int modelSize = sizeOfModels + selected.at(i).values.size();
             if (!selected.at(i).send){

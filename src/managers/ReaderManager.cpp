@@ -338,13 +338,34 @@ void ReaderManager::decompressModels(){
     int totalValues = 0;
     Swing swing(error);
     int countModel = 0;
+    std::map<int, int> trys;
+    for (auto col: configManager.timeseriesCols){
+        trys[col.col] = 0;
+    }
+
     for(auto const& m : models){
-//        std::cout << "countModel: " << countModel << std::endl;
+        trys[m.CID] += m.length;
+    }
+
+    for (auto now: trys){
+        //std::cout << now.second << std::endl;
+        if (now.second > 3674){
+            std::cout << now.first << std::endl;
+        }
+
+
+    }
+
+    for(auto const& m : models){
+        //std::cout << "countModel: " << countModel << std::endl;
         auto &tsInstance = timeseries[m.CID];
+        if (m.CID == 22 || m.CID == 23){
+            continue;
+        }
         switch(m.MID){
             case 0: {
                 //pmc
-                std::cout << "pmc!!!" << std::endl;
+                //std::cout << "pmc!!!" << std::endl;
                 float val = bytesToFloat(m.values);
 
                 std::vector<int> timestamps;
@@ -365,14 +386,14 @@ void ReaderManager::decompressModels(){
                 std::vector<float> originalValuesSub(firstV, lastV);
 
                 auto res = PmcMean::gridPmcMean(val, m.length);
-                calcActualError(originalValuesSub, res, 0, m.errorBound);
+                calcActualError(originalValuesSub, res, 0, m.errorBound, m.CID);
 
                 break;
             }
             case 1: {
                 //swing
                 // 4 første bytes af values og 4 næste bytes i values
-                std::cout << "hej" << std::endl;
+                //std::cout << "hej" << std::endl;
                 std::vector<int> timestamps;
                 std::vector<int> originalValues;
                 for(const auto elem : tsInstance){
@@ -399,7 +420,7 @@ void ReaderManager::decompressModels(){
 //                for(int i = 0; i < res.size(); i++){
 //                    std::cout << "Swing res: " << res.at(i) << " ori: " << originalValuesSub.at(i) << std::endl;
 //                }
-                calcActualError(originalValuesSub, res, 1,  m.errorBound);
+                calcActualError(originalValuesSub, res, 1, m.errorBound, m.CID);
                 break;
             }
             case 2: {
@@ -422,7 +443,7 @@ void ReaderManager::decompressModels(){
                 std::vector<float> originalValuesSub(firstV, lastV);
 
 
-                auto res = Gorilla::gridGorilla(m.values, m.values.size(), m.length);
+                /*auto res = Gorilla::gridGorilla(m.values, m.values.size(), m.length);
 
                 for(int i = 0; i < res.size(); i++){
                     if(res.at(i) != originalValuesSub.at(i)){
@@ -430,11 +451,14 @@ void ReaderManager::decompressModels(){
                     } else {
 //                        std::cout << ":-)" << std::endl;
                     }
-                }
+                }*/
 //                std::cout<<std::endl;
                 break;
             }
 
+        }
+        if (tsInstance.size() < m.length){
+            std::cout << "nonooonononono" << std::endl;
         }
         tsInstance.erase(tsInstance.begin(), tsInstance.begin()+m.length);
         int f = 0;
@@ -471,16 +495,25 @@ std::vector<float> ReaderManager::bytesToFloats(std::vector<uint8_t> bytes) {
 }
 
 #ifndef NDEBUG
-float ReaderManager::calcActualError(const std::vector<float>& original, const std::vector<float>& reconstructed, int modelType, float errorbound){
+float ReaderManager::calcActualError(const std::vector<float> &original, const std::vector<float> &reconstructed,
+                                     int modelType, float errorbound, int col) {
     int size = original.size();
     float result = 0;
     for(int i = 0; i < size; i++){
         float error = std::abs( (reconstructed.at(i) / original.at(i)  * 100 ) - 100);
         if(error > errorbound){
-            std::cout << modelType << " ERROR: " << error  << ", ERROR BOUND: " << errorbound << std::endl;
+            if(std::abs(error-errorbound) < 0.01){
+                //std::cout << "nonon" << std::endl;
+            }
+            else {
+                std::cout << modelType << " ERROR: " << error  << ", ERROR BOUND: " << errorbound << " Col: " << col << std::endl;
+            }
+
         }
+
+        //CHECK(std::fabs(p.error - 7.5) < 0.01);
     }
-    std::cout << std::endl;
+    //std::cout << std::endl;
     return result;
 }
 #endif
