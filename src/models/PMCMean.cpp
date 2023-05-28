@@ -38,6 +38,10 @@ int PmcMean::fitValuePmc(float value) {
 
 int
 PmcMean::isValueWithinErrorBound(float realValue, float approxValue) const {
+    // Handle division by zero
+    if(realValue == 0){
+        return approxValue == 0;
+    }
     if (equalOrNanPmc(realValue, approxValue)) {
         return 1;
     } else {

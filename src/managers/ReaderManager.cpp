@@ -394,7 +394,7 @@ void ReaderManager::decompressModels(){
                 float val = bytesToFloat(m.values);
 
                 std::vector<int> timestamps;
-                std::vector<int> originalValues;
+                std::vector<float> originalValues;
                 for(const auto elem : tsInstance){
                     timestamps.push_back(elem.first);
                     originalValues.push_back(elem.second);
@@ -420,7 +420,7 @@ void ReaderManager::decompressModels(){
                 // 4 første bytes af values og 4 næste bytes i values
                 //std::cout << "hej" << std::endl;
                 std::vector<int> timestamps;
-                std::vector<int> originalValues;
+                std::vector<float> originalValues;
                 for(const auto elem : tsInstance){
                     timestamps.push_back(elem.first);
                     originalValues.push_back(elem.second);
@@ -451,7 +451,7 @@ void ReaderManager::decompressModels(){
             case 2: {
                 //gorilla
                 std::vector<int> timestamps;
-                std::vector<int> originalValues;
+                std::vector<float> originalValues;
                 for(const auto elem : tsInstance){
                     timestamps.push_back(elem.first);
                     originalValues.push_back(elem.second);
@@ -489,7 +489,7 @@ void ReaderManager::decompressModels(){
         int f = 0;
         countModel++;
     }
-
+    std::cout << "done" << std::endl;
 }
 
 float ReaderManager::bytesToFloat(std::vector<uint8_t> bytes) {
@@ -525,20 +525,31 @@ float ReaderManager::calcActualError(const std::vector<float> &original, const s
     int size = original.size();
     float result = 0;
     for(int i = 0; i < size; i++){
-        float error = std::abs( (reconstructed.at(i) / original.at(i)  * 100 ) - 100);
-        if(error > errorbound){
-            if(std::abs(error-errorbound) < 0.01){
-                //std::cout << "nonon" << std::endl;
-            }
-            else {
-                std::cout << modelType << " ERROR: " << error  << ", ERROR BOUND: " << errorbound << " Col: " << col << std::endl;
-            }
+        float error;
+
+        // Handle division by zero
+        if(fabs(original.at(i)) == 0){
+            error = 0;
+        } else {
+            error = fabs( (reconstructed.at(i) / original.at(i)  * 100 ) - 100);
 
         }
+//        if(col == 30){
+//            std::cout <<  "original: " << original.at(i) << std::endl;
+//
+//        }
+//        if(error > errorbound){
+            if(error - 0.0001 > errorbound){
+                std::cout << "nonon: " << col << " error: " << error << " err bound: " << errorbound << ": " << (modelType == 0 ? "PMC" : (modelType == 1 ? "SWING" : "GORILLA")) << std::endl;
+                std::cout << "      original: " << original.at(i) << ", reconstructed: " << reconstructed.at(i) << std::endl;
+            }
+            else {
+//                std::cout << modelType << " ERROR: " << error  << ", ERROR BOUND: " << errorbound << " Col: " << col << std::endl;
+            }
 
-        //CHECK(std::fabs(p.error - 7.5) < 0.01);
+//        }
+
     }
-    //std::cout << std::endl;
     return result;
 }
 #endif
