@@ -45,6 +45,9 @@ public:
 
     static void writeModelsToCsv(std::vector<SelectedModel> models);
 
+    //DEBUF
+    std::unordered_map<int, int> flushed;
+
 private:
     ModelManager &modelManager;
 
@@ -77,5 +80,6 @@ private:
     void selectAdjustedModels();
 
     void captureWeightedSumAndLength(std::vector<SelectedModel> models);
+
 
 };

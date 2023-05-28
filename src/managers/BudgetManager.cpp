@@ -22,8 +22,8 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     sizeOfModels += sizeof(float); // Size of error
     sizeOfModels += sizeof(int)*2; // size of start+end timestamp
     sizeOfModels += sizeof(int8_t)*2; // Size of model id, column id
-    numberIncreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 60);
-    numberDecreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 60);
+    numberIncreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
+    numberDecreasingAdjustableTimeSeries = std::min(static_cast<int>(modelManager.timeSeries.size()), 10);
     increasingError = false;
     loweringError = false;
 }
@@ -88,8 +88,14 @@ void BudgetManager::endOfChunkCalculations() {
                     models.push_back(s);
                 }
             }
-            captureWeightedSumAndLength(selected);
+            captureWeightedSumAndLength(models);
             writeModelsToCsv(models);
+            for (auto yes: models){
+                flushed[yes.cid] += yes.length;
+                if(timestampManager.timestampCurrent->data >= 1652413433 && yes.localId == 4){
+                    //std::cout << flushed[yes.localId] << std::endl;
+                }
+            }
             #endif
             selected.clear();
         }
@@ -101,9 +107,13 @@ void BudgetManager::endOfChunkCalculations() {
                     modelSizeTotal += sizeOfModels;
                     modelSizeTotal += selected.at(j).values.size();
                     models.push_back(selected.at(j));
+                    flushed[selected.at(j).cid] += selected.at(j).length;
+                }
+                else {
+                    //toFlush++;
                 }
             }
-            captureWeightedSumAndLength(selected);
+            captureWeightedSumAndLength(models);
             writeModelsToCsv(models);
             #endif
             selected.erase(selected.begin(), selected.begin()+toFlush);
@@ -299,7 +309,6 @@ void BudgetManager::decreaseErrorBounds(int locID){
 
 
 void BudgetManager::selectAdjustedModels(){
-
     if (increasingError){
         std::vector<adjustedModelSelectionInfo> scores;
         int toSave = configManager.bufferGoal - lastBudget.back();

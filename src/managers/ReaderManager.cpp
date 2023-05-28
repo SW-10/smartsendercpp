@@ -32,13 +32,15 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         std::get<0>(myMap[i]) = [](std::string *in,
                                    int &lineNum) { return CompressionType::NONE; };
         std::get<1>(myMap[i]) = CompressionType::NONE;
-
     }
 
     // TODO: Change all test-functions
     // Handle time series columns
     int i = 0;
     for (const auto &c: configManager.timeseriesCols) {
+        totalNum[c.col] = 0;
+        budgetManager.flushed[c.col] = 0;
+
         outlierDetector.count.push_back(0);
         outlierDetector.mean.push_back(0.0);
         outlierDetector.m2.push_back(0.0);
@@ -63,12 +65,17 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                   //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
                     this->budgetManager.decreaseErrorBounds(i);
                   this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
+                  if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
+                      std::cout << "blarn " << c.col << std::endl;
+                  }
+
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
 
                 //timestampManager.deltaDeltaCompress(lineNum, c.col);
                 modelManager.fitSegment(i, value,timestampManager.timestampCurrent);
+                totalNum[c.col]++;
 
                 //If adjusted model for current time series exist, fit!
                 if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
@@ -176,6 +183,24 @@ void ReaderManager::runCompressor() {
                 }
             }
         }
+        ;
+        for (auto blarn: totalNum){
+            int total = budgetManager.flushed[blarn.first];
+            //std::cout << "1" << std::endl;
+            for (auto &model : modelManager.selectedModels.at(blarn.first-1)){
+                if (model.send){
+                    total += model.length;
+                }
+
+            }
+            //std::cout << "2" << std::endl;
+            auto ts = modelManager.timeSeries.at(blarn.first-1);
+            //std::cout << "3" << std::endl;
+            total += std::max(ts.gorilla.length, std::max(ts.pmcMean.length, ts.swing.length));
+            if (total != blarn.second){
+                std::cout << lineNumber << " " << blarn.first << std::endl;
+            }
+        }
 
         lineNumber++;
     }
@@ -229,16 +254,18 @@ void ReaderManager::finaliseCompression() {
     for(int i = 0; i < configManager.timeseriesCols.size(); i++){
         modelManager.forceModelFlush(i);
     }
-
+    std::vector<SelectedModel> models;
     for(auto const  &selected : modelManager.selectedModels){
         for(auto const &s : selected){
             if(s.send){
                 budgetManager.modelSizeTotal += budgetManager.sizeOfModels;
                 budgetManager.modelSizeTotal += s.values.size();
+                models.emplace_back(s);
             }
         }
-        BudgetManager::writeModelsToCsv(selected);
+
     }
+    BudgetManager::writeModelsToCsv(models);
 
 
     timestampManager.flushTimestamps(timestampManager.timestampCurrent);
@@ -352,8 +379,6 @@ void ReaderManager::decompressModels(){
         if (now.second > 3674){
             std::cout << now.first << std::endl;
         }
-
-
     }
 
     for(auto const& m : models){

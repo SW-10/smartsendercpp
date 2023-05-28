@@ -56,6 +56,8 @@ private:
                           int modelType, float errorbound, int col);
     std::map<int, std::vector<std::pair<int, float>>> timeseries;
     int datasetTotalSize = 0;
+    //DEBUGGES
+    std::unordered_map<int, int> totalNum;
     #endif
 
 };
