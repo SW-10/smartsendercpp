@@ -23,6 +23,9 @@ Swing::Swing(double &errorBound)
 
 bool Swing::fitValueSwing(Node *timestamp, double value) {
     double maximumDeviation;
+    if(adjustable){
+        errorBound = maxError;
+    }
 
     maximumDeviation = fabs(value * (errorBound / 100.0));
 
@@ -218,7 +221,7 @@ Swing &Swing::operator=(const Swing &instance) {
     firstValue = instance.firstValue;
     upperBoundSlope = instance.upperBoundSlope;
     upperBoundIntercept = instance.upperBoundIntercept;
-    lowerBoundSlope = instance.upperBoundIntercept;
+    lowerBoundSlope = instance.lowerBoundSlope;
     lowerBoundIntercept = instance.lowerBoundIntercept;
     length = instance.length;
     lastTimestamp = instance.lastTimestamp;
