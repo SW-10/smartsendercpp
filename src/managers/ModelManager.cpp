@@ -166,6 +166,7 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
                       modelContainer.swing
                               .lowerBoundIntercept;
 
+
     if (start_value < end_value) {
         convertFloatsToUint8Array(model.values, start_value, end_value);
     } else {

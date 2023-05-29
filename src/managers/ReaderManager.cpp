@@ -38,7 +38,9 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
     // Handle time series columns
     int i = 0;
     for (const auto &c: configManager.timeseriesCols) {
+        #ifndef NDEBUG
         totalNum[c.col] = 0;
+        #endif
         budgetManager.flushed[c.col] = 0;
 
         outlierDetector.count.push_back(0);
@@ -66,7 +68,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                     this->budgetManager.decreaseErrorBounds(i);
                   this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
                   if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
-                      std::cout << "blarn " << c.col << std::endl;
+//                      std::cout << "blarn " << c.col << std::endl;
                   }
 
                 }
@@ -75,7 +77,9 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 
                 //timestampManager.deltaDeltaCompress(lineNum, c.col);
                 modelManager.fitSegment(i, value,timestampManager.timestampCurrent);
+                #ifndef NDEBUG
                 totalNum[c.col]++;
+                #endif
 
                 //If adjusted model for current time series exist, fit!
                 if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
@@ -184,6 +188,7 @@ void ReaderManager::runCompressor() {
             }
         }
         ;
+        #ifndef NDEBUG
         for (auto blarn: totalNum){
             int total = budgetManager.flushed[blarn.first];
             //std::cout << "1" << std::endl;
@@ -201,6 +206,7 @@ void ReaderManager::runCompressor() {
                 std::cout << lineNumber << " " << blarn.first << std::endl;
             }
         }
+        #endif
 
         lineNumber++;
     }
@@ -209,11 +215,13 @@ void ReaderManager::runCompressor() {
 
     this->csvFileStream.close();
     //timestampManager.finishDeltaDelta();
-    std::cerr <<
-    budgetManager.modelSizeTotal  << "," <<
-    budgetManager.huffmanSizeTotal   << "," <<
-    budgetManager.weightedSum / budgetManager.totalLength << "," <<
-    0.2;
+
+
+//    std::cerr <<
+//    budgetManager.modelSizeTotal  << "," <<
+//    budgetManager.huffmanSizeTotal   << "," <<
+//    budgetManager.weightedSum / budgetManager.totalLength << "," <<
+//    0.2;
 
 
 
@@ -246,7 +254,12 @@ void ReaderManager::runCompressor() {
     }
     #endif
 
+    #ifndef NDEBUG
     decompressModels();
+    std::cout << "AVERAGE ACTUAL ERROR: " << actualTotalError / totalPoints << std::endl;
+
+    #endif
+
 
 }
 
@@ -302,21 +315,19 @@ struct Model{
     std::vector<uint8_t> values;
 };
 
+#ifndef NDEBUG
 void ReaderManager::decompressModels(){
     std::fstream csvFileStream;
     csvFileStream.open("../models.csv", std::ios::in);
     if(!csvFileStream)
     {
         std::cout << "Can't open file!" << std::endl;
-    } else {
-        std::cout << "File opened successfully" << std::endl;
     }
 
     std::vector<Model> models;
 
     std::vector<std::string> row;
     std::string line, word;
-//    std::getline(csvFileStream, line);
     int lineNO = 0;
 
     while (std::getline(csvFileStream, line)) {
@@ -375,14 +386,12 @@ void ReaderManager::decompressModels(){
     }
 
     for (auto now: trys){
-        //std::cout << now.second << std::endl;
         if (now.second > 3674){
             std::cout << now.first << std::endl;
         }
     }
 
     for(auto const& m : models){
-        //std::cout << "countModel: " << countModel << std::endl;
         auto &tsInstance = timeseries[m.CID];
         if (m.CID == 22 || m.CID == 23){
             continue;
@@ -390,7 +399,6 @@ void ReaderManager::decompressModels(){
         switch(m.MID){
             case 0: {
                 //pmc
-                //std::cout << "pmc!!!" << std::endl;
                 float val = bytesToFloat(m.values);
 
                 std::vector<int> timestamps;
@@ -405,7 +413,7 @@ void ReaderManager::decompressModels(){
                 auto last  = timestamps.begin()+m.length;
                 std::vector<long> timestampsSub(first, last);
 
-                // ORIGINAL VALEUS
+                // ORIGINAL VALUES
                 auto firstV = originalValues.begin();
                 auto lastV  = originalValues.begin()+m.length;
                 std::vector<float> originalValuesSub(firstV, lastV);
@@ -417,8 +425,6 @@ void ReaderManager::decompressModels(){
             }
             case 1: {
                 //swing
-                // 4 første bytes af values og 4 næste bytes i values
-                //std::cout << "hej" << std::endl;
                 std::vector<int> timestamps;
                 std::vector<float> originalValues;
                 for(const auto elem : tsInstance){
@@ -435,16 +441,12 @@ void ReaderManager::decompressModels(){
                 auto last  = timestamps.begin()+m.length;
                 std::vector<long> timestampsSub(first, last);
 
-                // ORIGINAL VALEUS
+                // ORIGINAL VALUES
                 auto firstV = originalValues.begin();
                 auto lastV  = originalValues.begin()+m.length;
                 std::vector<float> originalValuesSub(firstV, lastV);
 
                 auto res = swing.gridSwing(floats.at(0), floats.at(1),up,timestampsSub, m.length);
-//                std::cout << "float 0: " << floats.at(0) << ", float 1: " << floats.at(1) << " error: " << m.errorBound << std::endl;
-//                for(int i = 0; i < res.size(); i++){
-//                    std::cout << "Swing res: " << res.at(i) << " ori: " << originalValuesSub.at(i) << std::endl;
-//                }
                 calcActualError(originalValuesSub, res, 1, m.errorBound, m.CID);
                 break;
             }
@@ -462,22 +464,14 @@ void ReaderManager::decompressModels(){
                 auto last  = timestamps.begin()+m.length;
                 std::vector<long> timestampsSub(first, last);
 
-                // ORIGINAL VALEUS
+                // ORIGINAL VALUES
                 auto firstV = originalValues.begin();
                 auto lastV  = originalValues.begin()+m.length;
                 std::vector<float> originalValuesSub(firstV, lastV);
 
+                auto res = Gorilla::gridGorilla(m.values, m.values.size(), m.length);
 
-                /*auto res = Gorilla::gridGorilla(m.values, m.values.size(), m.length);
-
-                for(int i = 0; i < res.size(); i++){
-                    if(res.at(i) != originalValuesSub.at(i)){
-//                        std::cout << "!!!!!!!!!!!!!!!! res: " << res.at(i) << " ori: " << originalValuesSub.at(i) << std::endl;
-                    } else {
-//                        std::cout << ":-)" << std::endl;
-                    }
-                }*/
-//                std::cout<<std::endl;
+                calcActualError(originalValuesSub, res, 2, m.errorBound, m.CID);
                 break;
             }
 
@@ -489,7 +483,6 @@ void ReaderManager::decompressModels(){
         int f = 0;
         countModel++;
     }
-    std::cout << "done" << std::endl;
 }
 
 float ReaderManager::bytesToFloat(std::vector<uint8_t> bytes) {
@@ -519,7 +512,7 @@ std::vector<float> ReaderManager::bytesToFloats(std::vector<uint8_t> bytes) {
     return result;
 }
 
-#ifndef NDEBUG
+
 float ReaderManager::calcActualError(const std::vector<float> &original, const std::vector<float> &reconstructed,
                                      int modelType, float errorbound, int col) {
     int size = original.size();
@@ -534,21 +527,15 @@ float ReaderManager::calcActualError(const std::vector<float> &original, const s
             error = fabs( (reconstructed.at(i) / original.at(i)  * 100 ) - 100);
 
         }
-//        if(col == 30){
-//            std::cout <<  "original: " << original.at(i) << std::endl;
-//
-//        }
-//        if(error > errorbound){
+
             if(error - 0.0001 > errorbound){
                 std::cout << "nonon: " << col << " error: " << error << " err bound: " << errorbound << ": " << (modelType == 0 ? "PMC" : (modelType == 1 ? "SWING" : "GORILLA")) << std::endl;
                 std::cout << "      original: " << original.at(i) << ", reconstructed: " << reconstructed.at(i) << std::endl;
             }
-            else {
-//                std::cout << modelType << " ERROR: " << error  << ", ERROR BOUND: " << errorbound << " Col: " << col << std::endl;
-            }
 
-//        }
 
+            actualTotalError += error;
+            totalPoints++;
     }
     return result;
 }
