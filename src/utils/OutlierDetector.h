@@ -24,6 +24,8 @@ public:
       double z_score = std_dev > std::numeric_limits<double>::epsilon() ? (value - mean[column_number]) / std_dev : 0.0;
 
       if (std::abs(z_score) > configManager.timeseriesCols[column_number].outlierThreshHold) {
+          count[column_number] = 1;
+          mean[column_number] = value;
           return true;
       }
       else {
