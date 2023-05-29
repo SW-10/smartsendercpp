@@ -65,7 +65,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 //                #endif
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
 
-                    std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << i << " value:" << value << std::endl;
+                    //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << i << " value:" << value << std::endl;
 
                     this->budgetManager.decreaseErrorBounds(i);
                     this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;

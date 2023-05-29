@@ -20,7 +20,7 @@ class Config:
         self.bufferGoal = "2000"
         self.budgetLeftRegressionLength = "10"
         self.chunksToGoal = "10"
-        self.cpp_program_path = "C:\\Users\\power\\CLionProjects\\smartsendercpp\\cmake-build-release\\smartsendercpp.exe"
+        self.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
         self.config_file_path = "../moby.cfg"
 
     def set_params(self, **kwargs):
@@ -135,10 +135,12 @@ config.set_columns(range(2, 88), (5, 10), 2.5)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["1000", "10000"],
-    "budget": ["1000", "10000"],
-    "chunkSize": ["1000", "10000"]
-    #"bufferGoal": ["10", "100", "1000", "10000", "100000"],
+    "maxAge": ["100", "1000", "10000"],
+    "budget": ["100", "1000", "10000"],
+    "chunkSize": ["100", "1000", "10000"],
+    "bufferGoal": ["100", "1000", "10000"],
+    "budgetLeftRegressionLength": ["10", "100", "1000"],
+    "chunksToGoal": ["1", "10", "100"]
 }
 
 # Run with permutations
