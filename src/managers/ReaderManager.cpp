@@ -38,9 +38,9 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
     // Handle time series columns
     int i = 0;
     for (const auto &c: configManager.timeseriesCols) {
-        #ifndef NDEBUG
+//        #ifndef NDEBUG
         totalNum[c.col] = 0;
-        #endif
+//        #endif
         budgetManager.flushed[c.col] = 0;
 
         outlierDetector.count.push_back(0);
@@ -49,9 +49,9 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
         std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
                                                   int &lineNum) {
 
-            #ifndef NDEBUG
+//            #ifndef NDEBUG
             datasetTotalSize += sizeof(float) + sizeof(int); // float = value, int = timestamp
-            #endif
+//            #endif
 
             if (!in->empty()) {
                 if(this->budgetManager.outlierCooldown[i] > 0){
@@ -60,16 +60,18 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 
                 float value = std::stof(*in);
 
-                #ifndef NDEBUG
+//                #ifndef NDEBUG
                 timeseries[c.col].push_back(std::make_pair(timestampManager.timestampCurrent->data, value));
-                #endif
+//                #endif
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
-                  //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << char(64 + i + 2) << std::endl;
+
+                    std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << i << " value:" << value << std::endl;
+
                     this->budgetManager.decreaseErrorBounds(i);
-                  this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
-                  if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
-//                      std::cout << "blarn " << c.col << std::endl;
-                  }
+                    this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
+                    if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
+  //                    std::cout << "blarn " << c.col << std::endl;
+                    }
 
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
@@ -203,7 +205,7 @@ void ReaderManager::runCompressor() {
             //std::cout << "3" << std::endl;
             total += std::max(ts.gorilla.length, std::max(ts.pmcMean.length, ts.swing.length));
             if (total != blarn.second){
-                std::cout << lineNumber << " " << blarn.first << std::endl;
+                //std::cout << lineNumber << " " << blarn.first << std::endl;
             }
         }
         #endif
@@ -217,19 +219,10 @@ void ReaderManager::runCompressor() {
     //timestampManager.finishDeltaDelta();
 
 
-//    std::cerr <<
-//    budgetManager.modelSizeTotal  << "," <<
-//    budgetManager.huffmanSizeTotal   << "," <<
-//    budgetManager.weightedSum / budgetManager.totalLength << "," <<
-//    0.2;
-
-
-
-
 #ifndef NDEBUG
-    std::cout << "HUFFMAN TOTAL SIZE: " << budgetManager.huffmanSizeTotal <<  " bytes" << std::endl;
-    std::cout << "MODEL   TOTAL SIZE: " << budgetManager.modelSizeTotal   <<  " bytes" << std::endl;
-    std::cout << "DATASET TOTAL SIZE: " << datasetTotalSize   <<  " bytes" << std::endl;
+//    std::cout << "HUFFMAN TOTAL SIZE: " << budgetManager.huffmanSizeTotal <<  " bytes" << std::endl;
+//    std::cout << "MODEL   TOTAL SIZE: " << budgetManager.modelSizeTotal   <<  " bytes" << std::endl;
+//    std::cout << "DATASET TOTAL SIZE: " << datasetTotalSize   <<  " bytes" << std::endl;
 #endif
 
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
@@ -254,11 +247,16 @@ void ReaderManager::runCompressor() {
     }
     #endif
 
-    #ifndef NDEBUG
+    //#ifndef NDEBUG
     decompressModels();
-    std::cout << "AVERAGE ACTUAL ERROR: " << actualTotalError / totalPoints << std::endl;
 
-    #endif
+    std::cerr <<
+    budgetManager.modelSizeTotal  << "," <<
+    budgetManager.huffmanSizeTotal   << "," <<
+    budgetManager.weightedSum / budgetManager.totalLength << ","
+    << actualTotalError / totalPoints;
+
+   // #endif
 
 
 }
@@ -315,7 +313,7 @@ struct Model{
     std::vector<uint8_t> values;
 };
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
 void ReaderManager::decompressModels(){
     std::fstream csvFileStream;
     csvFileStream.open("../models.csv", std::ios::in);
@@ -385,11 +383,11 @@ void ReaderManager::decompressModels(){
         trys[m.CID] += m.length;
     }
 
-    for (auto now: trys){
-        if (now.second > 3674){
-            std::cout << now.first << std::endl;
-        }
-    }
+//    for (auto now: trys){
+//        if (now.second > 3674){
+//            std::cout << now.first << std::endl;
+//        }
+//    }
 
     for(auto const& m : models){
         auto &tsInstance = timeseries[m.CID];
@@ -529,9 +527,9 @@ float ReaderManager::calcActualError(const std::vector<float> &original, const s
         }
 
             if(error - 0.0001 > errorbound){
-                std::cout << "nonon: " << col << " error: " << error << " err bound: " << errorbound << ": " << (modelType == 0 ? "PMC" : (modelType == 1 ? "SWING" : "GORILLA")) << std::endl;
-                std::cout << "      original: " << original.at(i) << ", reconstructed: " << reconstructed.at(i) << std::endl;
-            }
+//                std::cout << "nonon: " << col << " error: " << error << " err bound: " << errorbound << ": " << (modelType == 0 ? "PMC" : (modelType == 1 ? "SWING" : "GORILLA")) << std::endl;
+//                std::cout << "      original: " << original.at(i) << ", reconstructed: " << reconstructed.at(i) << std::endl;
+           }
 
 
             actualTotalError += error;
@@ -539,4 +537,4 @@ float ReaderManager::calcActualError(const std::vector<float> &original, const s
     }
     return result;
 }
-#endif
+//#endif

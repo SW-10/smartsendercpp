@@ -51,7 +51,7 @@ class Config:
 
     def run_cpp_program(self, permutation, keys):
         result = subprocess.run([self.cpp_program_path], text=True, capture_output=True)
-        file = "csvs/" + "_".join(permutation) + ".csv"
+        file = "csvs/" + "-".join(permutation) + ".csv"
         text_file = open(file, "w")
         text_file.write("modelSize, tsSize, wErrorBound, wErrorActual \n")
         text_file.write(result.stderr)
@@ -109,12 +109,15 @@ class Config:
     def run_with_permutations(self, params_dict, sort_values, save_tikz):
         keys, values = zip(*params_dict.items())
         permutations = list(itertools.product(*values))
+        counter = 0
 
         for permutation in permutations:
+            counter += 1
             params = dict(zip(keys, permutation))
             self.set_params(**params)
             self.write_config_file(self.config_file_path)
             self.run_cpp_program(permutation, keys)
+            print(counter)
 
         self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
 
@@ -122,16 +125,20 @@ class Config:
 # Initialize configuration
 config = Config()
 
-config.cpp_program_path = "../cmake-build-debug/smartsendercpp.exe"
+config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
+
+
+config.inputFile = "mars_subset_4(1).csv"
 
 # Set columns with their error bounds and type
-config.set_columns(range(2, 62), (5, 15), 4.0)
+config.set_columns(range(2, 88), (5, 10), 2.5)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["170000", "180000", "190000", "200000", "210000"],
-    "budget": ["3000"],
-    "bufferGoal": ["1000", "2000", "3000"],
+    "maxAge": ["1000", "10000"],
+    "budget": ["1000", "10000"],
+    "chunkSize": ["1000", "10000"]
+    #"bufferGoal": ["10", "100", "1000", "10000", "100000"],
 }
 
 # Run with permutations

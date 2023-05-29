@@ -78,7 +78,7 @@ void BudgetManager::endOfChunkCalculations() {
             }
         }
         if (flushAll){
-            #ifndef NDEBUG
+            //#ifndef NDEBUG
             std::vector<SelectedModel> models;
 
             for(auto const &s : selected){
@@ -96,11 +96,11 @@ void BudgetManager::endOfChunkCalculations() {
                     //std::cout << flushed[yes.localId] << std::endl;
                 }
             }
-            #endif
+            //#endif
             selected.clear();
         }
         else if(toFlush > 0){
-            #ifndef NDEBUG
+            //#ifndef NDEBUG
             std::vector<SelectedModel> models;
             for(int j = 0; j < toFlush; j++){
                 if(selected.at(j).send){
@@ -115,7 +115,7 @@ void BudgetManager::endOfChunkCalculations() {
             }
             captureWeightedSumAndLength(models);
             writeModelsToCsv(models);
-            #endif
+            //#endif
             selected.erase(selected.begin(), selected.begin()+toFlush);
         }
     }
@@ -126,10 +126,10 @@ void BudgetManager::endOfChunkCalculations() {
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
 
-        #ifndef NDEBUG
+        //#ifndef NDEBUG
         // CALC SIZE OF HUFFMAN
         huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
-        #endif
+        //#endif
         timestampManager.localOffsetListToSend.clear();
     }
     if(!timestampManager.globalOffsetListToSend.empty()){
@@ -137,10 +137,10 @@ void BudgetManager::endOfChunkCalculations() {
         huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
         huffmanGOL.encodeTree();
 
-        #ifndef NDEBUG
+        //#ifndef NDEBUG
         // CALC SIZE OF HUFFMAN
         huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
-        #endif
+        //#endif
         timestampManager.globalOffsetListToSend.clear();
     }
 

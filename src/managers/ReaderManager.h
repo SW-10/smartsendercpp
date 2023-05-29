@@ -51,7 +51,10 @@ private:
     void Update(const std::string &message_from_subject) override;
     bool newInterval = false;
 
-    #ifndef NDEBUG
+    float actualTotalError = 0;
+    float totalPoints = 0;
+
+    //#ifndef NDEBUG
     float bytesToFloat(std::vector<uint8_t> bytes);
     std::vector<float> bytesToFloats(std::vector<uint8_t> bytes);
     float calcActualError(const std::vector<float> &original, const std::vector<float> &reconstructed,
@@ -61,10 +64,9 @@ private:
     //DEBUGGES
 
 
-    float actualTotalError = 0;
-    float totalPoints = 0;
+
     std::unordered_map<int, int> totalNum;
-    #endif
+    //#endif
 
 
 
