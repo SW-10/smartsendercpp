@@ -83,7 +83,7 @@ public:
 
     int getUnfinishedModelSize(int localId);
 
-    void resetModeManagerLower(std::vector<columnsExtra> timeSeriesConfig);
+    void resetModeManagerLower(std::vector<columnsExtra> &timeSeriesConfig);
 private:
 
     union FloatToUint8 {

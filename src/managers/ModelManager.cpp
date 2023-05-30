@@ -93,7 +93,7 @@ void ModelManager::fitSegment(int id, float value, Node *timestamp) {
 
 ModelManager::ModelManager(TimestampManager &timestampManager) : timestampManager(timestampManager) { }
 
-void ModelManager::resetModeManagerLower(std::vector<columnsExtra> timeSeriesConfig){
+void ModelManager::resetModeManagerLower(std::vector<columnsExtra> &timeSeriesConfig){
     selectedModels.clear();
     timeSeries.clear();
     RefreshTimeSeries(timeSeriesConfig, false);
