@@ -9,7 +9,9 @@
 #include "../utils/OutlierDetector.h"
 #include <functional>
 #include <forward_list>
+#include <sstream>
 #include <cstdlib>
+#include "filesystem"
 
 //int Observer::static_number_ = 0;
 //Timekeeper *timekeeper = new Timekeeper;
@@ -22,6 +24,10 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
           outlierDetector(configManager) {
 
     timekeeper.Attach(this);
+    std::stringstream ss;
+    ss << configManager.maxAge << configManager.bufferGoal<<configManager.chunksToGoal<<configManager.chunkSize<<configManager.budget<<configManager.budgetLeftRegressionLength;
+
+    budgetManager.name = ss.str();
     timekeeper.intervalSeconds = &configManager.chunkSize;
     this->csvFileStream.open(
             "../" + this->configManager.inputFile/*"../Cobham_hour.csv"*/,
@@ -54,8 +60,15 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 //            #endif
 
             if (!in->empty()) {
-                if(this->budgetManager.outlierCooldown[i] > 0){
-                    this->budgetManager.outlierCooldown[i]--;
+                if(this->budgetManager.outlierCooldown[i] >= 0){
+                    if (this->budgetManager.outlierCooldown[i] == 0){
+                        this->budgetManager.outlierCooldown[i] = -1;
+                        configManager.timeseriesCols.at(i).error = configManager.timeseriesCols.at(i).defaultError ;
+                    }
+                    else {
+                        this->budgetManager.outlierCooldown[i]--;
+                    }
+
                 }
 
                 float value = std::stof(*in);
@@ -114,7 +127,7 @@ void ReaderManager::Update(const std::string &message_from_subject) {
 
 void ReaderManager::runCompressor() {
     std::ofstream myfile;
-    myfile.open ("../models.csv", std::ios_base::out);
+    myfile.open (std::string("../").append(budgetManager.name.append("models.csv")), std::ios_base::out);
     myfile.close();
     #ifdef linux
     ConnectionAddress address("0.0.0.0", 9999);
@@ -135,7 +148,6 @@ void ReaderManager::runCompressor() {
         row.clear();
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
-
         int count = 0;
         while (std::getline(s, word, ',')) {
             auto mapElement = myMap.find(count); //Get element in map
@@ -205,7 +217,9 @@ void ReaderManager::runCompressor() {
             //std::cout << "3" << std::endl;
             total += std::max(ts.gorilla.length, std::max(ts.pmcMean.length, ts.swing.length));
             if (total != blarn.second){
-                //std::cout << lineNumber << " " << blarn.first << std::endl;
+                std::cout << lineNumber << " " << blarn.first << std::endl;
+                std::cout << total << " " << blarn.second << std::endl;
+                std::cout << "==" << std::endl;
             }
         }
         #endif
@@ -247,7 +261,6 @@ void ReaderManager::runCompressor() {
     }
     #endif
 
-    //#ifndef NDEBUG
     decompressModels();
 
     std::cerr <<
@@ -256,7 +269,7 @@ void ReaderManager::runCompressor() {
     budgetManager.weightedSum / budgetManager.totalLength << ","
     << actualTotalError / totalPoints;
 
-   // #endif
+
 
 
 }
@@ -271,12 +284,14 @@ void ReaderManager::finaliseCompression() {
             if(s.send){
                 budgetManager.modelSizeTotal += budgetManager.sizeOfModels;
                 budgetManager.modelSizeTotal += s.values.size();
+                budgetManager.weightedSum += s.length * s.error;
+                budgetManager.totalLength += s.length;
                 models.emplace_back(s);
             }
         }
 
     }
-    BudgetManager::writeModelsToCsv(models);
+    BudgetManager::writeModelsToCsv(models, budgetManager.name);
 
 
     timestampManager.flushTimestamps(timestampManager.timestampCurrent);
@@ -316,7 +331,7 @@ struct Model{
 //#ifndef NDEBUG
 void ReaderManager::decompressModels(){
     std::fstream csvFileStream;
-    csvFileStream.open("../models.csv", std::ios::in);
+    csvFileStream.open(std::string("../").append(budgetManager.name), std::ios::in);
     if(!csvFileStream)
     {
         std::cout << "Can't open file!" << std::endl;
@@ -370,6 +385,8 @@ void ReaderManager::decompressModels(){
         lineNO++;
         models.push_back(m);
     }
+    csvFileStream.close();
+    std::filesystem::remove(std::string("../").append(budgetManager.name));
     double error = 0;
     int totalValues = 0;
     Swing swing(error);

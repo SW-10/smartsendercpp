@@ -7,6 +7,7 @@
 struct columns {
     int col;
     double error;
+    double defaultError;
     double maxError;
     double outlierThreshHold;
 

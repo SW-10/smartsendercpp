@@ -16,7 +16,7 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     this->bytesLeft = budget;
     for (auto &_: configManager.timeseriesCols) {
         tsInformation.emplace_back(_.col);
-        outlierCooldown[_.col] = 0;
+        outlierCooldown[_.col] = -1;
     }
     sizeOfModels = 0;
     sizeOfModels += sizeof(float); // Size of error
@@ -89,7 +89,7 @@ void BudgetManager::endOfChunkCalculations() {
                 }
             }
             captureWeightedSumAndLength(models);
-            writeModelsToCsv(models);
+            writeModelsToCsv(models, name);
             for (auto yes: models){
                 flushed[yes.cid] += yes.length;
                 if(timestampManager.timestampCurrent->data >= 1652413433 && yes.localId == 4){
@@ -114,7 +114,7 @@ void BudgetManager::endOfChunkCalculations() {
                 }
             }
             captureWeightedSumAndLength(models);
-            writeModelsToCsv(models);
+            writeModelsToCsv(models, name);
             //#endif
             selected.erase(selected.begin(), selected.begin()+toFlush);
         }
@@ -190,24 +190,24 @@ void BudgetManager::cleanSpaceKeeper(){
     const int max = 300;
     for(auto &timeSeries: tsInformation){
         int numEntries = 0;
-        float weightedSum = 0;
+        float weightedSumS = 0;
         int i;
         for (i = timeSeries.storageImpact.size()-1; i > -1; i--){
             if(!(timeSeries.storageImpact.at(i).first + numEntries < max)){
                 timeSeries.storageImpact.at(i).first = max - numEntries;
                 numEntries = max;
-                weightedSum += timeSeries.storageImpact.at(i).first*timeSeries.storageImpact.at(i).second;
+                weightedSumS += timeSeries.storageImpact.at(i).first * timeSeries.storageImpact.at(i).second;
                 break;
             } else {
                 numEntries += timeSeries.storageImpact.at(i).first;
-                weightedSum += timeSeries.storageImpact.at(i).first*timeSeries.storageImpact.at(i).second;
+                weightedSumS += timeSeries.storageImpact.at(i).first * timeSeries.storageImpact.at(i).second;
             }
         }
         if (i > 0){
             timeSeries.storageImpact.erase(timeSeries.storageImpact.begin(), timeSeries.storageImpact.begin()+i);
         }
         if(numEntries > 0){
-            timeSeries.byteRate = weightedSum / numEntries;
+            timeSeries.byteRate = weightedSumS / numEntries;
         }
     }
 }
@@ -436,6 +436,9 @@ void BudgetManager::selectAdjustedModels(){
                         model.values = Gorilla::getNFirstValuesBitstring(N, model.values);
                         model.length = N;
                     }
+
+                    model.length = lowerModelLength[map.first].first;
+
                 }
                 else if (originalModels.at(i).startTime >= adjustedModelStart){
                     originalModelSize += sizeOfModels + originalModels.at(i).values.size();
@@ -467,9 +470,9 @@ void BudgetManager::captureWeightedSumAndLength(std::vector<SelectedModel> model
       }
 };
 
-void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models){
+void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models, std::string name){
     std::ofstream myfile;
-    myfile.open ("../models.csv", std::ios_base::app);
+    myfile.open (std::string("../").append(name), std::ios_base::app);
     for (const auto& model : models){
         int mid = static_cast<int>(model.mid);
         int cid = static_cast<int>(model.cid);

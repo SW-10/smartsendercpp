@@ -168,6 +168,7 @@ void ConfigManager::fixQuotation(){
 columns::columns(int col, double error, double outlierThreshHold, double maxError) {
     this->col = col;
     this->error = error;
+    this->defaultError = error;
     this->outlierThreshHold = outlierThreshHold;
     this->maxError = maxError;
 }

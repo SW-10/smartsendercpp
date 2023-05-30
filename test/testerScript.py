@@ -7,6 +7,8 @@ import matplotlib.cm as cm
 import matplotlib.ticker as ticker
 import tikzplotlib as tikz
 import numpy as np
+import time
+from multiprocessing import Process
 
 
 class Config:
@@ -49,12 +51,15 @@ class Config:
             file.write("--budgetLeftRegressionLength=\"{}\"\n".format(self.budgetLeftRegressionLength))
             file.write("--chunksToGoal=\"{}\"\n".format(self.chunksToGoal))
 
-    def run_cpp_program(self, permutation, keys):
+    def run_cpp_program(self, permutation):
+        self.write_config_file(self.config_file_path)
         result = subprocess.run([self.cpp_program_path], text=True, capture_output=True)
         file = "csvs/" + "-".join(permutation) + ".csv"
         text_file = open(file, "w")
         text_file.write("modelSize, tsSize, wErrorBound, wErrorActual \n")
         text_file.write(result.stderr)
+        if result.returncode != 0:
+            print(result.returncode)
 
     def plot_results(self, sort_values=False, save_tikz=False):
         directory = 'csvs/'
@@ -111,15 +116,23 @@ class Config:
         permutations = list(itertools.product(*values))
         counter = 0
 
-        for permutation in permutations:
-            counter += 1
-            params = dict(zip(keys, permutation))
-            self.set_params(**params)
-            self.write_config_file(self.config_file_path)
-            self.run_cpp_program(permutation, keys)
-            print(counter)
+        processes = []
+        if __name__ == '__main__':
+            for permutation in permutations:
+                if len(processes) >= 6:
+                    processes[0].join()
+                    processes = processes[1:]
+                counter += 1
+                params = dict(zip(keys, permutation))
+                self.set_params(**params)
+                self.write_config_file(self.config_file_path)
+                process = Process(target = self.run_cpp_program, args=(permutation,))
+                time.sleep(1)
+                processes.append(process)
+                process.start()
+                print(counter)
 
-        self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
+            self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
 
 
 # Initialize configuration
@@ -128,19 +141,19 @@ config = Config()
 config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
 
 
-config.inputFile = "mars_subset_4(1).csv"
+config.inputFile = "mars_subset_4.csv"
 
 # Set columns with their error bounds and type
 config.set_columns(range(2, 88), (5, 10), 2.5)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["100", "1000", "10000"],
-    "budget": ["100", "1000", "10000"],
-    "chunkSize": ["100", "1000", "10000"],
-    "bufferGoal": ["100", "1000", "10000"],
-    "budgetLeftRegressionLength": ["10", "100", "1000"],
-    "chunksToGoal": ["1", "10", "100"]
+    "maxAge": ["10000"],
+    "budget": ["10000", "20000", "30000"],
+    "chunkSize": ["1000", "10000", "20000"],
+    "bufferGoal": ["1000", "10000"],
+    "budgetLeftRegressionLength": ["10"],
+    "chunksToGoal": ["10"]
 }
 
 # Run with permutations

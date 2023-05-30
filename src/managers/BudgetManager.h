@@ -43,10 +43,11 @@ public:
     int totalLength = 0;
     float errorBoundTotal = 0;
 
-    static void writeModelsToCsv(std::vector<SelectedModel> models);
+    static void writeModelsToCsv(std::vector<SelectedModel> models, std::string name);
 
     //DEBUF
     std::unordered_map<int, int> flushed;
+    std::string name;
 
 private:
     ModelManager &modelManager;
@@ -66,6 +67,7 @@ private:
     std::vector<timeSeriesInformation> tsInformation;
     std::unordered_map<int, std::pair<int, int>> lowerModelLength;
     int lowerErrorBoundEndTimestamp;
+    int lowerBoundLength;
     int numberIncreasingAdjustableTimeSeries;
     int numberDecreasingAdjustableTimeSeries;
 
