@@ -408,23 +408,40 @@ void ReaderManager::decompressModels(){
 //            std::cout << now.first << std::endl;
 //        }
 //    }
+    std::map<int,std::vector<std::pair<int,float>>::iterator> iters;
+
+    for (auto &t : timeseries){
+        iters[t.first] = t.second.begin();
+    }
 
     for(auto const& m : models){
         auto &tsInstance = timeseries[m.CID];
+        auto &iter = iters[m.CID];
         if (m.CID == 22 || m.CID == 23){
             continue;
         }
+
+
+        std::vector<int> timestamps;
+        std::vector<float> originalValues;
+        originalValues.reserve(m.length);
+        timestamps.reserve(m.length);
+        for(int i = 0; i < m.length; i++){
+            timestamps.push_back(iter->first);
+            originalValues.push_back(iter->second);
+            iter++;
+        }
+        /*for(const auto elem : tsInstance){
+            timestamps.push_back(elem.first);
+            originalValues.push_back(elem.second);
+        }*/
+
         switch(m.MID){
             case 0: {
                 //pmc
                 float val = bytesToFloat(m.values);
 
-                std::vector<int> timestamps;
-                std::vector<float> originalValues;
-                for(const auto elem : tsInstance){
-                    timestamps.push_back(elem.first);
-                    originalValues.push_back(elem.second);
-                }
+
 
                 // ORIGINAL TIMESTAMPS
                 auto first = timestamps.begin();
@@ -443,12 +460,14 @@ void ReaderManager::decompressModels(){
             }
             case 1: {
                 //swing
-                std::vector<int> timestamps;
+                /*std::vector<int> timestamps;
                 std::vector<float> originalValues;
+                originalValues.reserve(tsInstance.size());
+                timestamps.reserve(tsInstance.size());
                 for(const auto elem : tsInstance){
                     timestamps.push_back(elem.first);
                     originalValues.push_back(elem.second);
-                }
+                }*/
 
                 auto floats = bytesToFloats(m.values);
 
@@ -470,12 +489,14 @@ void ReaderManager::decompressModels(){
             }
             case 2: {
                 //gorilla
-                std::vector<int> timestamps;
+                /*std::vector<int> timestamps;
                 std::vector<float> originalValues;
+                originalValues.reserve(tsInstance.size());
+                timestamps.reserve(tsInstance.size());
                 for(const auto elem : tsInstance){
                     timestamps.push_back(elem.first);
                     originalValues.push_back(elem.second);
-                }
+                }*/
 
                 // ORIGINAL TIMESTAMPS
                 auto first = timestamps.begin();
@@ -497,7 +518,7 @@ void ReaderManager::decompressModels(){
         if (tsInstance.size() < m.length){
             std::cout << "nonooonononono" << std::endl;
         }
-        tsInstance.erase(tsInstance.begin(), tsInstance.begin()+m.length);
+        //tsInstance.erase(tsInstance.begin(), tsInstance.begin()+m.length);
         int f = 0;
         countModel++;
     }
