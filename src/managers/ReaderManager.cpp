@@ -149,6 +149,9 @@ void ReaderManager::runCompressor() {
         std::getline(this->csvFileStream, line);
         std::stringstream s(line);
         int count = 0;
+
+
+
         while (std::getline(s, word, ',')) {
             auto mapElement = myMap.find(count); //Get element in map
 
