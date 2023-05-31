@@ -293,7 +293,7 @@ void BudgetManager::lowerErrorBounds(){
         //configManager.timeseriesCols.at(locID).error = 0;
 
     }
-    lowerErrorBoundEndTimestamp = timestampManager.timestampCurrent->data;
+    lowerErrorBoundEndTimestamp = timestampManager.timestampCurrent->prev->data;
     adjustingModelManager.resetModeManagerLower(adjustableTimeSeriesConfig);
 
 
@@ -409,40 +409,41 @@ void BudgetManager::selectAdjustedModels(){
             }
 
             //Get size of last unfinished original model
-            int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
+            /*int sizeUnfinishedModel = modelManager.getUnfinishedModelSize(map.first);
             if (sizeUnfinishedModel != 0){
                 originalModelSize += sizeOfModels + sizeUnfinishedModel;
-            }
+            }*/
+            modelManager.forceModelFlush(map.first);
 
             //Get size of original models - But only those which are on the same chunk as adjusted models
             for(int i = 0; i < originalModels.size(); i++){
                 if (i < originalModels.size()-1 &&
                     originalModels.at(i).startTime < adjustedModelStart &&
-                    originalModels.at(i+1).startTime >= adjustedModelStart
-
-                ){
-                    auto IterModel = originalModels.at(i);
-                    int iter = i;
-                    int cutOffLength = 0;
-                    while (IterModel.startTime != lowerModelLength[map.first].second){
-                        iter--;
-                        cutOffLength += IterModel.length;
-                        IterModel = originalModels.at(iter);
-                    }
+                    originalModels.at(i).endTime >= adjustedModelStart)
+                {
                     auto &model = originalModels.at(i);
                     model.endTime = lowerErrorBoundEndTimestamp;
                     if (model.mid == GORILLA){
-                        int N = lowerModelLength[map.first].first - cutOffLength;
+                        int N = lowerModelLength[map.first].first;// - cutOffLength;
                         model.values = Gorilla::getNFirstValuesBitstring(N, model.values);
                         model.length = N;
                     }
-
                     model.length = lowerModelLength[map.first].first;
 
                 }
                 else if (originalModels.at(i).startTime >= adjustedModelStart){
                     originalModelSize += sizeOfModels + originalModels.at(i).values.size();
                     originalModels.at(i).send = false;
+                }
+                else if (originalModels.size() == 1){
+                    originalModelSize += sizeOfModels + originalModels.at(i).values.size();
+                    auto &model = originalModels.at(i);
+                    model.endTime = lowerErrorBoundEndTimestamp;
+                    if (model.mid == GORILLA){
+                        int N = lowerModelLength[map.first].first;
+                        model.values = Gorilla::getNFirstValuesBitstring(N, model.values);
+                    }
+                    model.length = lowerModelLength[map.first].first;
                 }
             }
             toFill -= adjustedModelSize - originalModelSize;
