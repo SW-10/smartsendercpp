@@ -129,9 +129,9 @@ void ReaderManager::runCompressor() {
     std::ofstream myfile;
     myfile.open (std::string("../").append(budgetManager.name.append("models.csv")), std::ios_base::out);
     myfile.close();
-    #ifdef linux
-    ConnectionAddress address("0.0.0.0", 9999);
-    #endif
+//    #ifdef linux
+//    ConnectionAddress address("0.0.0.0", 9999);
+//    #endif
 
     std::vector<std::string> row;
     std::string line, word;
@@ -242,24 +242,24 @@ void ReaderManager::runCompressor() {
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
     //timestampManager.reconstructDeltaDelta();
 
-    #ifdef linux
-    auto table = VectorToColumnarTable(
-            this->modelManager.selectedModels).ValueOrDie();
-
-    auto recordBatch = MakeRecordBatch(table).ValueOrDie();
-
-    ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
-    auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
-                        arrow::flight::FlightDescriptor{arrow::flight
-                                                        ::FlightDescriptor::Path(std::vector<std::string>{"table.parquet"})}, recordBatch->schema()).ValueOrDie();
-
-    ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
-    arrow::Status st = arrow::Status::OK();
-    if (!st.ok()) {
-        std::cerr << st << std::endl;
-        exit(1);
-    }
-    #endif
+//    #ifdef linux
+//    auto table = VectorToColumnarTable(
+//            this->modelManager.selectedModels).ValueOrDie();
+//
+//    auto recordBatch = MakeRecordBatch(table).ValueOrDie();
+//
+//    ARROW_ASSIGN_OR_RAISE(auto flightClient, createClient(address))
+//    auto doPutResult = flightClient->DoPut(arrow::flight::FlightCallOptions(),
+//                        arrow::flight::FlightDescriptor{arrow::flight
+//                                                        ::FlightDescriptor::Path(std::vector<std::string>{"table.parquet"})}, recordBatch->schema()).ValueOrDie();
+//
+//    ARROW_RETURN_NOT_OK(doPutResult.writer->WriteRecordBatch(*recordBatch));
+//    arrow::Status st = arrow::Status::OK();
+//    if (!st.ok()) {
+//        std::cerr << st << std::endl;
+//        exit(1);
+//    }
+//    #endif
 
     decompressModels();
 
