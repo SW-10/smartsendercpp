@@ -146,12 +146,9 @@ SelectedModel ModelManager::selectPmcMean(TimeSeriesModelContainer &modelContain
     model.endTime = modelContainer.pmcMean.lastTimestamp->data;
     convertFloatToUint8Array(model.values, (modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
     //model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
-    if (modelContainer.pmcMean.adjustable){
-        model.error = modelContainer.pmcMean.error;
-    }
-    else {
-        model.error = modelContainer.errorBound;
-    }
+
+    model.error = modelContainer.pmcMean.error;
+
     model.bitRate = bitRate;
     model.length = modelContainer.pmcMean.length;
     return model;
@@ -180,12 +177,9 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.swing.lastTimestamp->data;
     model.values.emplace_back((int) (start_value < end_value));
-    if (modelContainer.swing.adjustable){
-        model.error = modelContainer.swing.errorBound;
-    }
-    else {
-        model.error = modelContainer.errorBound;
-    }
+    model.error = modelContainer.swing.errorBound;
+
+
     model.bitRate = bitRate;
     model.length = modelContainer.swing.length;
     return model;
@@ -206,7 +200,7 @@ SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContain
     // Copy the remaining bits to the byte-array
     modelContainer.gorilla.compressedValues.bytes.push_back(modelContainer.gorilla.compressedValues.currentByte);
     model.values = std::move(modelContainer.gorilla.compressedValues.bytes);
-    model.error = modelContainer.errorBound;
+    model.error = modelContainer.swing.errorBound;
     model.bitRate = bitrate;
     model.length = modelContainer.gorilla.length;
 
