@@ -159,12 +159,14 @@ config.set_columns(range(2, 88), (5, 10), 3)
 # Define permutations
 params_dict = {
     "maxAge": ["10000", "100000"],
-    "budget": ["36000", "72000"],
-    "chunkSize": ["36000", "72000"],
-    "bufferGoal": ["10000", "50000"],
+    "budget": ["18000", "36000", "72000", "144000"],
+    "chunkSize": ["1800", "3600", "7200", "14400"],
+    "bufferGoal": ["10000"],
     "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
+    "chunksToGoal": ["5", "10", "20"]
 }
 
 # Run with permutations
-config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
+#config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
+
+config.plot_results(sort_values=True, save_tikz=False)
