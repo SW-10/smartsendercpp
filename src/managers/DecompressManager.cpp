@@ -1,7 +1,3 @@
-//
-// Created by teisv on 02-06-2023.
-//
-
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -21,7 +17,6 @@ void DecompressManager::decompressModels(){
 
     std::fstream csvFileStream;
     csvFileStream.open(std::string("../").append(budgetManager.name), std::ios::in);
-//    csvFileStream.open(std::string("../10000100010100010000010models.csv"), std::ios::in);
 
     if(!csvFileStream)
     {
@@ -85,12 +80,10 @@ void DecompressManager::decompressModels(){
             }
         }
         lineNO++;
-        decompressOneModel(m, timeseries[m.CID]); // First: timestamps, second: original values
+        decompressOneModel(m, timeseries[m.CID]);
     }
     std::cout << "Success!" << std::endl;
     csvFileStream.close();
-    std::cout << "closed" << std::endl;
-//    std::filesystem::remove(std::string("../").append(budgetManager.name));
 
     std::cout << "Number of data points: " << totalPoints << std::endl;
     std::cout << "Avg error:  " << actualTotalError / totalPoints << std::endl;
@@ -102,7 +95,6 @@ void DecompressManager::decompressOneModel(Model& m, std::deque<std::pair<int, f
 
     switch(m.MID){
         case 0: {
-
             //pmc
             float val = bytesToFloat(m.values);
             auto res = PmcMean::gridPmcMean(val, m.length);
@@ -111,7 +103,6 @@ void DecompressManager::decompressOneModel(Model& m, std::deque<std::pair<int, f
         }
         case 1: {
             //swing
-
             auto floats = bytesToFloats(m.values);
             bool up = m.values.at(8);
 
