@@ -13,4 +13,5 @@ target_sources(smartsendercpp PRIVATE TimestampManager.cpp)
 target_sources(smartsendercpp PRIVATE BudgetManager.h)
 target_sources(smartsendercpp PRIVATE BudgetManager.cpp)
 
-
+target_sources(smartsendercpp PRIVATE DecompressManager.h)
+target_sources(smartsendercpp PRIVATE DecompressManager.cpp)

@@ -4,9 +4,11 @@
 #include "string"
 #include "ConfigManager.h"
 #include "ModelManager.h"
+#include "DecompressManager.h"
 #include "TimestampManager.h"
 #include "BudgetManager.h"
 #include "../utils/OutlierDetector.h"
+#include <deque>
 #ifdef linux
 #include "../ArrowFlight.h"
 #endif
@@ -17,11 +19,12 @@
 #include <any>
 #include <functional>
 
-
+struct Model;
 class ReaderManager : public IObserver {
 private:
     ConfigManager configManager;
     TimestampManager timestampManager;
+    DecompressManager decompressManager;
     OutlierDetector outlierDetector;
 
 public:
@@ -29,6 +32,7 @@ public:
     explicit ReaderManager(std::string configFile, Timekeeper &timekeeper);
 
     void runCompressor();
+//    void decompressModels();
 
 private:
     BudgetManager budgetManager;
@@ -44,22 +48,20 @@ private:
                     int
             > // value (function, compressionType, count)
     > myMap;
-
-    void decompressModels();
-
+//    int getNextLineInOriginalFile(std::fstream& csvFileStream, std::map<int, std::deque<std::pair<int, float>>>& timeseries);
+//    void decompressOneModel(Model& m,  std::deque<std::pair<int, float>>& originalValues);
     void finaliseCompression();
     void Update(const std::string &message_from_subject) override;
     bool newInterval = false;
 
     float actualTotalError = 0;
-    float totalPoints = 0;
+    int totalPoints = 0;
 
     //#ifndef NDEBUG
-    float bytesToFloat(std::vector<uint8_t> bytes);
+//    float bytesToFloat(std::vector<uint8_t> bytes);
     std::vector<float> bytesToFloats(std::vector<uint8_t> bytes);
-    float calcActualError(const std::vector<float> &original, const std::vector<float> &reconstructed,
-                          int modelType, float errorbound, int col);
-    std::map<int, std::vector<std::pair<int, float>>> timeseries;
+//    float calcActualError(std::deque<std::pair<int, float>> &original, const std::vector<float> &reconstructed,
+//                          int modelType, float errorbound, int col);
     int datasetTotalSize = 0;
     //DEBUGGES
 
