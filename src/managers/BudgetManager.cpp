@@ -421,14 +421,23 @@ void BudgetManager::selectAdjustedModels(){
                     originalModels.at(i).startTime < adjustedModelStart &&
                     originalModels.at(i).endTime >= adjustedModelStart)
                 {
+                    int iter = i;
+                    int extras = lowerModelLength[map.first].first;
+                    while (iter != 0){
+                        if (lowerModelLength[map.first].second != originalModels.at(iter-1).startTime){
+                            break;
+                        }
+                        extras -= originalModels.at(iter-1).length;
+                        iter--;
+                    }
                     auto &model = originalModels.at(i);
                     model.endTime = lowerErrorBoundEndTimestamp;
                     if (model.mid == GORILLA){
-                        int N = lowerModelLength[map.first].first;// - cutOffLength;
+                        int N = extras;// - cutOffLength;
                         model.values = Gorilla::getNFirstValuesBitstring(N, model.values);
-                        model.length = N;
+                        //model.length = N;
                     }
-                    model.length = lowerModelLength[map.first].first;
+                    model.length = extras;
 
                 }
                 else if (originalModels.at(i).startTime >= adjustedModelStart){

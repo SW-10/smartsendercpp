@@ -15,11 +15,11 @@ class Config:
     def __init__(self):
         self.columns = {}
         self.timestamps = "1"
-        self.inputFile = "cobham_hour_reloaded_no_pos.csv"
-        self.maxAge = "180000"
-        self.chunkSize = "604800"
-        self.budget = "10000"
-        self.bufferGoal = "2000"
+        self.inputFile = "mars_subset_4(1).csv"
+        self.maxAge = "10000"
+        self.chunkSize = "1000"
+        self.budget = "1000"
+        self.bufferGoal = "1000"
         self.budgetLeftRegressionLength = "10"
         self.chunksToGoal = "10"
         self.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
@@ -76,6 +76,12 @@ class Config:
                     data[column_name][filename] = df[column_name].tolist()
 
         for column_name, column_data in data.items():
+            for filename in column_data:
+                if not column_data[f"{filename}"]:
+                    print(filename)
+                    os.remove(directory + filename)
+
+        for column_name, column_data in data.items():
 
             plot_df = pd.DataFrame(column_data)
 
@@ -109,7 +115,11 @@ class Config:
             if save_tikz:
                 tikz.save(f'{column_name}.tex')
             else:
-                plt.show()
+                # plt.show()
+                if not sort_values:
+                    plt.savefig(f"{column_name}")
+                else:
+                    plt.savefig(f"{column_name}-sorted")
 
     def run_with_permutations(self, params_dict, sort_values, save_tikz):
         keys, values = zip(*params_dict.items())
@@ -119,7 +129,7 @@ class Config:
         processes = []
         if __name__ == '__main__':
             for permutation in permutations:
-                if len(processes) >= 6:
+                if len(processes) >= 3:
                     processes[0].join()
                     processes = processes[1:]
                 counter += 1
@@ -132,7 +142,7 @@ class Config:
                 process.start()
                 print(counter)
 
-            self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
+            #self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
 
 
 # Initialize configuration
@@ -141,19 +151,55 @@ config = Config()
 config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
 
 
-config.inputFile = "mars_subset_4.csv"
+config.inputFile = "mars-trimmed.csv"
 
 # Set columns with their error bounds and type
-config.set_columns(range(2, 88), (5, 10), 2.5)
+config.set_columns(range(2, 88), (5, 10), 3)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["10000"],
-    "budget": ["10000", "20000", "30000"],
-    "chunkSize": ["1000", "10000", "20000"],
-    "bufferGoal": ["1000", "10000"],
+    "maxAge": ["1000", "10000", "50000", "100000", "1000000"],
+    "budget": ["36000"],
+    "chunkSize": ["3600"],
+    "bufferGoal": ["10000"],
     "budgetLeftRegressionLength": ["10"],
     "chunksToGoal": ["10"]
+}
+
+# Run with permutations
+config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
+
+params_dict = {
+    "maxAge": ["100000"],
+    "budget": ["9000", "18000", "36000", "72000", "144000"],
+    "chunkSize": ["3600"],
+    "bufferGoal": ["10000"],
+    "budgetLeftRegressionLength": ["10"],
+    "chunksToGoal": ["10"]
+}
+
+# Run with permutations
+config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
+
+params_dict = {
+    "maxAge": ["100000"],
+    "budget": ["36000"],
+    "chunkSize": ["900", "1800", "3600", "7200", "14400"],
+    "bufferGoal": ["10000"],
+    "budgetLeftRegressionLength": ["10"],
+    "chunksToGoal": ["10"]
+}
+
+# Run with permutations
+config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
+
+params_dict = {
+    "maxAge": ["100000"],
+    "budget": ["36000"],
+    "chunkSize": ["3600"],
+    "bufferGoal": ["10000"],
+    "budgetLeftRegressionLength": ["10"],
+    "chunksToGoal": ["5", "10", "20", "40", "100"]
 }
 
 # Run with permutations
