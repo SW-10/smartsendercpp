@@ -8,6 +8,7 @@
 #include "DecompressManager.h"
 
 void DecompressManager::decompressModels(){
+    std::cout << "Starting decompression ..." << std::endl;
     std::map<int, std::deque<std::pair<int, float>>> timeseries;
     std::fstream originalFileStream;
     originalFileStream.open("../" + this->configManager.inputFile, std::ios::in);
