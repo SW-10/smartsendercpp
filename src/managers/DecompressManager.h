@@ -18,6 +18,15 @@ struct Model{
     std::vector<uint8_t> values;
 };
 
+struct ModelError {
+    float accErrorBound = 0;
+    float accError = 0;
+    int totalValues = 0;
+    float avgErrorBound = 0;
+    float avgError = 0;
+    int cid;
+};
+
 
 class DecompressManager {
 public:
@@ -30,14 +39,16 @@ public:
     void decompressModels();
     float actualTotalError = 0;
     int totalPoints = 0;
+    std::map<int, ModelError> columnsError;
 
 private:
-
-    int getNextLineInOriginalFile(std::fstream& csvFileStream, std::map<int, std::deque<std::pair<int, float>>>& timeseries);
     void decompressOneModel(Model& m,  std::deque<std::pair<int, float>>& originalValues);
     float bytesToFloat(std::vector<uint8_t> bytes);
     std::vector<float> bytesToFloats(std::vector<uint8_t> bytes);
     float calcActualError(std::deque<std::pair<int, float>> &original, const std::vector<float> &reconstructed,
                           int modelType, float errorbound, int col);
+
+    int
+    getNextLineInOriginalFile(std::fstream &csvFileStream, std::map<int, std::deque<std::pair<int, float>>> &timeseries);
 };
 

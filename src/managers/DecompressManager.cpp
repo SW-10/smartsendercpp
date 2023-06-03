@@ -87,6 +87,21 @@ void DecompressManager::decompressModels(){
 
     std::cout << "Number of data points: " << totalPoints << std::endl;
     std::cout << "Avg error:  " << actualTotalError / totalPoints << std::endl;
+
+    std::vector<ModelError> columns;
+
+    for (auto column: columnsError){
+        column.second.cid = column.first;
+        column.second.avgError = column.second.accError / column.second.totalValues;
+        column.second.avgErrorBound = column.second.accErrorBound / column.second.totalValues;
+        columns.emplace_back(column.second);
+    }
+
+
+    std::sort(columns.begin(), columns.end(), [](ModelError &left, ModelError &right){
+        return left.avgErrorBound < right.avgErrorBound;
+    });
+
 }
 
 void DecompressManager::decompressOneModel(Model& m, std::deque<std::pair<int, float>>& originalValues){
@@ -159,7 +174,7 @@ float DecompressManager::calcActualError(std::deque<std::pair<int, float>> &orig
     for(int i = 0; i < size; i++){
         float error;
 
-        // Handle division by zero
+        // Handle division by zerowriting code meme
         if(fabs(original.at(i).second) == 0){
             error = 0;
         } else {
@@ -173,7 +188,11 @@ float DecompressManager::calcActualError(std::deque<std::pair<int, float>> &orig
 
 
         actualTotalError += error;
+
         totalPoints++;
+        columnsError[col].accError += error;
+        columnsError[col].accErrorBound += errorbound;
+        columnsError[col].totalValues++;
     }
 
     //Remove the items from the original vector
@@ -202,7 +221,7 @@ int DecompressManager::getNextLineInOriginalFile(std::fstream& csvFileStream, st
             timestamp = std::stoi(word);
             continue;
         }
-        timeseries[count].push_back(std::make_pair(timestamp, std::stof(word)));
+        timeseries[count].emplace_back(timestamp, std::stof(word));
         }
     }
 
