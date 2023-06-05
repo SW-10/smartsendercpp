@@ -77,15 +77,17 @@ void DecompressManager::decompressModels(){
                     break;
             }
 
-            while(m.end > latestTSOri){
-                latestTSOri = getNextLineInOriginalFile(originalFileStream, timeseries);
-            }
+
 
 
             count++;
             if(count > 6){
                 count = 0;
             }
+            while(m.end > latestTSOri){
+                latestTSOri = getNextLineInOriginalFile(originalFileStream, timeseries);
+            }
+
         }
         lineNO++;
         decompressOneModel(m, timeseries[m.CID]);
@@ -191,7 +193,10 @@ float DecompressManager::calcActualError(std::deque<datapoint> &original, const 
         }
         if (original.at(i).important){
             columnsError[col].numOutlier++;
-            errorBoundImportant += errorbound;
+            if (modelType != 2){
+                errorBoundImportant += errorbound;
+            }
+
             errorImportant += error;
             numImportant++;
         }

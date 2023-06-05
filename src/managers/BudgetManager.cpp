@@ -17,7 +17,6 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     for (auto &_: configManager.timeseriesCols) {
         tsInformation.emplace_back(_.col);
         outlierCooldown[_.col] = -1;
-        hasBeenCooled[_.col] = false;
 
     }
     sizeOfModels = 0;
@@ -48,9 +47,6 @@ void BudgetManager::endOfChunkCalculations() {
         lowerModelLength.clear();
         loweringError = false;
         increasingError = false;
-    }
-    for (auto &ts : hasBeenCooled){
-        ts.second = false;
     }
 
     int penaltySender = 0;
@@ -320,9 +316,6 @@ void BudgetManager::selectAdjustedModels(){
         int toSave = configManager.bufferGoal - lastBudget.back();
         scores.reserve(adjustableTimeSeries.size());
         for (auto &map : adjustableTimeSeries){
-            if (hasBeenCooled[map.first]){
-                continue;
-            }
             adjustingModelManager.forceModelFlush(map.second);
             //Get finished models
             std::vector<SelectedModel> &adjustedModels = adjustingModelManager.selectedModels.at(map.second);

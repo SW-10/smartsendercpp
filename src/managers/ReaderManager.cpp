@@ -66,6 +66,8 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                         if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
                             if (budgetManager.increasingError){
                                 budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.errorBound = configManager.timeseriesCols.at(i).maxError;
+                                budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.maxError = configManager.timeseriesCols.at(i).maxError;
+                                budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).pmcMean.maxError = configManager.timeseriesCols.at(i).maxError;
                             }
                         }
 
@@ -91,6 +93,9 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                         if (budgetManager.increasingError){
                             budgetManager.adjustingModelManager.forceModelFlush(budgetManager.adjustableTimeSeries[i]);
                             budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.errorBound = 0;
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.maxError = 0;
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).pmcMean.maxError = 0;
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).pmcMean.error = 0;
                         }
                     }
                     this->budgetManager.decreaseErrorBounds(i);
@@ -98,7 +103,6 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                     if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
   //                    std::cout << "blarn " << c.col << std::endl;
                     }
-                    this->budgetManager.hasBeenCooled[i] = true;
                     outlierHolderStream << "1";
                     added = true;
 
@@ -235,7 +239,7 @@ void ReaderManager::runCompressor() {
         }
         ;
         #ifndef NDEBUG
-        for (auto blarn: totalNum){
+        /*for (auto blarn: totalNum){
             int total = budgetManager.flushed[blarn.first];
             //std::cout << "1" << std::endl;
             for (auto &model : modelManager.selectedModels.at(blarn.first-1)){
@@ -253,7 +257,7 @@ void ReaderManager::runCompressor() {
                 std::cout << total << " " << blarn.second << std::endl;
                 std::cout << "==" << std::endl;
             }
-        }
+        }*/
         #endif
 
         lineNumber++;

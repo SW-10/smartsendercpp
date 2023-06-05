@@ -32,7 +32,6 @@ public:
     std::unordered_map<int, int> adjustableTimeSeries;
 
     std::map<int,int> outlierCooldown;
-    std::map<int,bool> hasBeenCooled;
     const int cooldown = 10;
     int sizeOfModels;
 
