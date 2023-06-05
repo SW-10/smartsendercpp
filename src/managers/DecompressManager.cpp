@@ -30,9 +30,7 @@ void DecompressManager::decompressModels(){
     std::string line, word;
     int lineNO = 0;
 
-
     int latestTSOri = getNextLineInOriginalFile(originalFileStream, timeseries);
-
 
     while (std::getline(csvFileStream, line)) {
 
@@ -69,15 +67,13 @@ void DecompressManager::decompressModels(){
                     break;
             }
 
-            while(m.end > latestTSOri){
-                latestTSOri = getNextLineInOriginalFile(originalFileStream, timeseries);
-            }
-
-
             count++;
             if(count > 6){
                 count = 0;
             }
+        }
+        while(m.end > latestTSOri){
+            latestTSOri = getNextLineInOriginalFile(originalFileStream, timeseries);
         }
         lineNO++;
         decompressOneModel(m, timeseries[m.CID]);
@@ -189,7 +185,6 @@ int DecompressManager::getNextLineInOriginalFile(std::fstream& csvFileStream, st
     std::vector<std::string> row;
     std::string line, word;
     int timestamp = 0;
-
     if (!csvFileStream.eof()) {
         row.clear();
         std::getline(csvFileStream, line);
@@ -197,12 +192,12 @@ int DecompressManager::getNextLineInOriginalFile(std::fstream& csvFileStream, st
         int count = -1;
 
         while (std::getline(s, word, ',')) {
-        count++;
-        if(count==0){
-            timestamp = std::stoi(word);
-            continue;
-        }
-        timeseries[count].push_back(std::make_pair(timestamp, std::stof(word)));
+            count++;
+            if(count==0){
+                timestamp = std::stoi(word);
+                continue;
+            }
+            timeseries[count].push_back(std::make_pair(timestamp, std::stof(word)));
         }
     }
 
