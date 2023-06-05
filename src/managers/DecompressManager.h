@@ -27,6 +27,7 @@ struct ModelError {
     float avgError = 0;
     int cid;
     int numOutlier;
+
 };
 
 struct datapoint {
@@ -57,6 +58,7 @@ public:
     float errorBoundNotImportant = 0;
     float errorNotImportant = 0;
     int numNotImportant = 0;
+    std::vector<ModelError> columns;
 
 private:
     void decompressOneModel(Model& m, std::deque<datapoint> &originalValues);

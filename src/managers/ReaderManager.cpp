@@ -321,7 +321,8 @@ void ReaderManager::runCompressor() {
     budgetManager.modelSizeTotal  << "," <<
     budgetManager.huffmanSizeTotal   << "," <<
     budgetManager.weightedSum / budgetManager.totalLength << ","
-    << decompressManager.actualTotalError / decompressManager.totalPoints;
+    << decompressManager.actualTotalError / decompressManager.totalPoints << ","
+    << ;
 
 
 

@@ -96,8 +96,6 @@ void DecompressManager::decompressModels(){
     std::cout << "Number of data points: " << totalPoints << std::endl;
     std::cout << "Avg error:  " << actualTotalError / totalPoints << std::endl;
 
-    std::vector<ModelError> columns;
-
     for (auto column: columnsError){
         column.second.cid = column.first;
         column.second.avgError = column.second.accError / column.second.totalValues;
