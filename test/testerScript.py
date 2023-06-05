@@ -9,7 +9,7 @@ import tikzplotlib as tikz
 import numpy as np
 import time
 from multiprocessing import Process
-
+from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 class Config:
     def __init__(self):
@@ -108,6 +108,12 @@ class Config:
     def plot_results(self, sort_values=False, save_tikz=False):
         directory = 'csvs/'
 
+        def format_func(value, tick_number):
+            if value.is_integer():
+                return f'{value:.0f}'
+            else:
+                return f'{value:.1f}'
+
         data = {}
         error_data = {}
 
@@ -161,15 +167,24 @@ class Config:
             for i, filename in enumerate(plot_df.columns):
                 for j in range(len(plot_df)):
                     if not np.isnan(plot_df[filename].iloc[j]):
-                        bar_values.append(plot_df[filename].iloc[j])
+                        bar_values.append(plot_df[filename].iloc[j]/1048576)
                         bar_labels.append(filename)
 
             colors = cm.rainbow(np.linspace(0, 1, len(bar_values)))
 
-            ax.bar(range(len(bar_values)), bar_values, tick_label=bar_labels, color=colors)
+
+            bars = ax.bar(range(len(bar_values)), bar_values, tick_label=bar_labels, color='#ecd9ed',edgecolor='blue')
+
+            for bar in bars:
+                yval = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width() / 2.0, yval, round(yval, 2), va='bottom', ha='center')
 
             ax.set_ylabel(column_name)
             ax.set_title('Comparison of ' + column_name + ' across CSV files')
+            formatter = FuncFormatter(format_func)
+            ax.yaxis.set_major_locator(MaxNLocator(nbins=20))
+            # ax.yaxis.get_major_formatter().set_scientific(False)
+            ax.yaxis.set_major_formatter(formatter)
 
             error_bound_x_values = [bar_labels.index(filename.replace("-columns.csv", "-all.csv")) + 0.5 for filename in
                                     error_bound_labels]
@@ -190,9 +205,10 @@ class Config:
 
             plt.xticks(rotation=45, ha='right')
 
+            plt.tight_layout()
             if save_tikz:
                 tikz.save(f'{column_name}.tex')
-            else:
+            if True:
                 # plt.show()
                 if not sort_values:
                     plt.savefig(f"{column_name}")
