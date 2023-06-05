@@ -3,9 +3,15 @@
 #include <cmath>
 #include "DecompressManager.h"
 
+
+
+
 void DecompressManager::decompressModels(){
+
     std::cout << "Starting decompression ..." << std::endl;
-    std::map<int, std::deque<std::pair<int, float>>> timeseries;
+
+    //std::map<int, std::deque<std::pair<int, float>>> timeseries;
+    std::map<int, std::deque<datapoint>> timeseries;
     std::fstream originalFileStream;
     originalFileStream.open("../" + this->configManager.inputFile, std::ios::in);
     if(!originalFileStream)
@@ -17,11 +23,13 @@ void DecompressManager::decompressModels(){
 
     std::fstream csvFileStream;
     csvFileStream.open(std::string("../").append(budgetManager.name), std::ios::in);
+    outlier.open("../outlier.csv", std::ios::in);
 
     if(!csvFileStream)
     {
         std::cout << "Can't open file!" << std::endl;
     }
+
 
 
     std::vector<Model> models;
@@ -97,14 +105,13 @@ void DecompressManager::decompressModels(){
         columns.emplace_back(column.second);
     }
 
-
     std::sort(columns.begin(), columns.end(), [](ModelError &left, ModelError &right){
         return left.avgErrorBound < right.avgErrorBound;
     });
 
 }
 
-void DecompressManager::decompressOneModel(Model& m, std::deque<std::pair<int, float>>& originalValues){
+void DecompressManager::decompressOneModel(Model& m, std::deque<datapoint> &originalValues){
     double error = 0;
     Swing swing(error);
 
@@ -124,7 +131,7 @@ void DecompressManager::decompressOneModel(Model& m, std::deque<std::pair<int, f
             std::vector<long> timestampsSub;
 
             for(int i = 0; i < m.length; i++){
-                timestampsSub.push_back(std::move(originalValues.at(i).first));
+                timestampsSub.push_back(originalValues.at(i).timestamp);
             }
             auto res = swing.gridSwing(floats.at(0), floats.at(1),up,timestampsSub, m.length);
             calcActualError(originalValues, res, 1, m.errorBound, m.CID);
@@ -167,23 +174,33 @@ std::vector<float> DecompressManager::bytesToFloats(std::vector<uint8_t> bytes) 
 }
 
 
-float DecompressManager::calcActualError(std::deque<std::pair<int, float>> &original, const std::vector<float> &reconstructed,
-                                     int modelType, float errorbound, int col) {
+float DecompressManager::calcActualError(std::deque<datapoint> &original, const std::vector<float> &reconstructed,
+                                         int modelType, float errorbound, int col) {
     int size = reconstructed.size();
     float result = 0;
     for(int i = 0; i < size; i++){
         float error;
-
         // Handle division by zerowriting code meme
-        if(fabs(original.at(i).second) == 0){
+        if(fabs(original.at(i).value) == 0){
             error = 0;
         } else {
-            error = fabs( (reconstructed.at(i) / original.at(i).second  * 100 ) - 100);
+            error = fabs( (reconstructed.at(i) / original.at(i).value  * 100 ) - 100);
 
         }
         if(error - 0.0001 > errorbound){
             std::cout << "nonon: " << col << " error: " << error << " err bound: " << errorbound << ": " << (modelType == 0 ? "PMC" : (modelType == 1 ? "SWING" : "GORILLA")) << std::endl;
-            std::cout << "      original: " << original.at(i).second << ", reconstructed: " << reconstructed.at(i) << std::endl;
+            std::cout << "      original: " << original.at(i).value << ", reconstructed: " << reconstructed.at(i) << std::endl;
+        }
+        if (original.at(i).important){
+            columnsError[col].numOutlier++;
+            errorBoundImportant += errorbound;
+            errorImportant += error;
+            numImportant++;
+        }
+        else {
+            errorBoundNotImportant += errorbound;
+            errorNotImportant += error;
+            numNotImportant++;
         }
 
 
@@ -203,26 +220,36 @@ float DecompressManager::calcActualError(std::deque<std::pair<int, float>> &orig
     return result;
 }
 
+datapoint::datapoint(int timestamp, float value, bool outlier){
+    this->timestamp = timestamp;
+    this->value = value;
+    this->important = outlier;
+}
 
-int DecompressManager::getNextLineInOriginalFile(std::fstream& csvFileStream, std::map<int, std::deque<std::pair<int, float>>>& timeseries) {
+int DecompressManager::getNextLineInOriginalFile(std::fstream& csvFileStream, std::map<int, std::deque<datapoint>> &timeseries) {
     std::vector<std::string> row;
     std::string line, word;
+    std::string lineO, wordO;
     int timestamp = 0;
 
     if (!csvFileStream.eof()) {
         row.clear();
         std::getline(csvFileStream, line);
+        std::getline(outlier, lineO);
         std::stringstream s(line);
+        std::stringstream sO(lineO);
         int count = -1;
 
         while (std::getline(s, word, ',')) {
-        count++;
-        if(count==0){
-            timestamp = std::stoi(word);
-            continue;
-        }
-        timeseries[count].emplace_back(timestamp, std::stof(word));
-        }
+
+            count++;
+            if(count==0){
+                timestamp = std::stoi(word);
+                continue;
+            }
+            std::getline(sO, wordO, ',');
+            timeseries[count].emplace_back(timestamp, std::stof(word), std::stoi(wordO));
+            }
     }
 
     return timestamp;

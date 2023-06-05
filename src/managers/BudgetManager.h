@@ -32,6 +32,7 @@ public:
     std::unordered_map<int, int> adjustableTimeSeries;
 
     std::map<int,int> outlierCooldown;
+    std::map<int,bool> hasBeenCooled;
     const int cooldown = 10;
     int sizeOfModels;
 
@@ -48,7 +49,8 @@ public:
     //DEBUF
     std::unordered_map<int, int> flushed;
     std::string name;
-
+    bool loweringError;
+    bool increasingError;
 private:
     ModelManager &modelManager;
 
@@ -57,8 +59,7 @@ private:
     std::vector<columnsExtra> adjustableTimeSeriesConfig;
     int &budget;
     int bytesLeft;
-    bool loweringError;
-    bool increasingError;
+
     int &maxAge;
     std::vector<int> lastBudget;
     int temp = 0;

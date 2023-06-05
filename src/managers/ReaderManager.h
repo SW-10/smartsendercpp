@@ -66,7 +66,7 @@ private:
     //DEBUGGES
 
 
-
+    std::ofstream outlierHolderStream;
     std::unordered_map<int, int> totalNum;
     //#endif
 

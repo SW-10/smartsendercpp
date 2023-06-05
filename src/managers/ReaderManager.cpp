@@ -22,7 +22,6 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                        timestampManager),
                        budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge),
           outlierDetector(configManager), decompressManager(configManager, budgetManager) {
-
     timekeeper.Attach(this);
     std::stringstream ss;
     ss << configManager.maxAge << configManager.bufferGoal<<configManager.chunksToGoal<<configManager.chunkSize<<configManager.budget<<configManager.budgetLeftRegressionLength;
@@ -58,16 +57,25 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 //            #ifndef NDEBUG
             datasetTotalSize += sizeof(float) + sizeof(int); // float = value, int = timestamp
 //            #endif
-
+            bool added = false;
             if (!in->empty()) {
                 if(this->budgetManager.outlierCooldown[i] >= 0){
                     if (this->budgetManager.outlierCooldown[i] == 0){
                         this->budgetManager.outlierCooldown[i] = -1;
-                        configManager.timeseriesCols.at(i).error = configManager.timeseriesCols.at(i).defaultError ;
+                        configManager.timeseriesCols.at(i).error = configManager.timeseriesCols.at(i).defaultError;
+                        if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
+                            if (budgetManager.increasingError){
+                                budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.errorBound = configManager.timeseriesCols.at(i).maxError;
+                            }
+                        }
+
                     }
                     else {
                         this->budgetManager.outlierCooldown[i]--;
+                        outlierHolderStream << "1";
+                        added = true;
                     }
+
 
                 }
 
@@ -79,13 +87,30 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
 
                     //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << i << " value:" << value << std::endl;
-
+                    if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
+                        if (budgetManager.increasingError){
+                            budgetManager.adjustingModelManager.forceModelFlush(budgetManager.adjustableTimeSeries[i]);
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.errorBound = 0;
+                        }
+                    }
                     this->budgetManager.decreaseErrorBounds(i);
                     this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
                     if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
   //                    std::cout << "blarn " << c.col << std::endl;
                     }
+                    this->budgetManager.hasBeenCooled[i] = true;
+                    outlierHolderStream << "1";
+                    added = true;
 
+                }
+                if (!added){
+                    outlierHolderStream << "0";
+                }
+                if (i+1 != configManager.timeseriesCols.size()){
+                    outlierHolderStream << ",";
+                }
+                else {
+                    outlierHolderStream << std::endl;
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
@@ -133,6 +158,10 @@ void ReaderManager::runCompressor() {
 //    ConnectionAddress address("0.0.0.0", 9999);
 //    #endif
 
+    std::ofstream outlierHolder;
+    outlierHolder.open(std::string("../outlier.csv"), std::ios_base::out);
+    outlierHolder.close();
+    outlierHolderStream.open(std::string("../outlier.csv"), std::ios_base::app);
     std::vector<std::string> row;
     std::string line, word;
 
@@ -231,7 +260,7 @@ void ReaderManager::runCompressor() {
     }
 
     finaliseCompression();
-
+    outlierHolderStream.close();
     this->csvFileStream.close();
     //timestampManager.finishDeltaDelta();
 
