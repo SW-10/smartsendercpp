@@ -293,28 +293,6 @@ void ReaderManager::runCompressor() {
 //    }
 //    #endif
 
-
-    for (auto blarn: totalNum){
-        int total = budgetManager.flushed[blarn.first];
-        //std::cout << "1" << std::endl;
-        for (auto &model : modelManager.selectedModels.at(blarn.first-1)){
-            if (model.send){
-                total += model.length;
-            }
-
-        }
-        //std::cout << "2" << std::endl;
-        auto ts = modelManager.timeSeries.at(blarn.first-1);
-        //std::cout << "3" << std::endl;
-        total += std::max(ts.gorilla.length, std::max(ts.pmcMean.length, ts.swing.length));
-        if (total != blarn.second){
-            std::cout << lineNumber << " " << blarn.first << std::endl;
-            std::cout << total << " " << blarn.second << std::endl;
-            std::cout << "==" << std::endl;
-        }
-    }
-
-
     decompressManager.decompressModels();
 
     std::cerr <<
@@ -322,7 +300,14 @@ void ReaderManager::runCompressor() {
     budgetManager.huffmanSizeTotal   << "," <<
     budgetManager.weightedSum / budgetManager.totalLength << ","
     << decompressManager.actualTotalError / decompressManager.totalPoints << ","
-    << ;
+    << decompressManager.errorBoundImportant << ","
+    << decompressManager.errorImportant << ","
+    << decompressManager.errorBoundNotImportant << ","
+    << decompressManager.errorNotImportant << ";";
+
+    for(auto column: decompressManager.columns){
+      std::cerr << column.cid << "," << column.avgErrorBound << "," << column.avgError << ",";
+    }
 
 
 

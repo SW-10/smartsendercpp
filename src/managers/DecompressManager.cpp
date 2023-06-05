@@ -103,9 +103,9 @@ void DecompressManager::decompressModels(){
         columns.emplace_back(column.second);
     }
 
-    std::sort(columns.begin(), columns.end(), [](ModelError &left, ModelError &right){
-        return left.avgErrorBound < right.avgErrorBound;
-    });
+//    std::sort(columns.begin(), columns.end(), [](ModelError &left, ModelError &right){
+//        return left.avgErrorBound < right.avgErrorBound;
+//    });
 
 }
 
