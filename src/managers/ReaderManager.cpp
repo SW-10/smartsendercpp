@@ -324,10 +324,10 @@ void ReaderManager::runCompressor() {
     budgetManager.huffmanSizeTotal   << "," <<
     budgetManager.weightedSum / budgetManager.totalLength << ","
     << decompressManager.actualTotalError / decompressManager.totalPoints << ","
-    << decompressManager.errorBoundImportant << ","
-    << decompressManager.errorImportant << ","
-    << decompressManager.errorBoundNotImportant << ","
-    << decompressManager.errorNotImportant << ";";
+    << decompressManager.errorBoundImportant / decompressManager.numImportant << ","
+    << decompressManager.errorImportant / decompressManager.numImportant << ","
+    << decompressManager.errorBoundNotImportant / decompressManager.numNotImportant << ","
+    << decompressManager.errorNotImportant / decompressManager.numNotImportant << ";";
 
     for(auto column: decompressManager.columns){
       std::cerr << column.cid << "," << column.avgErrorBound << "," << column.avgError << ",";

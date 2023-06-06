@@ -90,21 +90,18 @@ class Config:
         processes = []
         if __name__ == '__main__':
             for permutation in permutations:
-                self.run_cpp_program(permutation)
-                # if len(processes) >= 3:
-                #     processes[0].join()
-                #     processes = processes[1:]
-                # counter += 1
-                # params = dict(zip(keys, permutation))
-                # self.set_params(**params)
-                # self.write_config_file(self.config_file_path)
-                # process = Process(target=self.run_cpp_program, args=(permutation,))
-                # time.sleep(1)
-                # processes.append(process)
-                # process.start()
-                # print(counter)
-
-            self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
+                if len(processes) >= 3:
+                    processes[0].join()
+                    processes = processes[1:]
+                counter += 1
+                params = dict(zip(keys, permutation))
+                self.set_params(**params)
+                self.write_config_file(self.config_file_path)
+                process = Process(target=self.run_cpp_program, args=(permutation,))
+                time.sleep(1)
+                processes.append(process)
+                process.start()
+                print(counter)
 
     def plot_results(self, sort_values=False, save_tikz=False):
         directory = 'csvs/'
@@ -140,13 +137,11 @@ class Config:
                             continue
                         if column_name not in error_data:
                             error_data[column_name] = {}
-                        error_data[column_name][filename] = [df[column_name].max(), df[column_name].min()]
-                    for j in range(len(error_data)):
-                        error_bound_values.append(error_data['avgErrorBound'][filename][j])
-                        error_bound_labels.append(filename)
+                        if column_name == 'avgErrorBound':
+                            error_bound_values.append(df[column_name].max())
+                        else:
+                            error_values.append(df[column_name].max())
 
-                        error_values.append(error_data['avgError'][filename][j])
-                        error_labels.append(filename)
 
         # for column_name, column_data in data.items():
         #     for filename in column_data:
@@ -171,38 +166,33 @@ class Config:
                         bar_values.append(plot_df[filename].iloc[j])
                         bar_labels.append(filename)
 
-            colors = cm.rainbow(np.linspace(0, 1, len(bar_values)))
-
             ind = np.arange(len(bar_values))
 
-            primary_width = 0.3  # Width of the primary bar (needs to be twice the amount of secondary_width)
-            secondary_width = 0.15  # Width of the secondary bars
+            primary_width = 0.2  # Width of the primary bar (needs to be twice the amount of secondary_width)
+            secondary_width = 0.1  # Width of the secondary bars
 
-            primary_bar = ax.bar(ind, bar_values, tick_label=bar_labels, color=colors)
+            plt.xticks(rotation=45, ha='right')
+
+            primary_bar = ax.bar(ind, bar_values, primary_width, tick_label=bar_labels, color='blue')
 
             ax.set_ylabel(column_name)
-            ax.set_title('Comparison of ' + column_name + ' across CSV files')
+            ax.set_title('Comparison of ' + column_name + ' across permutations')
 
             if column_name == "modelSize":
                 ax2 = ax.twinx()
                 secondary_x1 = ind + primary_width - secondary_width / 2
                 secondary_x2 = secondary_x1 + secondary_width
-                secondary_bar_2 = ax2.bar(secondary_x1, error_bound_values, secondary_width, color='r',
-                                          label='Error Percentage 1')
-                secondary_bar_3 = ax2.bar(secondary_x2, error_values, secondary_width, color='g',
-                                          label='Error Percentage 2')
-                ax2.set_ylabel('Error Percentage', color='r')
+                secondary_bar_1 = ax2.bar(secondary_x1, error_bound_values, secondary_width, color='r')
+                secondary_bar_2 = ax2.bar(secondary_x2, error_values, secondary_width, color='g')
+                ax2.set_ylabel('Error (%)', color='r')
                 ax2.tick_params('y', colors='r')
 
-            ax.legend((primary_bar[0], secondary_bar_2[0], secondary_bar_3[0]), ('Model Size', 'Error Bound', 'Error'))
-
-            plt.xticks(rotation=45, ha='right')
+            ax.legend((primary_bar[0], secondary_bar_1[0], secondary_bar_2[0]), ('Model Size', 'Maximum Error Bound', 'Maximum Actual Error'))
 
             plt.tight_layout()
             if save_tikz:
                 tikz.save(f'{column_name}.tex')
             if True:
-                # plt.show()
                 if not sort_values:
                     plt.savefig(f"{column_name}")
                 else:
@@ -221,7 +211,7 @@ config.set_columns(range(2, 88), (5, 10), 3)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["1000000"],
+    "maxAge": ["100", "1000", "10000" "1000000"],
     "budget": ["72000"],
     "chunkSize": ["900"],
     "bufferGoal": ["10000"],
@@ -229,4 +219,6 @@ params_dict = {
     "chunksToGoal": ["10"]
 }
 
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
+#config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
+
+config.plot_results(False, False)
