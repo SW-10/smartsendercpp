@@ -11,6 +11,7 @@ import time
 from multiprocessing import Process
 from matplotlib.ticker import FuncFormatter, MaxNLocator
 
+
 class Config:
     def __init__(self):
         self.columns = {}
@@ -147,11 +148,11 @@ class Config:
                         error_values.append(error_data['avgError'][filename][j])
                         error_labels.append(filename)
 
-        for column_name, column_data in data.items():
-            for filename in column_data:
-                if not column_data[f"{filename}"]:
-                    print(filename)
-                    os.remove(directory + filename)
+        # for column_name, column_data in data.items():
+        #     for filename in column_data:
+        #         if not column_data[f"{filename}"]:
+        #             print(filename)
+        #             os.remove(directory + filename)
 
         for column_name, column_data in data.items():
 
@@ -167,41 +168,33 @@ class Config:
             for i, filename in enumerate(plot_df.columns):
                 for j in range(len(plot_df)):
                     if not np.isnan(plot_df[filename].iloc[j]):
-                        bar_values.append(plot_df[filename].iloc[j]/1048576)
+                        bar_values.append(plot_df[filename].iloc[j])
                         bar_labels.append(filename)
 
             colors = cm.rainbow(np.linspace(0, 1, len(bar_values)))
 
+            ind = np.arange(len(bar_values))
 
-            bars = ax.bar(range(len(bar_values)), bar_values, tick_label=bar_labels, color='#ecd9ed',edgecolor='blue')
+            primary_width = 0.3  # Width of the primary bar (needs to be twice the amount of secondary_width)
+            secondary_width = 0.15  # Width of the secondary bars
 
-            for bar in bars:
-                yval = bar.get_height()
-                ax.text(bar.get_x() + bar.get_width() / 2.0, yval, round(yval, 2), va='bottom', ha='center')
+            primary_bar = ax.bar(ind, bar_values, tick_label=bar_labels, color=colors)
 
             ax.set_ylabel(column_name)
             ax.set_title('Comparison of ' + column_name + ' across CSV files')
-            formatter = FuncFormatter(format_func)
-            ax.yaxis.set_major_locator(MaxNLocator(nbins=20))
-            # ax.yaxis.get_major_formatter().set_scientific(False)
-            ax.yaxis.set_major_formatter(formatter)
-
-            error_bound_x_values = [bar_labels.index(filename.replace("-columns.csv", "-all.csv")) + 0.5 for filename in
-                                    error_bound_labels]
-            error_x_values = [bar_labels.index(filename.replace("-columns.csv", "-all.csv")) + 0.75 for filename in
-                              error_labels]
 
             if column_name == "modelSize":
                 ax2 = ax.twinx()
+                secondary_x1 = ind + primary_width - secondary_width / 2
+                secondary_x2 = secondary_x1 + secondary_width
+                secondary_bar_2 = ax2.bar(secondary_x1, error_bound_values, secondary_width, color='r',
+                                          label='Error Percentage 1')
+                secondary_bar_3 = ax2.bar(secondary_x2, error_values, secondary_width, color='g',
+                                          label='Error Percentage 2')
+                ax2.set_ylabel('Error Percentage', color='r')
+                ax2.tick_params('y', colors='r')
 
-                color = 'tab:blue'
-                ax2.set_ylabel('Error (%)', color=color)
-                ax2.tick_params(axis='y', labelcolor=color)
-
-                ax2.plot(error_bound_x_values, error_bound_values, color='tab:blue', label='avgErrorBound')
-                ax2.plot(error_x_values, error_values, color='tab:orange', label='avgError')
-
-                ax2.legend(loc='upper left')
+            ax.legend((primary_bar[0], secondary_bar_2[0], secondary_bar_3[0]), ('Model Size', 'Error Bound', 'Error'))
 
             plt.xticks(rotation=45, ha='right')
 
@@ -221,14 +214,14 @@ config = Config()
 
 config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
 
-config.inputFile = "mars_subset_4.csv"
+config.inputFile = "mars_subset_4(1).csv"
 
 # Set columns with their error bounds and type
 config.set_columns(range(2, 88), (5, 10), 3)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["100", "1000", "1000000"],
+    "maxAge": ["1000000"],
     "budget": ["72000"],
     "chunkSize": ["900"],
     "bufferGoal": ["10000"],
