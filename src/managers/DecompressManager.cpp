@@ -19,7 +19,7 @@ void DecompressManager::decompressModels(){
 
     std::fstream csvFileStream;
     csvFileStream.open(std::string("../").append(budgetManager.name), std::ios::in);
-    outlier.open("../outlier.csv", std::ios::in);
+    outlier.open(std::string("../")+std::string("outlier").append(budgetManager.name), std::ios::in);
 
     if(!csvFileStream)
     {

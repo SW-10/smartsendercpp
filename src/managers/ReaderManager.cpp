@@ -176,9 +176,9 @@ void ReaderManager::runCompressor() {
 //    #endif
 #ifndef PERFORMANCE_TEST
     std::ofstream outlierHolder;
-    outlierHolder.open(std::string("../outlier.csv"), std::ios_base::out);
+    outlierHolder.open(std::string("../")+std::string("outlier").append(budgetManager.name), std::ios_base::out);
     outlierHolder.close();
-    outlierHolderStream.open(std::string("../outlier.csv"), std::ios_base::app);
+    outlierHolderStream.open(std::string("../")+std::string("outlier").append(budgetManager.name), std::ios_base::app);
 #endif
     std::vector<std::string> row;
     std::string line, word;
