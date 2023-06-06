@@ -70,6 +70,9 @@ void ModelManager::fitSegment(int id, float value, Node *timestamp) {
         container.status.pmcMeanReady = container.pmcMean.fitValuePmc(value);
         if (container.status.pmcMeanReady) {
             container.pmcMean.lastTimestamp = timestamp;
+            if (!container.status.gorillaReady && container.swing.length < container.pmcMean.length * 0.5){
+
+            }
         }
     }
     if (container.status.gorillaReady){
@@ -83,6 +86,9 @@ void ModelManager::fitSegment(int id, float value, Node *timestamp) {
             container.cachedValues.startTimestamp = timestamp;
         }
         container.cachedValues.values.emplace_back(value);
+    }
+    else if (!container.cachedValues.values.empty()){
+        container.cachedValues.values.clear();
     }
     if (shouldConstructModel(container)) {
         constructFinishedModels(container, timestamp);
@@ -128,7 +134,30 @@ ModelManager::ModelManager(std::vector<columns> &timeSeriesConfig,
 }
 
 bool ModelManager::shouldCacheData(TimeSeriesModelContainer& container) {
+    if (!container.status.gorillaReady && !container.status.pmcMeanReady && container.status.SwingReady) {
+        if (container.pmcMean.length < container.swing.length / 2) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+    else if (container.status.pmcMeanReady && !container.status.gorillaReady && !container.status.SwingReady) {
+        return false;
+    }
     return !(container.status.SwingReady && container.status.pmcMeanReady && container.status.gorillaReady);
+    /*else if (!(container.status.SwingReady && container.status.pmcMeanReady && container.status.gorillaReady)){
+        return true;
+    }
+    else {
+        return true;
+    }*/
+
+
+    /*return (!container.status.gorillaReady &&
+        (container.status.pmcMeanReady && (!container.status.SwingReady &&) )
+
+    return !(container.status.SwingReady && container.status.pmcMeanReady && container.status.gorillaReady);*/
 }
 
 bool ModelManager::shouldConstructModel(TimeSeriesModelContainer &container) {
@@ -145,12 +174,10 @@ SelectedModel ModelManager::selectPmcMean(TimeSeriesModelContainer &modelContain
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.pmcMean.lastTimestamp->data;
     convertFloatToUint8Array(model.values, (modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
-    //model.values.emplace_back((modelContainer.pmcMean.sumOfValues / modelContainer.pmcMean.length));
-
     model.error = modelContainer.pmcMean.error;
-
     model.bitRate = bitRate;
     model.length = modelContainer.pmcMean.length;
+
     return model;
 };
 
@@ -178,10 +205,10 @@ SelectedModel ModelManager::selectSwing(TimeSeriesModelContainer &modelContainer
     model.endTime = modelContainer.swing.lastTimestamp->data;
     model.values.emplace_back((int) (start_value < end_value));
     model.error = modelContainer.swing.errorBound;
-
-
     model.bitRate = bitRate;
     model.length = modelContainer.swing.length;
+
+
     return model;
 }
 
@@ -193,9 +220,6 @@ SelectedModel ModelManager::selectGorilla(TimeSeriesModelContainer &modelContain
     model.localId = modelContainer.localId;
     model.startTime = modelContainer.startTimestamp;
     model.endTime = modelContainer.gorilla.lastTimestamp->data;
-    /*for (auto x: modelContainer.gorilla.compressedValues.bytes) {
-        model.values.emplace_back(x);
-    }*/
 
     // Copy the remaining bits to the byte-array
     modelContainer.gorilla.compressedValues.bytes.push_back(modelContainer.gorilla.compressedValues.currentByte);
@@ -243,15 +267,29 @@ ModelManager::constructFinishedModels(TimeSeriesModelContainer &finishedSegment,
     if (pmcMeanSize <= swingSize && pmcMeanSize <= gorillaSize) {
         selectedModels.at(finishedSegment.localId).emplace_back(selectPmcMean(finishedSegment, pmcMeanSize));
         lastModelledTimestamp = finishedSegment.pmcMean.lastTimestamp;
-        indexToStart = finishedSegment.pmcMean.length - indexToStart;
+        if(finishedSegment.pmcMean.length > finishedSegment.swing.length && finishedSegment.pmcMean.length > finishedSegment.gorilla.length){
+            indexToStart = 0;
+        }
+        else {
+            indexToStart = finishedSegment.pmcMean.length - indexToStart;
+        }
+
     } else if (swingSize <= pmcMeanSize && swingSize <= gorillaSize) {
         selectedModels.at(finishedSegment.localId).emplace_back(selectSwing(finishedSegment, swingSize));
         lastModelledTimestamp = finishedSegment.swing.lastTimestamp;
-        indexToStart = finishedSegment.swing.length - indexToStart;
+        if(finishedSegment.pmcMean.length  < finishedSegment.swing.length / 2 && finishedSegment.swing.length > finishedSegment.gorilla.length){
+            indexToStart = 0;
+        }
+        else {
+            indexToStart = finishedSegment.swing.length - indexToStart;
+        }
+
+
     } else {
         selectedModels.at(finishedSegment.localId).emplace_back(selectGorilla(finishedSegment, gorillaSize));
         lastModelledTimestamp = finishedSegment.gorilla.lastTimestamp;
         indexToStart = finishedSegment.gorilla.length - indexToStart;
+
     }
     if(finishedSegment.pmcMean.adjustable && finishedSegment.swing.adjustable){
         CleanAdjustedModels(finishedSegment);
@@ -293,7 +331,7 @@ Node * ModelManager::calculateFlushTimestamp() {
             }
         }
     }
-    return earliestUsedTimestamp ;//== nullptr || timestampManager.flushTimestamps(earliestUsedTimestamp);
+    return earliestUsedTimestamp;
 }
 
 void ModelManager::forceModelFlush(int localId) {

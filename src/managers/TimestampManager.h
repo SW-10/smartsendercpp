@@ -17,6 +17,7 @@ struct TwoLatestTimestamps {
     int currentOffset;
     bool readyForOffset;
 };
+#ifndef PERFORMANCE_TEST
 
 struct DeltaDeltaCompression {
     int timestampCurrent;
@@ -27,7 +28,7 @@ struct DeltaDeltaCompression {
     bool readyForDelta;
     bool readyForDeltaDelta;
 };
-
+#endif
 class TimestampManager {
 public:
     int firstTimestamp;
@@ -72,7 +73,7 @@ public:
     bool decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader, int* currentVal, std::vector<int> *decompressed, bool valueIsSigned);
 
     bool flushTimestamps(Node *lastUsedTimestamp);
-    TimestampManager();
+
     int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
     size_t getSizeOfLocalOffsetList() const;
     size_t getSizeOfGlobalOffsetList() const;
@@ -82,14 +83,14 @@ private:
     bool readyForOffset = false;
     Node *allTimestampsReconstructed;
     std::vector<TwoLatestTimestamps> latestTimestamps;
+#ifndef PERFORMANCE_TEST
+
     std::vector<DeltaDeltaCompression> latestTimestampsForDeltaDelta;
-    int findBestSchemeForSize(int elements);
-
-    Timekeeper &timekeeper;
-
     std::tuple<int, int> deltaDeltaLimits(const int &val);
 
     std::unordered_map<int, int> deltaDeltaSizes;
+#endif
+    Timekeeper &timekeeper;
 
     void makeForwardListToSend(std::pair<int, int> &offset);
 

@@ -24,7 +24,9 @@ class ReaderManager : public IObserver {
 private:
     ConfigManager configManager;
     TimestampManager timestampManager;
+#ifndef PERFORMANCE_TEST
     DecompressManager decompressManager;
+#endif
     OutlierDetector outlierDetector;
 
 public:
@@ -50,26 +52,16 @@ private:
     > myMap;
 //    int getNextLineInOriginalFile(std::fstream& csvFileStream, std::map<int, std::deque<std::pair<int, float>>>& timeseries);
 //    void decompressOneModel(Model& m,  std::deque<std::pair<int, float>>& originalValues);
+#ifndef PERFORMANCE_TEST
     void finaliseCompression();
+#endif
     void Update(const std::string &message_from_subject) override;
     bool newInterval = false;
 
+    #ifndef PERFORMANCE_TEST
     float actualTotalError = 0;
     int totalPoints = 0;
-
-    //#ifndef NDEBUG
-//    float bytesToFloat(std::vector<uint8_t> bytes);
-    std::vector<float> bytesToFloats(std::vector<uint8_t> bytes);
-//    float calcActualError(std::deque<std::pair<int, float>> &original, const std::vector<float> &reconstructed,
-//                          int modelType, float errorbound, int col);
     int datasetTotalSize = 0;
-    //DEBUGGES
-
-
-
     std::unordered_map<int, int> totalNum;
-    //#endif
-
-
-
+    #endif
 };

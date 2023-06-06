@@ -47,13 +47,18 @@ void BudgetManager::endOfChunkCalculations() {
         loweringError = false;
         increasingError = false;
     }
-
+    /*if (selected.at(i).passes >= 10){
+                       selected.erase(selected.begin()+i);
+                   }
+                   selected.at(i).passes++;*/
+    std::vector<int> deletable;
     int penaltySender = 0;
+    int locID = 0;
     for(auto &selected : modelManager.selectedModels){
+        locID++;
         bool flushAll = true;
         int i;
         int toFlush = 0;
-        int Extras = 0;
         for(i = 0; i < selected.size(); i++){
             int modelSize = sizeOfModels + selected.at(i).values.size();
             if (!selected.at(i).send){
@@ -65,6 +70,12 @@ void BudgetManager::endOfChunkCalculations() {
                     penaltySender -= modelSize - bytesLeft;
                 }
                 else {
+#ifdef PERFORMANCE_TEST
+                    selected.at(i).passes++;
+                    if (selected.at(i).passes > 10){
+                        deletable.emplace_back(locID-1);
+                    }
+#endif
                     toFlush = i;
                     penaltySender -= modelSize;
                     flushAll = false;
@@ -78,7 +89,8 @@ void BudgetManager::endOfChunkCalculations() {
             }
         }
         if (flushAll){
-            //#ifndef NDEBUG
+#ifndef PERFORMANCE_TEST
+
             std::vector<SelectedModel> models;
 
             for(auto const &s : selected){
@@ -96,11 +108,12 @@ void BudgetManager::endOfChunkCalculations() {
                     //std::cout << flushed[yes.localId] << std::endl;
                 }
             }
-            //#endif
+#endif
             selected.clear();
         }
         else if(toFlush > 0){
-            //#ifndef NDEBUG
+#ifndef PERFORMANCE_TEST
+
             std::vector<SelectedModel> models;
             for(int j = 0; j < toFlush; j++){
                 if(selected.at(j).send){
@@ -115,21 +128,26 @@ void BudgetManager::endOfChunkCalculations() {
             }
             captureWeightedSumAndLength(models);
             writeModelsToCsv(models, name);
-            //#endif
+#endif
             selected.erase(selected.begin(), selected.begin()+toFlush);
         }
     }
-
+#ifdef PERFORMANCE_TEST
+    for(auto del : deletable){
+        modelManager.selectedModels.at(del).erase(modelManager.selectedModels.at(del).begin());
+    }
+#endif
     cleanSpaceKeeper();
     if (!timestampManager.localOffsetListToSend.empty()){
         Huffman huffmanLOL;
         huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
         huffmanLOL.encodeTree();
 
-        //#ifndef NDEBUG
         // CALC SIZE OF HUFFMAN
+#ifndef PERFORMANCE_TEST
+
         huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
-        //#endif
+#endif
         timestampManager.localOffsetListToSend.clear();
     }
     if(!timestampManager.globalOffsetListToSend.empty()){
@@ -137,10 +155,10 @@ void BudgetManager::endOfChunkCalculations() {
         huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
         huffmanGOL.encodeTree();
 
-        //#ifndef NDEBUG
+#ifndef PERFORMANCE_TEST
         // CALC SIZE OF HUFFMAN
         huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
-        //#endif
+#endif
         timestampManager.globalOffsetListToSend.clear();
     }
 
@@ -178,7 +196,6 @@ void BudgetManager::endOfChunkCalculations() {
         }
     }
     bytesLeft += budget;
-
 }
 
 void BudgetManager::spaceKeeperEmplace(std::pair<int, float> size, int index){
@@ -473,6 +490,8 @@ void BudgetManager::selectAdjustedModels(){
     }
 }
 
+#ifndef PERFORMANCE_TEST
+
 void BudgetManager::captureWeightedSumAndLength(std::vector<SelectedModel> models){
       for (const auto& model : models){
         weightedSum += model.length * model.error;
@@ -501,7 +520,7 @@ void BudgetManager::writeModelsToCsv(std::vector<SelectedModel> models, std::str
     }
     myfile.close();
 }
-
+#endif
 timeSeriesInformation::timeSeriesInformation(int8_t globalId) {
     this->globalId = globalId;
 }

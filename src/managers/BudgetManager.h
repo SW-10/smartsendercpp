@@ -35,18 +35,17 @@ public:
     const int cooldown = 10;
     int sizeOfModels;
 
-
     // ======== Variables for evaluation ========
+#ifndef PERFORMANCE_TEST
     int huffmanSizeTotal = 0;
     int modelSizeTotal = 0;
     float weightedSum = 0;
     int totalLength = 0;
     float errorBoundTotal = 0;
-
-    static void writeModelsToCsv(std::vector<SelectedModel> models, std::string name);
-
-    //DEBUF
     std::unordered_map<int, int> flushed;
+    static void writeModelsToCsv(std::vector<SelectedModel> models, std::string name);
+#endif
+
     std::string name;
 
 private:
@@ -61,13 +60,9 @@ private:
     bool increasingError;
     int &maxAge;
     std::vector<int> lastBudget;
-    int temp = 0;
-    int modelspace = 0;
-    //std::vector<std::pair<float ,std::vector<std::pair<int, float>>>> storageImpact;
     std::vector<timeSeriesInformation> tsInformation;
     std::unordered_map<int, std::pair<int, int>> lowerModelLength;
     int lowerErrorBoundEndTimestamp;
-    int lowerBoundLength;
     int numberIncreasingAdjustableTimeSeries;
     int numberDecreasingAdjustableTimeSeries;
 
@@ -76,8 +71,6 @@ private:
     void increaseErrorBounds();
 
     void cleanSpaceKeeper();
-
-    void errorBoundStats(double error, int index);
 
     void selectAdjustedModels();
 

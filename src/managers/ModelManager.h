@@ -21,16 +21,19 @@ struct CachedValues {
 };
 
 struct SelectedModel{
-    int64_t startTime;
-    int64_t endTime;
+    std::vector<uint8_t> values;
+    int startTime;
+    int endTime;
     float error;
     float bitRate;
+
     int length;
+
     int8_t mid;
     int8_t cid;
     int8_t localId;
     bool send = true;
-    std::vector<uint8_t> values;
+    int8_t passes = 0;
 };
 
 struct TimeSeriesModelContainer {

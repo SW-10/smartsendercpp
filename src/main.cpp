@@ -60,6 +60,10 @@ int main(int argc, char *argv[]) {
 #endif
     Timekeeper *timekeeper = new Timekeeper;
 
+#ifndef PERFORMANCE_TEST
+    std::cout << "Performance test is off" << std::endl;
+#endif
+
     std::string path = "moby.cfg";
     ReaderManager readerManager(path, *timekeeper);
     readerManager.runCompressor();

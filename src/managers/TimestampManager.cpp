@@ -17,9 +17,10 @@ TimestampManager::TimestampManager(ConfigManager &confMan, Timekeeper &timekeepe
     for (int i = 0; i < confMan.totalNumberOfCols; i++) {
         TwoLatestTimestamps ts = {0, 0, false};
         latestTimestamps.push_back(ts);
-
+#ifndef PERFORMANCE_TEST
         DeltaDeltaCompression ddc = {0, 0, 0, 0, 0, false, false};
         latestTimestampsForDeltaDelta.push_back(ddc);
+#endif
     }
 
     allTimestampsReconstructed = NULL;
@@ -79,7 +80,7 @@ void TimestampManager::makeLocalOffsetList(int lineNumber, int globalID) {
     elem->timestampPrevious = elem->timestampCurrent;
     elem->readyForOffset = true;
 }
-
+#ifndef PERFORMANCE_TEST
 void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
     auto elem = &latestTimestampsForDeltaDelta.at(globalID);
     if(!deltaDeltaSizes.contains(globalID)){
@@ -184,6 +185,7 @@ std::tuple<int, int> TimestampManager::deltaDeltaLimits(const int &val){
     }
 }
 
+
 std::vector<int> TimestampManager::flattenLOL(){
     std::vector<int> flat;
     //Sort unordered map
@@ -215,6 +217,8 @@ std::vector<int> TimestampManager::flattenGOL(){
     flat.emplace_back(-3);
     return flat;
 }
+#endif
+
 
 
 void
@@ -258,10 +262,14 @@ TimestampManager::getTimestampsByGlobalId(int globID, Node *timestampA,
         }
     }
     // TODO: RUN IF DEBUG / make runtime test
+#ifndef PERFORMANCE_TEST
     if(!found){
         std::cout << "getTimestampsByGlobalId failed" << std::endl;
     }
+#endif
 }
+
+#ifndef PERFORMANCE_TEST
 
 bool
 TimestampManager::decompressNextValue(std::vector<int> schemeVals, BitReader *bitReader,
@@ -314,7 +322,7 @@ size_t TimestampManager::getSizeOfLocalOffsetList() const {
 size_t TimestampManager::getSizeOfGlobalOffsetList() const {
     return offsetList.size()*2;
 }
-
+#endif
 
 bool TimestampManager::flushTimestamps(
         Node *lastUsedTimestamp) {

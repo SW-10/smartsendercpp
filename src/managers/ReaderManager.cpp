@@ -21,7 +21,11 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
           modelManager(configManager.timeseriesCols,
                        timestampManager),
                        budgetManager(modelManager, configManager, timestampManager, configManager.budget, configManager.maxAge),
-          outlierDetector(configManager), decompressManager(configManager, budgetManager) {
+          outlierDetector(configManager)
+#ifndef PERFORMANCE_TEST
+          , decompressManager(configManager, budgetManager)
+#endif
+           {
 
     timekeeper.Attach(this);
     std::stringstream ss;
@@ -44,20 +48,19 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
     // Handle time series columns
     int i = 0;
     for (const auto &c: configManager.timeseriesCols) {
-//        #ifndef NDEBUG
+#ifndef PERFORMANCE_TEST
         totalNum[c.col] = 0;
-//        #endif
         budgetManager.flushed[c.col] = 0;
-
+#endif
         outlierDetector.count.push_back(0);
         outlierDetector.mean.push_back(0.0);
         outlierDetector.m2.push_back(0.0);
         std::get<0>(myMap[c.col]) = [this, i, &c](std::string *in,
                                                   int &lineNum) {
 
-//            #ifndef NDEBUG
+            #ifndef PERFORMANCE_TEST
             datasetTotalSize += sizeof(float) + sizeof(int); // float = value, int = timestamp
-//            #endif
+            #endif
 
             if (!in->empty()) {
                 if(this->budgetManager.outlierCooldown[i] >= 0){
@@ -82,9 +85,6 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 
                     this->budgetManager.decreaseErrorBounds(i);
                     this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
-                    if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
-  //                    std::cout << "blarn " << c.col << std::endl;
-                    }
 
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
@@ -93,7 +93,10 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 //timestampManager.deltaDeltaCompress(lineNum, c.col);
                 modelManager.fitSegment(i, value,timestampManager.timestampCurrent);
                 #ifndef NDEBUG
+#ifndef PERFORMANCE_TEST
+
                 totalNum[c.col]++;
+#endif
                 #endif
 
                 //If adjusted model for current time series exist, fit!
@@ -150,7 +153,9 @@ void ReaderManager::runCompressor() {
         std::stringstream s(line);
         int count = 0;
 
-
+        if (lineNumber % 100000 == 0){
+            std::cout << lineNumber << std::endl;
+        }
 
         while (std::getline(s, word, ',')) {
             auto mapElement = myMap.find(count); //Get element in map
@@ -204,8 +209,10 @@ void ReaderManager::runCompressor() {
                 }
             }
         }
-        ;
+
         #ifndef NDEBUG
+#ifndef PERFORMANCE_TEST
+
         for (auto blarn: totalNum){
             int total = budgetManager.flushed[blarn.first];
             //std::cout << "1" << std::endl;
@@ -225,12 +232,15 @@ void ReaderManager::runCompressor() {
                 std::cout << "==" << std::endl;
             }
         }
+#endif
         #endif
 
         lineNumber++;
     }
-
+    #ifndef PERFORMANCE_TEST
     finaliseCompression();
+    #endif
+
 
     this->csvFileStream.close();
     //timestampManager.finishDeltaDelta();
@@ -263,29 +273,7 @@ void ReaderManager::runCompressor() {
 //        exit(1);
 //    }
 //    #endif
-
-
-    for (auto blarn: totalNum){
-        int total = budgetManager.flushed[blarn.first];
-        //std::cout << "1" << std::endl;
-        for (auto &model : modelManager.selectedModels.at(blarn.first-1)){
-            if (model.send){
-                total += model.length;
-            }
-
-        }
-        //std::cout << "2" << std::endl;
-        auto ts = modelManager.timeSeries.at(blarn.first-1);
-        //std::cout << "3" << std::endl;
-        total += std::max(ts.gorilla.length, std::max(ts.pmcMean.length, ts.swing.length));
-        if (total != blarn.second){
-            std::cout << lineNumber << " " << blarn.first << std::endl;
-            std::cout << total << " " << blarn.second << std::endl;
-            std::cout << "==" << std::endl;
-        }
-    }
-
-
+    #ifndef PERFORMANCE_TEST
     decompressManager.decompressModels();
 
     std::cerr <<
@@ -293,11 +281,9 @@ void ReaderManager::runCompressor() {
     budgetManager.huffmanSizeTotal   << "," <<
     budgetManager.weightedSum / budgetManager.totalLength << ","
     << decompressManager.actualTotalError / decompressManager.totalPoints;
-
-
-
-
+    #endif
 }
+#ifndef PERFORMANCE_TEST
 
 void ReaderManager::finaliseCompression() {
     for(int i = 0; i < configManager.timeseriesCols.size(); i++){
@@ -342,3 +328,4 @@ void ReaderManager::finaliseCompression() {
 
 
 }
+#endif

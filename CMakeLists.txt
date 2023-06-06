@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.24)
 project(smartsendercpp)
 
+option(PERFORMANCE_TEST "Compile with performance test code" OFF)
+if(PERFORMANCE_TEST)
+    add_definitions(-DPERFORMANCE_TEST)
+endif()
+
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_C_FLAGS "${CMAKE_CFLAGS} -fopenmp")
 set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
@@ -12,11 +18,17 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 #endif(UNIX)
 
 add_executable(smartsendercpp "src/CMakeLists.txt" "src/models/CMakeLists.txt" "src/utils/CMakeLists.txt")
-
+if(PERFORMANCE_TEST)
+    target_compile_definitions(smartsendercpp PRIVATE PERFORMANCE_TEST)
+endif()
 add_subdirectory(src)
 add_subdirectory(src/models)
 add_subdirectory(src/utils)
 add_subdirectory(src/managers)
+
+
+
+
 
 #if(UNIX)
 #    target_link_libraries(smartsendercpp PUBLIC Arrow::arrow_shared ArrowFlight::arrow_flight_shared ArrowFlightSql::arrow_flight_sql_shared parquet)

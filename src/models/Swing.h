@@ -12,7 +12,7 @@ struct slopeAndIntercept {
 
 class Swing {
 public:
-    Node * lastTimestamp;
+    Node* lastTimestamp;
     double &errorBound;
     int firstTimestamp;
     int length;
@@ -23,7 +23,6 @@ public:
     double lowerBoundIntercept;
     float maxError;
     bool adjustable;
-    int delta_time;
     Swing(double &errorBound);
 
     bool fitValueSwing(Node *timestamp, double value);

@@ -7,13 +7,13 @@
 
 class PmcMean {
 public:
-    int length;
     Node* lastTimestamp;
     double &error;
     float minValue;
     float maxValue;
     float sumOfValues;
     float maxError;
+    int length;
     bool adjustable;
 
     explicit PmcMean(double &errorBound);

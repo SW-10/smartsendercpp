@@ -15,8 +15,9 @@ public:
     Node* lastTimestamp;
     uint8_t lastLeadingZeroBits;
     uint8_t lastTrailingZeroBits;
-    BitVecBuilder compressedValues;
     int length;
+    BitVecBuilder compressedValues;
+
 
     Gorilla();
 
