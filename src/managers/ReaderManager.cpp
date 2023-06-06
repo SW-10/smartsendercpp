@@ -79,8 +79,11 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                     }
                     else {
                         this->budgetManager.outlierCooldown[i]--;
+#ifndef PERFORMANCE_TEST
+
                         outlierHolderStream << "1";
                         added = true;
+#endif
                     }
 
 
@@ -105,11 +108,14 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                     }
                     this->budgetManager.decreaseErrorBounds(i);
                     this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
+#ifndef PERFORMANCE_TEST
 
                     outlierHolderStream << "1";
                     added = true;
-
+#endif
                 }
+#ifndef PERFORMANCE_TEST
+
                 if (!added){
                     outlierHolderStream << "0";
                 }
@@ -119,6 +125,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 else {
                     outlierHolderStream << std::endl;
                 }
+#endif
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
 
@@ -167,11 +174,12 @@ void ReaderManager::runCompressor() {
 //    #ifdef linux
 //    ConnectionAddress address("0.0.0.0", 9999);
 //    #endif
-
+#ifndef PERFORMANCE_TEST
     std::ofstream outlierHolder;
     outlierHolder.open(std::string("../outlier.csv"), std::ios_base::out);
     outlierHolder.close();
     outlierHolderStream.open(std::string("../outlier.csv"), std::ios_base::app);
+#endif
     std::vector<std::string> row;
     std::string line, word;
 
@@ -247,7 +255,7 @@ void ReaderManager::runCompressor() {
         #ifndef NDEBUG
 #ifndef PERFORMANCE_TEST
 
-        for (auto blarn: totalNum){
+        /*for (auto blarn: totalNum){
             int total = budgetManager.flushed[blarn.first];
             //std::cout << "1" << std::endl;
             for (auto &model : modelManager.selectedModels.at(blarn.first-1)){
@@ -265,7 +273,7 @@ void ReaderManager::runCompressor() {
                 std::cout << total << " " << blarn.second << std::endl;
                 std::cout << "==" << std::endl;
             }
-        }
+        }*/
 #endif
         #endif
 
