@@ -47,7 +47,8 @@ public:
 #endif
 
     std::string name;
-
+    bool loweringError;
+    bool increasingError;
 private:
     ModelManager &modelManager;
 
@@ -56,8 +57,7 @@ private:
     std::vector<columnsExtra> adjustableTimeSeriesConfig;
     int &budget;
     int bytesLeft;
-    bool loweringError;
-    bool increasingError;
+
     int &maxAge;
     std::vector<int> lastBudget;
     std::vector<timeSeriesInformation> tsInformation;

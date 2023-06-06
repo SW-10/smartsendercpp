@@ -60,17 +60,29 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 
             #ifndef PERFORMANCE_TEST
             datasetTotalSize += sizeof(float) + sizeof(int); // float = value, int = timestamp
+            bool added = false;
             #endif
 
             if (!in->empty()) {
                 if(this->budgetManager.outlierCooldown[i] >= 0){
                     if (this->budgetManager.outlierCooldown[i] == 0){
                         this->budgetManager.outlierCooldown[i] = -1;
-                        configManager.timeseriesCols.at(i).error = configManager.timeseriesCols.at(i).defaultError ;
+                        configManager.timeseriesCols.at(i).error = configManager.timeseriesCols.at(i).defaultError;
+                        if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
+                            if (budgetManager.increasingError){
+                                budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.errorBound = configManager.timeseriesCols.at(i).maxError;
+                                budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.maxError = configManager.timeseriesCols.at(i).maxError;
+                                budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).pmcMean.maxError = configManager.timeseriesCols.at(i).maxError;
+                            }
+                        }
+
                     }
                     else {
                         this->budgetManager.outlierCooldown[i]--;
+                        outlierHolderStream << "1";
+                        added = true;
                     }
+
 
                 }
 
@@ -82,10 +94,30 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
 
                     //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << i << " value:" << value << std::endl;
-
+                    if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
+                        if (budgetManager.increasingError){
+                            budgetManager.adjustingModelManager.forceModelFlush(budgetManager.adjustableTimeSeries[i]);
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.errorBound = 0;
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).swing.maxError = 0;
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).pmcMean.maxError = 0;
+                            budgetManager.adjustingModelManager.timeSeries.at(budgetManager.adjustableTimeSeries[i]).pmcMean.error = 0;
+                        }
+                    }
                     this->budgetManager.decreaseErrorBounds(i);
                     this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
 
+                    outlierHolderStream << "1";
+                    added = true;
+
+                }
+                if (!added){
+                    outlierHolderStream << "0";
+                }
+                if (i+1 != configManager.timeseriesCols.size()){
+                    outlierHolderStream << ",";
+                }
+                else {
+                    outlierHolderStream << std::endl;
                 }
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
@@ -136,6 +168,10 @@ void ReaderManager::runCompressor() {
 //    ConnectionAddress address("0.0.0.0", 9999);
 //    #endif
 
+    std::ofstream outlierHolder;
+    outlierHolder.open(std::string("../outlier.csv"), std::ios_base::out);
+    outlierHolder.close();
+    outlierHolderStream.open(std::string("../outlier.csv"), std::ios_base::app);
     std::vector<std::string> row;
     std::string line, word;
 
@@ -153,9 +189,7 @@ void ReaderManager::runCompressor() {
         std::stringstream s(line);
         int count = 0;
 
-        if (lineNumber % 100000 == 0){
-            std::cout << lineNumber << std::endl;
-        }
+
 
         while (std::getline(s, word, ',')) {
             auto mapElement = myMap.find(count); //Get element in map
@@ -239,6 +273,7 @@ void ReaderManager::runCompressor() {
     }
     #ifndef PERFORMANCE_TEST
     finaliseCompression();
+    outlierHolderStream.close();
     #endif
 
 
@@ -280,8 +315,17 @@ void ReaderManager::runCompressor() {
     budgetManager.modelSizeTotal  << "," <<
     budgetManager.huffmanSizeTotal   << "," <<
     budgetManager.weightedSum / budgetManager.totalLength << ","
-    << decompressManager.actualTotalError / decompressManager.totalPoints;
-    #endif
+    << decompressManager.actualTotalError / decompressManager.totalPoints << ","
+    << decompressManager.errorBoundImportant << ","
+    << decompressManager.errorImportant << ","
+    << decompressManager.errorBoundNotImportant << ","
+    << decompressManager.errorNotImportant << ";";
+
+    for(auto column: decompressManager.columns){
+      std::cerr << column.cid << "," << column.avgErrorBound << "," << column.avgError << ",";
+    }
+
+#endif
 }
 #ifndef PERFORMANCE_TEST
 

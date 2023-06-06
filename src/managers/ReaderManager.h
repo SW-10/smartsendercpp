@@ -63,5 +63,6 @@ private:
     int totalPoints = 0;
     int datasetTotalSize = 0;
     std::unordered_map<int, int> totalNum;
+    std::ofstream outlierHolderStream;
     #endif
 };

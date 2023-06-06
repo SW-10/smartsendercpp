@@ -9,7 +9,7 @@ import tikzplotlib as tikz
 import numpy as np
 import time
 from multiprocessing import Process
-
+from matplotlib.ticker import FuncFormatter, MaxNLocator
 
 class Config:
     def __init__(self):
@@ -54,26 +54,98 @@ class Config:
     def run_cpp_program(self, permutation):
         self.write_config_file(self.config_file_path)
         result = subprocess.run([self.cpp_program_path], text=True, capture_output=True)
-        file = "csvs/" + "-".join(permutation) + ".csv"
-        text_file = open(file, "w")
-        text_file.write("modelSize, tsSize, wErrorBound, wErrorActual \n")
-        text_file.write(result.stderr)
+        first_file = "csvs/" + "-".join(permutation) + "-all.csv"
+        second_file = "csvs/" + "-".join(permutation) + "-columns.csv"
+        first_file_content = "modelSize, tsSize, wErrorBound, wErrorActual, errorBoundImportant, errorImportant, errorBoundNotImportant, errorNotImportant \n"
+        second_file_content = "cid,avgErrorBound,avgError\n"
+
+        data_parts = result.stderr.split(';')
+        first_file_content += data_parts[0].strip() + '\n'
+
+        # Process subsequent data parts
+        for part in data_parts[1:]:
+            # Split each part by comma and add newline after every third element
+            part_data = part.strip().split(',')
+            temp_content = ', '.join(
+                part_data[i] if (i + 1) % 3 != 0 else part_data[i] + '\n' for i in range(len(part_data)))
+            temp_content = temp_content.replace("\n, ", "\n")
+            temp_content = temp_content.replace(" ", "")
+            second_file_content += temp_content
+
+        with open(first_file, "w") as text_file:
+            text_file.write(first_file_content)
+
+        with open(second_file, "w") as text_file:
+            text_file.write(second_file_content)
+
         if result.returncode != 0:
             print(result.returncode)
+
+    def run_with_permutations(self, params_dict, sort_values, save_tikz):
+        keys, values = zip(*params_dict.items())
+        permutations = list(itertools.product(*values))
+        counter = 0
+
+        processes = []
+        if __name__ == '__main__':
+            for permutation in permutations:
+                self.run_cpp_program(permutation)
+                # if len(processes) >= 3:
+                #     processes[0].join()
+                #     processes = processes[1:]
+                # counter += 1
+                # params = dict(zip(keys, permutation))
+                # self.set_params(**params)
+                # self.write_config_file(self.config_file_path)
+                # process = Process(target=self.run_cpp_program, args=(permutation,))
+                # time.sleep(1)
+                # processes.append(process)
+                # process.start()
+                # print(counter)
+
+            self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
 
     def plot_results(self, sort_values=False, save_tikz=False):
         directory = 'csvs/'
 
+        def format_func(value, tick_number):
+            if value.is_integer():
+                return f'{value:.0f}'
+            else:
+                return f'{value:.1f}'
+
         data = {}
+        error_data = {}
+
+        error_bound_values = []
+        error_bound_labels = []
+
+        error_values = []
+        error_labels = []
 
         for filename in os.listdir(directory):
             if filename.endswith('.csv'):
                 df = pd.read_csv(directory + filename)
 
-                for column_name in df.columns:
-                    if column_name not in data:
-                        data[column_name] = {}
-                    data[column_name][filename] = df[column_name].tolist()
+                if "-all.csv" in filename:
+                    for column_name in df.columns:
+                        if column_name not in data:
+                            data[column_name] = {}
+                        data[column_name][filename] = df[column_name].tolist()
+
+                elif "-columns.csv" in filename:
+                    for column_name in df.keys():
+                        if column_name == 'cid':
+                            continue
+                        if column_name not in error_data:
+                            error_data[column_name] = {}
+                        error_data[column_name][filename] = [df[column_name].max(), df[column_name].min()]
+                    for j in range(len(error_data)):
+                        error_bound_values.append(error_data['avgErrorBound'][filename][j])
+                        error_bound_labels.append(filename)
+
+                        error_values.append(error_data['avgError'][filename][j])
+                        error_labels.append(filename)
 
         for column_name, column_data in data.items():
             for filename in column_data:
@@ -87,8 +159,6 @@ class Config:
 
             fig, ax = plt.subplots()
 
-            width = 0.5
-
             if sort_values:
                 plot_df = plot_df.sort_values(by=0, axis=1, ascending=False)
 
@@ -97,52 +167,53 @@ class Config:
             for i, filename in enumerate(plot_df.columns):
                 for j in range(len(plot_df)):
                     if not np.isnan(plot_df[filename].iloc[j]):
-                        bar_values.append(plot_df[filename].iloc[j])
+                        bar_values.append(plot_df[filename].iloc[j]/1048576)
                         bar_labels.append(filename)
 
             colors = cm.rainbow(np.linspace(0, 1, len(bar_values)))
 
-            ax.bar(range(len(bar_values)), bar_values, tick_label=bar_labels, color=colors)
+
+            bars = ax.bar(range(len(bar_values)), bar_values, tick_label=bar_labels, color='#ecd9ed',edgecolor='blue')
+
+            for bar in bars:
+                yval = bar.get_height()
+                ax.text(bar.get_x() + bar.get_width() / 2.0, yval, round(yval, 2), va='bottom', ha='center')
 
             ax.set_ylabel(column_name)
             ax.set_title('Comparison of ' + column_name + ' across CSV files')
+            formatter = FuncFormatter(format_func)
+            ax.yaxis.set_major_locator(MaxNLocator(nbins=20))
+            # ax.yaxis.get_major_formatter().set_scientific(False)
+            ax.yaxis.set_major_formatter(formatter)
 
-            ax.yaxis.set_major_locator(ticker.MaxNLocator(nbins=20))
+            error_bound_x_values = [bar_labels.index(filename.replace("-columns.csv", "-all.csv")) + 0.5 for filename in
+                                    error_bound_labels]
+            error_x_values = [bar_labels.index(filename.replace("-columns.csv", "-all.csv")) + 0.75 for filename in
+                              error_labels]
+
+            if column_name == "modelSize":
+                ax2 = ax.twinx()
+
+                color = 'tab:blue'
+                ax2.set_ylabel('Error (%)', color=color)
+                ax2.tick_params(axis='y', labelcolor=color)
+
+                ax2.plot(error_bound_x_values, error_bound_values, color='tab:blue', label='avgErrorBound')
+                ax2.plot(error_x_values, error_values, color='tab:orange', label='avgError')
+
+                ax2.legend(loc='upper left')
 
             plt.xticks(rotation=45, ha='right')
 
             plt.tight_layout()
             if save_tikz:
                 tikz.save(f'{column_name}.tex')
-            else:
+            if True:
                 # plt.show()
                 if not sort_values:
                     plt.savefig(f"{column_name}")
                 else:
                     plt.savefig(f"{column_name}-sorted")
-
-    def run_with_permutations(self, params_dict, sort_values, save_tikz):
-        keys, values = zip(*params_dict.items())
-        permutations = list(itertools.product(*values))
-        counter = 0
-
-        processes = []
-        if __name__ == '__main__':
-            for permutation in permutations:
-                if len(processes) >= 3:
-                    processes[0].join()
-                    processes = processes[1:]
-                counter += 1
-                params = dict(zip(keys, permutation))
-                self.set_params(**params)
-                self.write_config_file(self.config_file_path)
-                process = Process(target = self.run_cpp_program, args=(permutation,))
-                time.sleep(1)
-                processes.append(process)
-                process.start()
-                print(counter)
-
-            #self.plot_results(sort_values=sort_values, save_tikz=save_tikz)
 
 
 # Initialize configuration
@@ -150,57 +221,19 @@ config = Config()
 
 config.cpp_program_path = "../cmake-build-release/smartsendercpp.exe"
 
-
-config.inputFile = "mars-trimmed.csv"
+config.inputFile = "mars_subset_4.csv"
 
 # Set columns with their error bounds and type
 config.set_columns(range(2, 88), (5, 10), 3)
 
 # Define permutations
 params_dict = {
-    "maxAge": ["1000", "10000", "50000", "100000", "1000000"],
-    "budget": ["36000"],
-    "chunkSize": ["3600"],
+    "maxAge": ["100", "1000", "1000000"],
+    "budget": ["72000"],
+    "chunkSize": ["900"],
     "bufferGoal": ["10000"],
     "budgetLeftRegressionLength": ["10"],
     "chunksToGoal": ["10"]
 }
 
-# Run with permutations
-config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
-
-params_dict = {
-    "maxAge": ["100000"],
-    "budget": ["9000", "18000", "36000", "72000", "144000"],
-    "chunkSize": ["3600"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-# Run with permutations
-config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
-
-params_dict = {
-    "maxAge": ["100000"],
-    "budget": ["36000"],
-    "chunkSize": ["900", "1800", "3600", "7200", "14400"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-# Run with permutations
-config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
-
-params_dict = {
-    "maxAge": ["100000"],
-    "budget": ["36000"],
-    "chunkSize": ["3600"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["5", "10", "20", "40", "100"]
-}
-
-# Run with permutations
-config.run_with_permutations(params_dict, sort_values=True, save_tikz=False)
+config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)

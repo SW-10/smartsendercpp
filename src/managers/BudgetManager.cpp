@@ -17,6 +17,7 @@ BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configMa
     for (auto &_: configManager.timeseriesCols) {
         tsInformation.emplace_back(_.col);
         outlierCooldown[_.col] = -1;
+
     }
     sizeOfModels = 0;
     sizeOfModels += sizeof(float); // Size of error
@@ -327,6 +328,7 @@ void BudgetManager::decreaseErrorBounds(int locID){
 
 void BudgetManager::selectAdjustedModels(){
     if (increasingError){
+
         std::vector<adjustedModelSelectionInfo> scores;
         int toSave = configManager.bufferGoal - lastBudget.back();
         scores.reserve(adjustableTimeSeries.size());
