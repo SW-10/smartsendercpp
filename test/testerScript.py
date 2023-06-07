@@ -135,10 +135,7 @@ class Config:
                             continue
                         if column_name not in error_data:
                             error_data[column_name] = {}
-                        if column_name == 'avgErrorBound':
-                            error_bound_values.append(df[column_name].max())
-                        else:
-                            error_values.append(df[column_name].max())
+                        error_data[column_name][filename] = [df[column_name], df[column_name]]
 
 
         # for column_name, column_data in data.items():
@@ -147,24 +144,26 @@ class Config:
         #             print(filename)
         #             os.remove(directory + filename)
 
-        for column_name, column_data in data.items():
+        data_df = pd.DataFrame(data)
 
+        for column_name in data_df.columns:
 
+            if sort_values:
+                if column_name == "modelSize":
+                    data_df = data_df.sort_values(by=column_name)
+
+            column_data = data_df[column_name]
 
             plot_df = pd.DataFrame(column_data)
 
+            if sort_values:
+                if column_name != "modelSize":
+                    plot_df = plot_df.sort_values(by=column_name, axis=0, ascending=True)
+
             fig, ax = plt.subplots()
 
-            if sort_values:
-                plot_df = plot_df.sort_values(by=0, axis=1, ascending=True)
-
-            bar_values = []
-            bar_labels = []
-            for i, filename in enumerate(plot_df.columns):
-                for j in range(len(plot_df)):
-                    if not np.isnan(plot_df[filename].iloc[j]):
-                        bar_values.append(plot_df[filename].iloc[j])
-                        bar_labels.append(filename)
+            bar_values = [item for sublist in plot_df[column_name].dropna().values.tolist() for item in sublist]
+            bar_labels = plot_df.index.tolist()
 
             ind = np.arange(len(bar_values))
 
@@ -184,19 +183,11 @@ class Config:
             ax.yaxis.set_major_formatter(formatter)
 
             if column_name == "modelSize":
-                wError_values = []
-                plot_df = pd.DataFrame(data[' wErrorActual'])
-                for i, filename in enumerate(plot_df.columns):
-                    for j in range(len(plot_df)):
-                        if not np.isnan(plot_df[filename].iloc[j]):
-                            wError_values.append(plot_df[filename].iloc[j])
+                wError_values = [item for sublist in data_df[' wErrorActual'].dropna().values.tolist() for item in
+                                 sublist]
 
-                wErrorBound_values = []
-                plot_df = pd.DataFrame(data[' wErrorBound'])
-                for i, filename in enumerate(plot_df.columns):
-                    for j in range(len(plot_df)):
-                        if not np.isnan(plot_df[filename].iloc[j]):
-                            wErrorBound_values.append(plot_df[filename].iloc[j])
+                wErrorBound_values = [item for sublist in data_df[' wErrorBound'].dropna().values.tolist() for item in
+                                      sublist]
 
                 ax2 = ax.twinx()
                 secondary_x1 = ind + primary_width - secondary_width / 2
@@ -208,9 +199,6 @@ class Config:
 
                 ax.legend((primary_bar[0], secondary_bar_1[0], secondary_bar_2[0]),
                           ('Model Size', 'Average Error Bound', 'Average Actual Error'))
-
-
-
 
             plt.tight_layout()
             if save_tikz:
@@ -242,257 +230,8 @@ params_dict = {
     "chunksToGoal": ["10"]
 }
 
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["50000"],
-    "chunkSize": ["500"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["100000"],
-    "chunkSize": ["1000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["200000"],
-    "chunkSize": ["2000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["300000"],
-    "chunkSize": ["3000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["400000"],
-    "chunkSize": ["4000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["500000"],
-    "chunkSize": ["5000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["600000"],
-    "chunkSize": ["6000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["700000"],
-    "chunkSize": ["7000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["800000"],
-    "chunkSize": ["8000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["900000"],
-    "chunkSize": ["9000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["1000000"],
-    "chunkSize": ["10000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["2000000"],
-    "chunkSize": ["20000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["3000000"],
-    "chunkSize": ["30000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["4000000"],
-    "chunkSize": ["40000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["5000000"],
-    "chunkSize": ["50000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["6000000"],
-    "chunkSize": ["60000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["7000000"],
-    "chunkSize": ["70000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["8000000"],
-    "chunkSize": ["80000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["9000000"],
-    "chunkSize": ["90000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-params_dict = {
-    "maxAge": ["1000000"],
-    "budget": ["10000000"],
-    "chunkSize": ["100000"],
-    "bufferGoal": ["10000"],
-    "budgetLeftRegressionLength": ["10"],
-    "chunksToGoal": ["10"]
-}
-
-config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
-
-
-
-
-
-
-
-
-
-
-
 #config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
 
 #config.run_with_permutations(params_dict, True, True)
 
-#config.plot_results(True, False)
+config.plot_results(True, False)
