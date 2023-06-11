@@ -443,7 +443,7 @@ void BudgetManager::selectAdjustedModels(){
                     int iter = i;
                     int extras = lowerModelLength[map.first].first;
                     while (iter != 0){
-                        if (lowerModelLength[map.first].second != originalModels.at(iter-1).startTime){
+                        if (lowerModelLength[map.first].second > originalModels.at(iter-1).startTime){
                             break;
                         }
                         extras -= originalModels.at(iter-1).length;
@@ -487,7 +487,6 @@ void BudgetManager::selectAdjustedModels(){
             numberDecreasingAdjustableTimeSeries  = std::min(static_cast<int>(modelManager.timeSeries.size()), numberDecreasingAdjustableTimeSeries -1);
         }
         else {
-            numberDecreasingAdjustableTimeSeries = std::max(numberDecreasingAdjustableTimeSeries + 1, 1);
         }
     }
 }
