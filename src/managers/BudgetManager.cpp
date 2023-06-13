@@ -437,7 +437,7 @@ void BudgetManager::selectAdjustedModels(){
             //Get size of original models - But only those which are on the same chunk as adjusted models
             for(int i = 0; i < originalModels.size(); i++){
                 if (i < originalModels.size()-1 &&
-                    originalModels.at(i).startTime < adjustedModelStart &&
+                    originalModels.at(i).startTime <= adjustedModelStart &&
                     originalModels.at(i).endTime >= adjustedModelStart)
                 {
                     int iter = i;
