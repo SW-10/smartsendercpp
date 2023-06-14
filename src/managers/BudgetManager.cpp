@@ -48,6 +48,31 @@ void BudgetManager::endOfChunkCalculations() {
         loweringError = false;
         increasingError = false;
     }
+    if (!timestampManager.localOffsetListToSend.empty()){
+        Huffman huffmanLOL;
+        huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
+        huffmanLOL.encodeTree();
+
+        // CALC SIZE OF HUFFMAN
+#ifndef PERFORMANCE_TEST
+
+        huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+        bytesLeft -= huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+#endif
+        timestampManager.localOffsetListToSend.clear();
+    }
+    if(!timestampManager.globalOffsetListToSend.empty()){
+        Huffman huffmanGOL;
+        huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
+        huffmanGOL.encodeTree();
+
+#ifndef PERFORMANCE_TEST
+        // CALC SIZE OF HUFFMAN
+        huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
+        bytesLeft -= huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
+#endif
+        timestampManager.globalOffsetListToSend.clear();
+    }
     /*if (selected.at(i).passes >= 10){
                        selected.erase(selected.begin()+i);
                    }
@@ -139,29 +164,6 @@ void BudgetManager::endOfChunkCalculations() {
     }
 #endif
     cleanSpaceKeeper();
-    if (!timestampManager.localOffsetListToSend.empty()){
-        Huffman huffmanLOL;
-        huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
-        huffmanLOL.encodeTree();
-
-        // CALC SIZE OF HUFFMAN
-#ifndef PERFORMANCE_TEST
-
-        huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
-#endif
-        timestampManager.localOffsetListToSend.clear();
-    }
-    if(!timestampManager.globalOffsetListToSend.empty()){
-        Huffman huffmanGOL;
-        huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
-        huffmanGOL.encodeTree();
-
-#ifndef PERFORMANCE_TEST
-        // CALC SIZE OF HUFFMAN
-        huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
-#endif
-        timestampManager.globalOffsetListToSend.clear();
-    }
 
     lastBudget.emplace_back(bytesLeft + penaltySender);
     if(lastBudget.size()-1 == configManager.budgetLeftRegressionLength){
@@ -437,7 +439,7 @@ void BudgetManager::selectAdjustedModels(){
             //Get size of original models - But only those which are on the same chunk as adjusted models
             for(int i = 0; i < originalModels.size(); i++){
                 if (i < originalModels.size()-1 &&
-                    originalModels.at(i).startTime <= adjustedModelStart &&
+                    originalModels.at(i).startTime < adjustedModelStart &&
                     originalModels.at(i).endTime >= adjustedModelStart)
                 {
                     int iter = i;
