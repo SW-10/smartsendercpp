@@ -146,6 +146,7 @@ void ConfigManager::handleColumns(const int *count, char *token) {
     if (*count % 3 == 2) {
         columns &ptr = timeseriesCols.back();
         ptr.outlierThreshHold = atof(token);
+//        ptr.outlierThreshHold = 5.5;
     }
 }
 

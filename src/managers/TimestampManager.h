@@ -31,6 +31,7 @@ struct DeltaDeltaCompression {
 #endif
 class TimestampManager {
 public:
+    int deltaDeltaTotalSize = 0;
     int firstTimestamp;
 
     struct Node* timestampCurrent;
@@ -75,8 +76,12 @@ public:
     bool flushTimestamps(Node *lastUsedTimestamp);
 
     int flushLocalOffsetList(std::vector<std::pair<int, int>> &localOffsetListRef, int numberOfFlushedIndices);
+
+    void finishAndResetDeltaDelta();
     size_t getSizeOfLocalOffsetList() const;
     size_t getSizeOfGlobalOffsetList() const;
+    std::vector<DeltaDeltaCompression> latestTimestampsForDeltaDelta;
+
 private:
     Timekeeper tk;
     int timestampPrevious;
@@ -85,7 +90,6 @@ private:
     std::vector<TwoLatestTimestamps> latestTimestamps;
 #ifndef PERFORMANCE_TEST
 
-    std::vector<DeltaDeltaCompression> latestTimestampsForDeltaDelta;
     std::tuple<int, int> deltaDeltaLimits(const int &val);
 
     std::unordered_map<int, int> deltaDeltaSizes;

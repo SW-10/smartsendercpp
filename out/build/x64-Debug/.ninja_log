@@ -1,0 +1,19 @@
+# ninja log v5
+13	939	7075795912517044	CMakeFiles/smartsendercpp.dir/src/constants.cpp.obj	c82fbc5eb9cee720
+28	1094	7075795913577355	CMakeFiles/smartsendercpp.dir/src/getopt.c.obj	edea25743addeb21
+39	2289	7075795925388031	CMakeFiles/smartsendercpp.dir/src/models/Gorilla.cpp.obj	cdd9f27e1ceed699
+43	2391	7075795926837688	CMakeFiles/smartsendercpp.dir/src/models/PMCMean.cpp.obj	54162d19a8ab6187
+8	3158	7075795934704764	CMakeFiles/smartsendercpp.dir/src/main.cpp.obj	c7ad895f6ac0973a
+1094	3625	7075795939654001	CMakeFiles/smartsendercpp.dir/src/utils/bitreader.cpp.obj	88486082e026a3fa
+964	3939	7075795942073417	CMakeFiles/smartsendercpp.dir/src/models/Swing.cpp.obj	23bf42e55a62791f
+2289	4600	7075795949263492	CMakeFiles/smartsendercpp.dir/src/utils/Utils.cpp.obj	61cfbf823aec7306
+24	5177	7075795954729131	CMakeFiles/smartsendercpp.dir/src/doctest_main.cpp.obj	8808da8e27cadd33
+2392	5227	7075795955644537	CMakeFiles/smartsendercpp.dir/src/utils/Huffman.cpp.obj	83c265edbeb351a2
+3158	5505	7075795957954690	CMakeFiles/smartsendercpp.dir/src/utils/Timekeeper.cpp.obj	3ff839ae10f738b5
+4600	7267	7075795976155398	CMakeFiles/smartsendercpp.dir/src/managers/ModelManager.cpp.obj	376985e1e89b3ca5
+5505	8037	7075795983955185	CMakeFiles/smartsendercpp.dir/src/managers/DecompressManager.cpp.obj	5e7b17b3a63c4b6e
+3942	8197	7075795985635594	CMakeFiles/smartsendercpp.dir/src/managers/ConfigManager.cpp.obj	a41a18a9134801c1
+5177	8237	7075795986030374	CMakeFiles/smartsendercpp.dir/src/managers/TimestampManager.cpp.obj	de86bd0d4deb26fc
+5228	8591	7075795989545677	CMakeFiles/smartsendercpp.dir/src/managers/BudgetManager.cpp.obj	55c5111a8e6ec51
+3625	8784	7075795991485372	CMakeFiles/smartsendercpp.dir/src/managers/ReaderManager.cpp.obj	db7c63c70cb52daa
+8784	10188	7075795998846069	smartsendercpp.exe	320ce45f30eba42a

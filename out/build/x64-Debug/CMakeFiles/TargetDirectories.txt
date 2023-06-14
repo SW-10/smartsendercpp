@@ -1,0 +1,11 @@
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/CMakeFiles/smartsendercpp.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/models/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/models/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/utils/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/utils/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/managers/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/out/build/x64-Debug/src/managers/CMakeFiles/rebuild_cache.dir

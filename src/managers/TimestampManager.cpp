@@ -142,13 +142,28 @@ void TimestampManager::deltaDeltaCompress(int lineNumber, int globalID) {
     }
 }
 
+void TimestampManager::finishAndResetDeltaDelta(){
+    finishDeltaDelta();
+//    latestTimestampsForDeltaDelta.clear();
+    for(auto &elem : latestTimestampsForDeltaDelta){
+        elem = {0, 0, 0, 0, 0, false, false};
+    }
+//    DeltaDeltaCompression ddc = {0, 0, 0, 0, 0, false, false};
+//    latestTimestampsForDeltaDelta.push_back(ddc);
+}
+
 void TimestampManager::finishDeltaDelta(){
     int bytes = 0;
     for(auto &elem : deltaDeltasBuilders){
         elem.second.bytes.emplace_back(elem.second.currentByte);
         bytes += elem.second.bytes.size();
+
+        elem.second.currentByte = 0;
+        elem.second.remainingBits = 0;
+        elem.second.bytes.clear();
     }
-    std::cout << "Delta delta size: " << bytes << " bytes!" << std::endl;
+//    std::cout << "Delta delta size: " << bytes << " bytes!" << std::endl;
+    deltaDeltaTotalSize+=bytes;
 }
 
 void TimestampManager::reconstructDeltaDelta(){

@@ -12,6 +12,7 @@
 #include <sstream>
 #include <cstdlib>
 #include "filesystem"
+#include "../utils/arithmetic-coding/Encoder.h"
 
 //int Observer::static_number_ = 0;
 //Timekeeper *timekeeper = new Timekeeper;
@@ -62,6 +63,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
             datasetTotalSize += sizeof(float) + sizeof(int); // float = value, int = timestamp
             bool added = false;
             #endif
+            totalPoints++;
 
             if (!in->empty()) {
                 if(this->budgetManager.outlierCooldown[i] >= 0){
@@ -80,7 +82,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                     else {
                         this->budgetManager.outlierCooldown[i]--;
 #ifndef PERFORMANCE_TEST
-
+                        numImportant++;
                         outlierHolderStream << "1";
                         added = true;
 #endif
@@ -95,7 +97,6 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 //                timeseries[c.col].push_back(std::make_pair(timestampManager.timestampCurrent->data, value));
 //                #endif
                 if(outlierDetector.addValueAndDetectOutlier(i, value)){
-
                     //std::cout << "Outlier detected on line " << lineNum + 2 << " in column " << i << " value:" << value << std::endl;
                     if(budgetManager.adjustableTimeSeries.find(i) != budgetManager.adjustableTimeSeries.end()){
                         if (budgetManager.increasingError){
@@ -110,6 +111,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                     this->budgetManager.outlierCooldown[i] = this->budgetManager.cooldown;
 #ifndef PERFORMANCE_TEST
 
+                    numImportant++;
                     outlierHolderStream << "1";
                     added = true;
 #endif
@@ -117,6 +119,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
 #ifndef PERFORMANCE_TEST
 
                 if (!added){
+                    numNotImportant++;
                     outlierHolderStream << "0";
                 }
                 if (i+1 != configManager.timeseriesCols.size()){
@@ -129,7 +132,7 @@ ReaderManager::ReaderManager(std::string configFile, Timekeeper &timekeeper)
                 timestampManager.makeLocalOffsetList(lineNum,
                                                      c.col); //c.col is the global ID
 
-                //timestampManager.deltaDeltaCompress(lineNum, c.col);
+                timestampManager.deltaDeltaCompress(lineNum, c.col);
                 modelManager.fitSegment(i, value,timestampManager.timestampCurrent);
                 #ifndef NDEBUG
 #ifndef PERFORMANCE_TEST
@@ -213,6 +216,7 @@ void ReaderManager::runCompressor() {
             // newInterval is set to true when timekeeper sends a message which is received by the
             // Update() function in ReaderManager.cpp
             if(newInterval){
+                timestampManager.finishAndResetDeltaDelta();
                 //std::cout << "timebefore" << lineNumber << std::endl;
                 budgetManager.endOfChunkCalculations();
                 //std::cout << "timenow" << lineNumber << std::endl;
@@ -290,9 +294,9 @@ void ReaderManager::runCompressor() {
 
 
 #ifndef NDEBUG
-//    std::cout << "HUFFMAN TOTAL SIZE: " << budgetManager.huffmanSizeTotal <<  " bytes" << std::endl;
-//    std::cout << "MODEL   TOTAL SIZE: " << budgetManager.modelSizeTotal   <<  " bytes" << std::endl;
-//    std::cout << "DATASET TOTAL SIZE: " << datasetTotalSize   <<  " bytes" << std::endl;
+    std::cout << "HUFFMAN TOTAL SIZE: " << budgetManager.huffmanSizeTotal <<  " bytes" << std::endl;
+    std::cout << "MODEL   TOTAL SIZE: " << budgetManager.modelSizeTotal   <<  " bytes" << std::endl;
+    std::cout << "DATASET TOTAL SIZE: " << datasetTotalSize   <<  " bytes" << std::endl;
 #endif
 
     //std::cout << "size loc : " << timestampManager.binaryCompressLocOffsets2(timestampManager.localOffsetList).size() << std::endl;
@@ -322,12 +326,22 @@ void ReaderManager::runCompressor() {
     std::cerr <<
     budgetManager.modelSizeTotal  << "," <<
     budgetManager.huffmanSizeTotal   << "," <<
+    budgetManager.arithmeticSizeTotal << "," <<
+    timestampManager.deltaDeltaTotalSize << ";" <<
     budgetManager.weightedSum / budgetManager.totalLength << ","
     << decompressManager.actualTotalError / decompressManager.totalPoints << ","
     << decompressManager.errorBoundImportant / decompressManager.numImportant << ","
     << decompressManager.errorImportant / decompressManager.numImportant << ","
     << decompressManager.errorBoundNotImportant / decompressManager.numNotImportant << ","
     << decompressManager.errorNotImportant / decompressManager.numNotImportant << ";";
+
+    std::cout << "Total points: " << totalPoints << std::endl;
+//    std::cout << "Number of important points: " << numImportant << std::endl;
+//    std::cout << "Number of not important points: " << numNotImportant << std::endl;
+    std::cout << "Huffman    : " << budgetManager.huffmanSizeTotal << std::endl;
+    std::cout << "Arithmetic : " << budgetManager.arithmeticSizeTotal << std::endl;
+    std::cout << "Delta-delta: " << timestampManager.deltaDeltaTotalSize << std::endl;
+    std::cout << "Model size : " << budgetManager.modelSizeTotal << std::endl;
 
     for(auto column: decompressManager.columns){
       std::cerr << column.cid << "," << column.avgErrorBound << "," << column.avgError << ",";
@@ -338,6 +352,7 @@ void ReaderManager::runCompressor() {
 #ifndef PERFORMANCE_TEST
 
 void ReaderManager::finaliseCompression() {
+    std::cout << "Beginning finalize!" << std::endl;
     for(int i = 0; i < configManager.timeseriesCols.size(); i++){
         modelManager.forceModelFlush(i);
     }
@@ -366,7 +381,16 @@ void ReaderManager::finaliseCompression() {
 
         // CALC SIZE OF HUFFMAN
         budgetManager.huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+
+        std::cout << "size of LOL: " << timestampManager.localOffsetListToSend.size() << std::endl;
+        // == DO ARITHMETIC CODING ==
+        Encoder enc;
+        std::map<int, int>  uniqueVals;
+        std::vector<float> accFreqs;
+        auto arith_encoding = enc.encode(timestampManager.localOffsetListToSend,  &uniqueVals, &accFreqs);
+        budgetManager.arithmeticSizeTotal += arith_encoding.size() + (uniqueVals.size() * 2) * sizeof(int) +  accFreqs.size() * sizeof(float);
         timestampManager.localOffsetListToSend.clear();
+
     }
     if(!timestampManager.globalOffsetListToSend.empty()){
         Huffman huffmanGOL;
@@ -375,7 +399,16 @@ void ReaderManager::finaliseCompression() {
 
         // CALC SIZE OF HUFFMAN
         budgetManager.huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
-        timestampManager.globalOffsetListToSend.clear();
+        std::cout << "size of LOL: " << timestampManager.globalOffsetListToSend.size() << std::endl;
+
+//        // == DO ARITHMETIC CODING ==
+//        Encoder enc;
+//        std::map<int, int>  uniqueVals;
+//        std::vector<float> accFreqs;
+//        auto arith_encoding = enc.encode(timestampManager.globalOffsetListToSend,  &uniqueVals, &accFreqs);
+//        budgetManager.arithmeticSizeTotal += arith_encoding.size() + (uniqueVals.size() * 2) * sizeof(int) +  accFreqs.size() * sizeof(float);
+//        timestampManager.globalOffsetListToSend.clear();
+
     }
 
 

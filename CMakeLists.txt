@@ -17,13 +17,14 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
 #    list(APPEND CMAKE_PREFIX_PATH "./lib")
 #endif(UNIX)
 
-add_executable(smartsendercpp "src/CMakeLists.txt" "src/models/CMakeLists.txt" "src/utils/CMakeLists.txt")
+add_executable(smartsendercpp "src/CMakeLists.txt" "src/models/CMakeLists.txt" "src/utils/CMakeLists.txt" "src/utils/arithmetic-coding/CMakeLists.txt")
 if(PERFORMANCE_TEST)
     target_compile_definitions(smartsendercpp PRIVATE PERFORMANCE_TEST)
 endif()
 add_subdirectory(src)
 add_subdirectory(src/models)
 add_subdirectory(src/utils)
+add_subdirectory(src/utils/arithmetic-coding)
 add_subdirectory(src/managers)
 
 

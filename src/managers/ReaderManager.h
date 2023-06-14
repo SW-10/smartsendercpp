@@ -22,6 +22,8 @@
 struct Model;
 class ReaderManager : public IObserver {
 private:
+    int numImportant = 0;
+    int numNotImportant = 0;
     ConfigManager configManager;
     TimestampManager timestampManager;
 #ifndef PERFORMANCE_TEST

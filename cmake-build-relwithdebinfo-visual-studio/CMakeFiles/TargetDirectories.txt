@@ -1,0 +1,11 @@
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/CMakeFiles/smartsendercpp.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/models/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/models/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/utils/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/utils/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/managers/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-relwithdebinfo-visual-studio/src/managers/CMakeFiles/rebuild_cache.dir

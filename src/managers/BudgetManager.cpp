@@ -5,6 +5,7 @@
 #include "BudgetManager.h"
 #include "../models/Gorilla.h"
 #include "../utils/Huffman.h"
+#include "../utils/arithmetic-coding/Encoder.h"
 
 
 BudgetManager::BudgetManager(ModelManager &modelManager, ConfigManager &configManager,
@@ -47,31 +48,6 @@ void BudgetManager::endOfChunkCalculations() {
         lowerModelLength.clear();
         loweringError = false;
         increasingError = false;
-    }
-    if (!timestampManager.localOffsetListToSend.empty()){
-        Huffman huffmanLOL;
-        huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
-        huffmanLOL.encodeTree();
-
-        // CALC SIZE OF HUFFMAN
-#ifndef PERFORMANCE_TEST
-
-        huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
-        bytesLeft -= huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
-#endif
-        timestampManager.localOffsetListToSend.clear();
-    }
-    if(!timestampManager.globalOffsetListToSend.empty()){
-        Huffman huffmanGOL;
-        huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
-        huffmanGOL.encodeTree();
-
-#ifndef PERFORMANCE_TEST
-        // CALC SIZE OF HUFFMAN
-        huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
-        bytesLeft -= huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
-#endif
-        timestampManager.globalOffsetListToSend.clear();
     }
     /*if (selected.at(i).passes >= 10){
                        selected.erase(selected.begin()+i);
@@ -164,6 +140,54 @@ void BudgetManager::endOfChunkCalculations() {
     }
 #endif
     cleanSpaceKeeper();
+    if (!timestampManager.localOffsetListToSend.empty()){
+        // == DO HUFFMAN CODING ==
+        Huffman huffmanLOL;
+        huffmanLOL.runHuffmanEncoding(timestampManager.localOffsetListToSend, false);
+        huffmanLOL.encodeTree();
+
+        // CALC SIZE OF HUFFMAN
+#ifndef PERFORMANCE_TEST
+        huffmanSizeTotal += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+#endif
+//        std::cout << "HUFFMAN SIZE: " << huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size() << std::endl;
+
+        // == DO ARITHMETIC CODING ==
+        Encoder enc;
+        std::map<int, int>  uniqueVals;
+        std::vector<float> accFreqs;
+        auto arith_encoding = enc.encode(timestampManager.localOffsetListToSend,  &uniqueVals, &accFreqs);
+#ifndef PERFORMANCE_TEST
+//        std::cout << "Adding: " << arith_encoding.size() + (uniqueVals.size() * 2) * sizeof(int) +  accFreqs.size() * sizeof(float) << " bytes to arithmetic coding" << std::endl;
+        arithmeticSizeTotal += arith_encoding.size() + (uniqueVals.size() * 2) * sizeof(int) +  accFreqs.size() * sizeof(float);
+//        std::cout << "Total: " << arithmeticSizeTotal << std::endl;
+#endif
+
+        //Temp Used for testing
+        //temp += huffmanLOL.huffmanBuilder.bytes.size() + huffmanLOL.treeBuilder.bytes.size();
+        timestampManager.localOffsetListToSend.clear();
+    }
+    if(!timestampManager.globalOffsetListToSend.empty()){
+        Huffman huffmanGOL;
+        huffmanGOL.runHuffmanEncoding(timestampManager.globalOffsetListToSend, false);
+        huffmanGOL.encodeTree();
+
+#ifndef PERFORMANCE_TEST
+        // CALC SIZE OF HUFFMAN
+        huffmanSizeTotal += huffmanGOL.huffmanBuilder.bytes.size() + huffmanGOL.treeBuilder.bytes.size();
+#endif
+
+        // == DO ARITHMETIC CODING ==
+        Encoder enc;
+        std::map<int, int>  uniqueVals;
+        std::vector<float> accFreqs;
+        auto arith_encoding = enc.encode(timestampManager.globalOffsetListToSend,  &uniqueVals, &accFreqs);
+#ifndef PERFORMANCE_TEST
+        arithmeticSizeTotal += arith_encoding.size() + (uniqueVals.size() * 2) * sizeof(int) +  accFreqs.size() * sizeof(float);
+#endif
+
+        timestampManager.globalOffsetListToSend.clear();
+    }
 
     lastBudget.emplace_back(bytesLeft + penaltySender);
     if(lastBudget.size()-1 == configManager.budgetLeftRegressionLength){
@@ -489,6 +513,7 @@ void BudgetManager::selectAdjustedModels(){
             numberDecreasingAdjustableTimeSeries  = std::min(static_cast<int>(modelManager.timeSeries.size()), numberDecreasingAdjustableTimeSeries -1);
         }
         else {
+            numberDecreasingAdjustableTimeSeries = std::max(numberDecreasingAdjustableTimeSeries + 1, 1);
         }
     }
 }

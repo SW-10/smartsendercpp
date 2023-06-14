@@ -38,6 +38,7 @@ public:
     // ======== Variables for evaluation ========
 #ifndef PERFORMANCE_TEST
     int huffmanSizeTotal = 0;
+    int arithmeticSizeTotal = 0;
     int modelSizeTotal = 0;
     float weightedSum = 0;
     int totalLength = 0;

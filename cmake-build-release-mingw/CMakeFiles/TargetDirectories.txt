@@ -1,0 +1,13 @@
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/CMakeFiles/smartsendercpp.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/models/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/models/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/utils/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/utils/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/utils/arithmetic-coding/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/utils/arithmetic-coding/CMakeFiles/rebuild_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/managers/CMakeFiles/edit_cache.dir
+C:/Users/teisv/Documents/GitHub/smartsendercpp/cmake-build-release-mingw/src/managers/CMakeFiles/rebuild_cache.dir
