@@ -11,8 +11,8 @@ import numpy as np
 import time
 from multiprocessing import Process
 from matplotlib.ticker import FuncFormatter, MaxNLocator
-plt.rcParams['figure.figsize'] = (20, 10)
 
+plt.rcParams['figure.figsize'] = (20, 10)
 
 
 class Config:
@@ -138,34 +138,38 @@ class Config:
         data_df = pd.DataFrame(data)
 
         if calculateIntervalsInError:
-            # interval_ranges = np.arange(0, 10, 1)  # assuming the max value won't exceed 100
-            #
-            # for filename in os.listdir(directory):
-            #     if filename.endswith('.csv'):
-            #         df = pd.read_csv(directory + filename)
-            #         if "-columns.csv" in filename:
-            #             for column_name in ['avgErrorBound']:
-            #                 df[column_name + '_Interval'] = pd.cut(df[column_name], bins=interval_ranges)
-            #                 plt.figure(figsize=(10, 6))
-            #                 df[column_name + '_Interval'].value_counts(sort=False).plot(kind='bar', color='b',
-            #                                                                             alpha=0.5)
-            #                 plt.title(f'Distribution of {column_name} in {filename}')
-            #                 plt.xlabel('Value Intervals')
-            #                 plt.ylabel('Frequency')
-            #                 if save_tikz:
-            #                     tikz.save(f'{filename}.tex')
-            interval_ranges = np.arange(0, 10, 1)  # assuming the max value won't exceed 100
-            interval_labels = [f'{i}-{i + 1}' for i in interval_ranges[:-1]]
+            interval_ranges = np.arange(0, 0.1, 0.01)
 
             for filename in os.listdir(directory):
                 if filename.endswith('.csv'):
                     df = pd.read_csv(directory + filename)
                     if "-columns.csv" in filename:
                         for column_name in ['avgErrorBound']:
-                            df[column_name] = pd.cut(df[column_name], bins=interval_ranges, labels=interval_labels)
-                            print(f"For {column_name} in {filename}:")
-                            print(df[column_name].value_counts().sort_index())
-                            print("\n")
+                            df[column_name + '_Interval'] = pd.cut(df[column_name], bins=interval_ranges)
+                            plt.figure(figsize=(10, 6))
+                            (df[column_name + '_Interval'].value_counts(sort=False, normalize=True) * 100).plot(
+                                kind='bar', color='b',
+                                alpha=0.5)
+                            plt.title(f'Distribution of {column_name} in {filename}')
+                            plt.xlabel('AvgErrorBound Intervals')
+                            plt.ylabel('Frequency (%)')
+                            if save_tikz:
+                                tikz.save(f'{filename}.tex')
+                            else:
+                                plt.tight_layout()
+                                plt.show()
+            # interval_ranges = np.arange(0, 10, 1)  # assuming the max value won't exceed 100
+            # interval_labels = [f'{i}-{i + 1}' for i in interval_ranges[:-1]]
+            #
+            # for filename in os.listdir(directory):
+            #     if filename.endswith('.csv'):
+            #         df = pd.read_csv(directory + filename)
+            #         if "-columns.csv" in filename:
+            #             for column_name in ['avgErrorBound']:
+            #                 df[column_name] = pd.cut(df[column_name], bins=interval_ranges, labels=interval_labels)
+            #                 print(f"For {column_name} in {filename}:")
+            #                 print(df[column_name].value_counts().sort_index())
+            #                 print("\n")
         elif errorPerColumn:
             for filename in os.listdir(directory):
                 if filename.endswith('.csv'):
@@ -178,35 +182,30 @@ class Config:
                                 error_data[column_name] = {}
                             error_data[column_name][filename] = df[column_name].max()
 
-            # Figure out the changing part in filenames
             filenames = list(error_data['avgErrorBound'].keys())
             parts = [list(map(int, re.findall(r'\d+', filename))) for filename in filenames]
             changing_part_index = next(i for i in range(len(parts[0])) if len(set(part[i] for part in parts)) > 1)
 
-            # Sort filenames based on the changing part
             filenames.sort(key=lambda filename: int(filename.split('-')[changing_part_index]))
 
-            # Sort max_values based on filenames
             max_values_error_bound = [error_data['avgErrorBound'][filename] for filename in filenames]
             max_values_error = [error_data['avgError'][filename] for filename in filenames]
 
-            # Plotting
             fig, ax = plt.subplots(figsize=(10, 7))
-            bar_width = 0.35
+            ax.grid(True, linestyle='--')
 
-            bar1 = np.arange(len(filenames))
-            ax.bar(bar1, max_values_error_bound, color='r', width=bar_width, edgecolor='grey',
-                   label='Max Value of avgErrorBound')
-            ax.bar(bar1 + bar_width, max_values_error, color='b', width=bar_width, edgecolor='grey',
-                   label='Max Value of avgError')
+            ax.plot(filenames, max_values_error_bound, color='r', marker='s', label='Max Value of avgErrorBound')
+            ax.plot(filenames, max_values_error, color='b', marker='^', label='Max Value of avgError')
 
-            ax.set_xticks(bar1 + bar_width / 2)
+            ax.set_xticks(filenames)
             ax.set_xticklabels(filenames, rotation=45, ha='right')
             ax.set_title('Maximum Values of avgErrorBound and avgError')
 
-
             if save_tikz:
                 tikz.save(f'{filename}.tex')
+            else:
+                plt.tight_layout()
+                plt.show()
 
         else:
             for column_name in data_df.columns:
@@ -224,44 +223,33 @@ class Config:
                         plot_df = plot_df.sort_values(by=column_name, axis=0, ascending=True)
 
                 fig, ax = plt.subplots()
+                ax.yaxis.grid(True, linestyle='--')
 
-                bar_values = [item for sublist in plot_df[column_name].dropna().values.tolist() for item in sublist]
-                bar_labels = plot_df.index.tolist()
-
-                ind = np.arange(len(bar_values))
-
-                primary_width = 0.2  # Width of the primary bar (needs to be twice the amount of secondary_width)
-                secondary_width = 0.1  # Width of the secondary bars
+                line_values = [item for sublist in plot_df[column_name].dropna().values.tolist() for item in sublist]
+                line_labels = plot_df.index.tolist()
 
                 plt.xticks(rotation=45, ha='right')
 
-                primary_bar = ax.bar(ind, bar_values, primary_width, tick_label=bar_labels, color='blue')
+                primary_line = ax.plot(line_labels, line_values, color='blue', marker='o')
 
                 ax.set_ylabel(column_name)
                 ax.set_title('Comparison of ' + column_name + ' across permutations')
 
                 formatter = FuncFormatter(format_func)
                 ax.yaxis.set_major_locator(MaxNLocator(nbins=20))
-                # ax.yaxis.get_major_formatter().set_scientific(False)
                 ax.yaxis.set_major_formatter(formatter)
 
                 if column_name == "modelSize":
                     wError_values = [item for sublist in data_df[' wErrorActual'].dropna().values.tolist() for item in
                                      sublist]
-
-                    wErrorBound_values = [item for sublist in data_df[' wErrorBound'].dropna().values.tolist() for item in
-                                          sublist]
+                    wErrorBound_values = [item for sublist in data_df[' wErrorBound'].dropna().values.tolist() for item
+                                          in sublist]
 
                     ax2 = ax.twinx()
-                    secondary_x1 = ind + primary_width - secondary_width / 2
-                    secondary_x2 = secondary_x1 + secondary_width
-                    secondary_bar_1 = ax2.bar(secondary_x1, wErrorBound_values, secondary_width, color='r')
-                    secondary_bar_2 = ax2.bar(secondary_x2, wError_values, secondary_width, color='g')
+                    secondary_line_1 = ax2.plot(line_labels, wErrorBound_values, color='r', marker='s')
+                    secondary_line_2 = ax2.plot(line_labels, wError_values, color='g', marker='^')
                     ax2.set_ylabel('Error (%)', color='r')
                     ax2.tick_params('y', colors='r')
-
-                    #ax.legend((primary_bar[0], secondary_bar_1[0], secondary_bar_2[0]),
-                    #          ('Model Size', 'Average Error Bound', 'Average Actual Error'))
 
                 plt.tight_layout()
                 if save_tikz:
@@ -271,8 +259,6 @@ class Config:
                         plt.savefig(f"{column_name}")
                     else:
                         plt.savefig(f"{column_name}-sorted")
-
-
 # Initialize configuration
 config = Config()
 
@@ -287,14 +273,15 @@ config.set_columns(range(2, 88), (5, 10), 3)
 params_dict = {
     "maxAge": ["1000000"],
     "budget": ["100000"],
-    "chunkSize": ["500", "1000", "2000", "3000", "4000", "5000", "6000", "7000", "8000", "9000", "10000", "20000", "30000", "40000", "50000", "60000", "70000", "80000", "90000", "100000"],
+    "chunkSize": ["500", "1000", "2000", "3000", "4000", "5000", "6000", "7000", "8000", "9000", "10000", "20000",
+                  "30000", "40000", "50000", "60000", "70000", "80000", "90000", "100000"],
     "bufferGoal": ["10000"],
     "budgetLeftRegressionLength": ["10"],
     "chunksToGoal": ["10"]
 }
 
-#config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
+# config.run_with_permutations(params_dict, sort_values=False, save_tikz=False)
 
-#config.run_with_permutations(params_dict, True, True)
+# config.run_with_permutations(params_dict, True, True)
 
-config.plot_results(False, False, False, True)
+config.plot_results(sort_values=True, save_tikz=False, errorPerColumn=False, calculateIntervalsInError=False)
